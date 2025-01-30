@@ -13,6 +13,7 @@
         "@mui/material": "^6",
         "@mui/material-nextjs": "^6",
         "@toolpad/core": "0.12.0",
+        "axios": "^1.7.9",
         "firebase": "^11",
         "react": "^19",
         "react-dom": "^19",

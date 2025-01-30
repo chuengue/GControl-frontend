@@ -2,64 +2,25 @@ import { Avatar, Box, Card, Container, Stack, Typography } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
-const char = [
-    {
-        uuid: '12a7b9fa-4f94-4d41-9430-8c3ec1b7dc1c',
-        name: 'Lass',
-        classes: [
-            {
-                className: 'Ladrão',
-                img: 'https://s3.amazonaws.com/gc-control-imgs/Character_1/Lass_00.png'
-            },
-            {
-                className: 'Ninja',
-                img: 'https://static.wikia.nocookie.net/grandchase/images/f/fb/Las22.png/revision/latest?cb=20160917000359&path-prefix=pt-br'
-            },
-            {
-                className: 'Assassino',
-                img: 'https://static.wikia.nocookie.net/grandchase/images/2/29/Las28.png/revision/latest?cb=20160917000146&path-prefix=pt-br'
-            },
-            {
-                className: 'Mercenário',
-                img: 'https://static.wikia.nocookie.net/grandchase/images/4/4e/Las35.png/revision/latest?cb=20160917000943&path-prefix=pt-br'
-            }
-        ],
 
-        level: 85
-    },
-    {
-        uuid: '12a7b9fa-4f94-4d41-9430-8c3ec1b7dc1c',
-        name: 'Lass',
-        classes: [
-            {
-                className: 'Ladrão',
-                img: 'https://s3.amazonaws.com/gc-control-imgs/Character_1/Lass_00.png'
-            },
-            {
-                className: 'Ninja',
-                img: 'https://static.wikia.nocookie.net/grandchase/images/f/fb/Las22.png/revision/latest?cb=20160917000359&path-prefix=pt-br'
-            },
-            {
-                className: 'Assassino',
-                img: 'https://static.wikia.nocookie.net/grandchase/images/2/29/Las28.png/revision/latest?cb=20160917000146&path-prefix=pt-br'
-            },
-            {
-                className: 'Mercenário',
-                img: 'https://static.wikia.nocookie.net/grandchase/images/4/4e/Las35.png/revision/latest?cb=20160917000943&path-prefix=pt-br'
-            }
-        ],
+// Tipagem de props para o componente
+interface Character {
+    name: string;
+    level: number;
+    classes: { img: string; className: string }[];
+}
 
-        level: 85
-    }
-];
+interface CharCardProps {
+    chars: Character[]; // Espera um array de Character como prop
+}
 
-function ChardCard() {
+function ChardCard({ chars }: CharCardProps) {
     return (
         <Container>
             <Grid container spacing={2}>
-                {char.map(char => {
+                {chars.map((char, index) => {
                     return (
-                        <Grid size={4}>
+                        <Grid key={index} size={4}>
                             <Stack direction="column" spacing={2}>
                                 <Card
                                     sx={{
@@ -70,35 +31,37 @@ function ChardCard() {
                                     }}
                                 >
                                     <Card
-                                    elevation={2}
+                                        elevation={2}
                                         sx={{
                                             bgcolor: blue[800],
                                             display: 'flex',
                                             flexDirection: 'row',
                                             alignItems: 'center',
+                                            justifyContent: 'space-around',
                                             borderRadius: '12px',
-                                            p: 2,
-                                            
+                                            p: 2
                                         }}
                                     >
-                                        <Stack>
-                                            <Typography variant="body2">
-                                                Level
-                                            </Typography>
-                                            <Avatar
-                                                sx={{
-                                                    bgcolor: blue[500],
-                                                    color: 'white'
-                                                }}
-                                            >
-                                                {char.level}
-                                            </Avatar>
-                                        </Stack>
+                                        {char.level && (
+                                            <Stack>
+                                                <Typography variant="body2">
+                                                    Level
+                                                </Typography>
+                                                <Avatar
+                                                    sx={{
+                                                        bgcolor: blue[500],
+                                                        color: 'white'
+                                                    }}
+                                                >
+                                                    {char.level}
+                                                </Avatar>
+                                            </Stack>
+                                        )}
+
                                         <Stack
                                             flexDirection="row"
                                             justifyContent="center"
                                             display="flex"
-                                            width="80%"
                                         >
                                             <Typography
                                                 variant="h4"
@@ -109,10 +72,7 @@ function ChardCard() {
                                         </Stack>
                                     </Card>
 
-                                    <Box
-                                        display="flex"
-                                        justifyContent="center "
-                                    >
+                                    <Box display="flex" justifyContent="center">
                                         <img
                                             src={char.classes[0].img}
                                             alt={char.classes[0].className}
@@ -128,4 +88,5 @@ function ChardCard() {
         </Container>
     );
 }
+
 export default ChardCard;
