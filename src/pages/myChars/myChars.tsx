@@ -3,6 +3,7 @@ import { Container } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import * as React from 'react';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { CharCard } from '../../components';
 import { useSession } from '../../SessionContext';
 import useCharStore from '../../stores/charStore';
@@ -16,17 +17,26 @@ interface Character {
 
 function MyChars() {
     const { session, setLoading } = useSession();
-    const { chars, setChars, fetchData } = useCharStore();
+    const { userChars, fetchUserCharsData } = useCharStore();
+    const navigate = useNavigate();
     const uid = session?.user.uid || '';
     useEffect(() => {
-        fetchData(uid);
+        fetchUserCharsData(uid);
     }, []);
+
+    function onAddCharacter() {
+        navigate('/chars/add-user-char');
+    }
 
     return (
         <Container>
             <Grid container spacing={2}>
-                {chars.length > 0 ? (
-                    <CharCard chars={chars} />
+                {userChars.length > 0 ? (
+                    <CharCard
+                        chars={userChars}
+                        onAddCharacter={onAddCharacter}
+                        details
+                    />
                 ) : (
                     <div>Sem personagens para exibir.</div>
                 )}

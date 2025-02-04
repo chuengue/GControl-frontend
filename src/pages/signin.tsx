@@ -6,9 +6,9 @@ import * as React from 'react';
 import { Navigate, useNavigate } from 'react-router';
 import { useSession, type Session } from '../SessionContext';
 import {
-  signInWithCredentials,
-  signInWithGithub,
-  signInWithGoogle
+    signInWithCredentials,
+    signInWithGithub,
+    signInWithGoogle
 } from '../firebase/auth';
 
 export default function SignIn() {
@@ -38,21 +38,25 @@ export default function SignIn() {
         return <h2 style={{ marginBottom: 8 }}>Login</h2>;
     }
     function SubTitle() {
-        return <Typography sx={{marginBottom: 1}} >Bem-vindo, faça login para continuar</Typography>;
+        return (
+            <Typography sx={{ marginBottom: 1 }}>
+                Bem-vindo, faça login para continuar
+            </Typography>
+        );
     }
 
     function CustomButton() {
-      return (
-        <Button
-          type="submit"
-          color="info"
-          variant="contained"
-          fullWidth
-          sx={{ my: 2 }}
-        >
-          Entrar
-        </Button>
-      );
+        return (
+            <Button
+                type="submit"
+                color="info"
+                variant="contained"
+                fullWidth
+                sx={{ my: 2 }}
+            >
+                Entrar
+            </Button>
+        );
     }
 
     return (
@@ -62,7 +66,6 @@ export default function SignIn() {
                 subtitle: SubTitle,
                 signUpLink: SignUpLink,
                 submitButton: CustomButton
-
             }}
             providers={[
                 { id: 'google', name: 'Google' },
@@ -100,6 +103,7 @@ export default function SignIn() {
                             }
                         };
                         setSession(userSession);
+                        console.log(result);
                         navigate(callbackUrl || '/', { replace: true });
                         return {};
                     }

@@ -1,14 +1,16 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+
 import App from './App';
 import Layout from './layouts/dashboard';
 import DashboardPage from './pages';
 import AddUserChar from './pages/addUserChar/addUserChar';
+import CreateItem from './pages/admin/createItem';
 import MyChars from './pages/myChars/myChars';
-import OrdersPage from './pages/orders';
 import register from './pages/register';
 import SignInPage from './pages/signin';
+import PrivateRoute from './PrivateRoute';
 
 const router = createBrowserRouter([
     {
@@ -23,8 +25,17 @@ const router = createBrowserRouter([
                         Component: DashboardPage
                     },
                     {
-                        path: 'orders',
-                        Component: OrdersPage
+                        path: 'admin',
+                        children: [
+                            {
+                                path: 'create-item',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <CreateItem />
+                                    </PrivateRoute>
+                                )
+                            }
+                        ]
                     },
                     {
                         path: 'chars',

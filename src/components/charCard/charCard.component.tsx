@@ -12,15 +12,15 @@ import {
 import { blue } from '@mui/material/colors';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { UserCharCardProps } from '../../interfaces/char';
-
-// Tipagem de props para o componente
 
 function CharCard({
     chars,
     onAddCharacter,
     details = true
 }: UserCharCardProps) {
+    const navigate = useNavigate();
     return (
         <Grid
             container
@@ -52,14 +52,19 @@ function CharCard({
                                     display: 'flex',
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    justifyContent: 'space-around',
+                                    justifyContent: 'space-between',
                                     borderRadius: '12px',
-                                    p: 2
+                                    p: 2,
+                                    mb: 1
                                 }}
                             >
                                 {char.level && (
                                     <Stack>
-                                        <Typography variant="body2">
+                                        <Typography
+                                            variant="body2"
+                                            color="white"
+                                            textAlign="center"
+                                        >
                                             Level
                                         </Typography>
                                         <Avatar
@@ -76,11 +81,13 @@ function CharCard({
                                 <Stack
                                     flexDirection="row"
                                     justifyContent="center"
+                                    width="100%"
                                     display="flex"
                                 >
                                     <Typography
                                         variant="h4"
                                         fontFamily={'faktos'}
+                                        color="white"
                                     >
                                         {char.gameChar.name}
                                     </Typography>
@@ -94,9 +101,9 @@ function CharCard({
                             >
                                 {char.gameChar.classes.length > 0 && (
                                     <img
-                                        src={char.gameChar.classes[0].img}
-                                        alt={char.gameChar.classes[0].className}
-                                        width="200px"
+                                        src={char.gameChar.defaultImgUrl}
+                                        alt={char.gameChar.name}
+                                        height="200px"
                                     />
                                 )}
                             </Box>

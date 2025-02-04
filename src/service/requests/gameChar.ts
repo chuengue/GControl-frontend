@@ -13,7 +13,7 @@ export const getMyCharacters = async (userId: string) => {
     }
 };
 
-export const getCharacters = async (charId?: string) => {
+export const getAllCharacters = async (charId?: string) => {
     try {
         // Monta a URL com ou sem o charId
         const url = charId ? `/chars/${charId}` : '/chars';
@@ -22,6 +22,56 @@ export const getCharacters = async (charId?: string) => {
         return response.data; // Retorna os dados da requisição
     } catch (error) {
         console.error('Erro ao buscar o personagem:', error);
+        throw error; // Lança o erro para ser tratado externamente
+    }
+};
+export const RegisterUserCharacter = async (
+    userId: string,
+    charId: string,
+    data: {
+        atkTotal: number;
+        level: number;
+    }
+) => {
+    if (!userId || typeof userId !== 'string') {
+        throw new Error('ID do usuário inválido.');
+    }
+
+    if (!charId || typeof charId !== 'string') {
+        throw new Error('ID do personagem inválido.');
+    }
+
+    if (
+        typeof data.atkTotal !== 'number' ||
+        isNaN(data.atkTotal) ||
+        data.atkTotal < 0
+    ) {
+        throw new Error('ATK Total deve ser um número positivo.');
+    }
+
+    if (
+        typeof data.level !== 'number' ||
+        isNaN(data.level) ||
+        data.level < 1 ||
+        data.level > 85
+    ) {
+        throw new Error('Level deve ser um número entre 1 e 100.');
+    }
+
+    try {
+        const response = await api.post(
+            `/user-char/create/${userId}/${charId}`,
+            {
+                atkTotal: data.atkTotal,
+                level: data.level
+            }
+        );
+        return response.data; // Retorna os dados da requisição
+    } catch (error) {
+        if (error.status === 409) {
+            throw new Error('Personagem já associado ao usuário.');
+        }
+
         throw error; // Lança o erro para ser tratado externamente
     }
 };

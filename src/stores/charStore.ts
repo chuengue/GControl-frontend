@@ -1,20 +1,27 @@
 import { create } from 'zustand';
-import { UserCharacter } from '../interfaces/char';
-import { getMyCharacters } from '../service/requests/gameChar';
+import { Character, UserCharacter } from '../interfaces/char';
+import {
+    getAllCharacters,
+    getMyCharacters
+} from '../service/requests/gameChar';
 
 interface CharStore {
-    chars: UserCharacter[];
+    allChars: Character[];
+    userChars: UserCharacter[];
     loading: boolean;
-    fetchData: (uid: string) => Promise<void>;
-    setChars: (chars: UserCharacter[]) => void;
+    fetchUserCharsData: (uid: string) => Promise<void>;
+    fetchAllCharsData: () => Promise<void>;
+    setUserChars: (chars: UserCharacter[]) => void;
+    setAllChars: (chars: Character[]) => void;
     setLoading: (loading: boolean) => void;
 }
 
 const useCharStore = create<CharStore>(set => ({
-    chars: [],
+    userChars: [],
+    allChars: [],
     loading: false,
 
-    fetchData: async (uid: string) => {
+    fetchUserCharsData: async (uid: string) => {
         if (!uid) return;
         set({ loading: true });
 
@@ -22,7 +29,7 @@ const useCharStore = create<CharStore>(set => ({
             const response = await getMyCharacters(uid);
             if (Array.isArray(response.results)) {
                 console.log(response.results);
-                set({ chars: response.results }); // Atualiza os personagens na store
+                set({ userChars: response.results }); // Atualiza os personagens na store
             } else {
                 console.error('Resposta inesperada:', response);
             }
@@ -32,8 +39,24 @@ const useCharStore = create<CharStore>(set => ({
             set({ loading: false });
         }
     },
+    fetchAllCharsData: async () => {
+        set({ loading: true });
 
-    setChars: (chars: UserCharacter[]) => set({ chars }),
+        try {
+            const response = await getAllCharacters();
+            if (Array.isArray(response.results)) {
+                set({ allChars: response.results }); // Atualiza os personagens na store
+            } else {
+                console.error('Resposta inesperada:', response);
+            }
+        } catch (err) {
+            console.error('Erro na requisição:', err);
+        } finally {
+            set({ loading: false });
+        }
+    },
+    setUserChars: (userChars: UserCharacter[]) => set({ userChars }),
+    setAllChars: (allChars: Character[]) => set({ allChars }),
     setLoading: (loading: boolean) => set({ loading })
 }));
 

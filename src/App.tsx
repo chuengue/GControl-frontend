@@ -1,28 +1,48 @@
+import { AddBox, AdminPanelSettings } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import type { Authentication, Navigation } from '@toolpad/core/AppProvider';
+
+import type {
+    Authentication,
+    NavigationDividerItem,
+    NavigationPageItem,
+    NavigationSubheaderItem
+} from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import * as React from 'react';
 import { Outlet } from 'react-router';
+import { GlobalSnackbar } from './components/globalSnackBar/globalSnackBar';
 import { firebaseSignOut, onAuthStateChanged } from './firebase/auth';
 import SessionContext, { type Session } from './SessionContext';
-const NAVIGATION: Navigation = [
+import { getFilteredNavigationForUser } from './utils/sidebarItems';
+
+export interface NavItemCustom extends NavigationPageItem {
+    role?: string;
+}
+
+export type NavigationItemCustom =
+    | NavItemCustom
+    | NavigationSubheaderItem
+    | NavigationDividerItem;
+
+export type NavigationCustom = NavigationItemCustom[];
+
+interface CustomNav extends NavigationCustom {
+    role?: string;
+}
+
+export const NAVIGATION: CustomNav = [
     {
         kind: 'header',
-        title: 'Main items'
+        title: 'Gcontrol'
     },
     {
         title: 'Dashboard',
         icon: <DashboardIcon />
     },
-    {
-        segment: 'orders',
-        title: 'Orders',
-        icon: <ShoppingCartIcon />
-    },
+
     {
         segment: 'chars',
         title: 'Personagens',
@@ -37,6 +57,19 @@ const NAVIGATION: Navigation = [
                 segment: 'add-user-char',
                 title: 'Adicionar Personagem',
                 icon: <AddCircleRoundedIcon />
+            }
+        ]
+    },
+    {
+        title: 'Admin',
+        segment: 'admin',
+        role: 'admin',
+        icon: <AdminPanelSettings />,
+        children: [
+            {
+                segment: 'create-item',
+                title: 'Adicionar Novo Item',
+                icon: <AddBox />
             }
         ]
     }
@@ -54,6 +87,8 @@ const AUTHENTICATION: Authentication = {
 export default function App() {
     const [session, setSession] = React.useState<Session | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [filteredNavigation, setFilteredNavigation] =
+        React.useState<NavigationCustom>(NAVIGATION); // Novo estado para navegação filtrada
 
     const sessionContextValue = React.useMemo(
         () => ({
@@ -85,14 +120,23 @@ export default function App() {
 
         return () => unsubscribe();
     }, []);
+    React.useEffect(() => {
+        const fetchNavigation = async () => {
+            const navigation = await getFilteredNavigationForUser();
+            setFilteredNavigation(navigation);
+        };
+
+        fetchNavigation();
+    }, [session]);
 
     return (
         <ReactRouterAppProvider
-            navigation={NAVIGATION}
+            navigation={filteredNavigation}
             branding={BRANDING}
             session={session}
             authentication={AUTHENTICATION}
         >
+            <GlobalSnackbar />
             <SessionContext.Provider value={sessionContextValue}>
                 <Outlet />
             </SessionContext.Provider>
