@@ -29,10 +29,15 @@ function AddUserChar() {
     const getOwnedCharIds = (charId: string) => {
         return userChars.some(userChar => userChar.gameChar.id === charId);
     };
+    const getAllChars = async () => {
+        if (!userChars || userChars.length === 0) {
+            if (session) await fetchUserCharsData(session.user.uid);
+        }
+    };
 
     useEffect(() => {
         fetchAllCharsData();
-        fetchUserCharsData(session.user.uid);
+        getAllChars();
     }, []);
 
     const handleSelectChar = (char: Character) => {
