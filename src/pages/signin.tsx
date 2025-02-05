@@ -22,11 +22,12 @@ export default function SignIn() {
     if (session) {
         return <Navigate to="/" />;
     }
+
     function SignUpLink() {
         return (
             <Stack flexDirection="row">
                 <Typography variant="caption" sx={{ marginRight: 1 }}>
-                    Ainda nao tem uma conta ?
+                    Ainda não tem uma conta?
                 </Typography>
                 <Link href="/sign-up" variant="body2">
                     <Typography variant="caption">Cadastre-se</Typography>
@@ -34,13 +35,15 @@ export default function SignIn() {
             </Stack>
         );
     }
+
     function Title() {
         return <h2 style={{ marginBottom: 8 }}>Login</h2>;
     }
+
     function SubTitle() {
         return (
             <Typography sx={{ marginBottom: 1 }}>
-                Bem-vindo, faça login para continuar
+                Bem-vindo, faça login para continuar.
             </Typography>
         );
     }
@@ -85,35 +88,38 @@ export default function SignIn() {
                         const password = formData?.get('password') as string;
 
                         if (!email || !password) {
-                            return { error: 'Email and password are required' };
+                            return { error: 'Email e senha são obrigatórios' };
                         }
 
                         result = await signInWithCredentials(email, password);
                     }
-                    console.log(result);
+
                     if (result?.success && result?.user) {
-                        // Convert Firebase user to Session format
+                        // Convertendo Firebase User para Session
                         const userSession: Session = {
                             user: {
                                 name: result.user.displayName || '',
                                 email: result.user.email || '',
                                 image: result.user.photoURL || '',
                                 displayName: result.user.displayName || '',
-                                uid: result.user.uid || ''
+                                uid: result.user.uid || '',
+                                role: result.additionalData?.role || 'user',
+                                nickname:
+                                    result.additionalData?.nickNameGC || ''
                             }
                         };
                         setSession(userSession);
-                        console.log(result);
                         navigate(callbackUrl || '/', { replace: true });
                         return {};
                     }
-                    return { error: result?.error || 'Failed to sign in' };
+
+                    return { error: result?.error || 'Falha ao fazer login' };
                 } catch (error) {
                     return {
                         error:
                             error instanceof Error
                                 ? error.message
-                                : 'An error occurred'
+                                : 'Ocorreu um erro inesperado'
                     };
                 }
             }}

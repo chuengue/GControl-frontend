@@ -1,12 +1,19 @@
-import { createUserWithEmailAndPassword, getAuth, updateProfile } from 'firebase/auth';
-const auth = getAuth()
+import {
+    createUserWithEmailAndPassword,
+    getAuth,
+    updateProfile
+} from 'firebase/auth';
+import { doc, getFirestore, setDoc } from 'firebase/firestore';
+
+const auth = getAuth();
+const db = getFirestore();
 
 export const registerUser = async (
     displayName: string,
     email: string,
-    password: string
+    password: string,
+    nickNameGC: string
 ) => {
-    console.log({email})
     if (!email || !password) {
         throw new Error('Email and password must be provided');
     }
@@ -17,16 +24,21 @@ export const registerUser = async (
             email,
             password
         );
+        const user = userCredential.user;
 
-        // Atualiza o perfil do usuário com o displayName e photoURL
+        await setDoc(doc(db, 'users', user.uid), {
+            nickNameGC: nickNameGC,
+            createdAt: new Date(),
+            role: 'user'
+        });
         if (auth.currentUser) {
-            await updateProfile(auth.currentUser, {
+            await updateProfile(user, {
                 displayName: displayName,
-                photoURL: auth.currentUser.photoURL,
+                photoURL: user.photoURL
             });
+
             console.log('Profile updated successfully');
         }
-
 
         return userCredential;
     } catch (error) {

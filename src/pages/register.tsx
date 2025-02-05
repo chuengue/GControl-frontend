@@ -16,18 +16,20 @@ const defaultFormFields = {
     displayName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    nickNameGC: ''
 };
 
 function Register() {
     const navigate = useNavigate();
-    const { session, loading, setLoading} = useSession();
+    const { session, loading, setLoading } = useSession();
 
     const [formFields, setFormFields] = useState(defaultFormFields);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const { displayName, email, password, confirmPassword } = formFields;
+    const { displayName, nickNameGC, email, password, confirmPassword } =
+        formFields;
 
     // Redireciona se o usuário já estiver autenticado
     useEffect(() => {
@@ -51,10 +53,12 @@ function Register() {
 
         try {
             setLoading(true);
-            await registerUser(displayName, email, password);
-            setSuccessMessage('Registration successful! You are now logged in.');
+            await registerUser(displayName, email, password, nickNameGC);
+            setSuccessMessage(
+                'Registration successful! You are now logged in.'
+            );
             resetFormFields();
-            navigate('/'); 
+            navigate('/');
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
                 setError('Email already exists!');
@@ -83,7 +87,7 @@ function Register() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                minHeight: '100vh',
+                minHeight: '100vh'
             }}
         >
             <Box
@@ -95,23 +99,29 @@ function Register() {
                     gap: 2,
                     padding: 4,
                     borderRadius: 1,
-                    backgroundColor: "background.paper",
-                    width: "80%",
-                    border: "1px solid grey",
+                    backgroundColor: 'background.paper',
+                    width: '80%',
+                    border: '1px solid grey',
                     boxShadow:
-                        "0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)",
+                        '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)'
                 }}
             >
-                <Typography variant="h4" component="h1" textAlign="center" fontFamily={"Faktos"}>
+                <Typography
+                    variant="h4"
+                    component="h1"
+                    textAlign="center"
+                    fontFamily={'Faktos'}
+                >
                     Cadastro
                 </Typography>
 
                 {error && <Alert severity="error">{error}</Alert>}
-                {successMessage && <Alert severity="success">{successMessage}</Alert>}
+                {successMessage && (
+                    <Alert severity="success">{successMessage}</Alert>
+                )}
 
                 <TextField
-                    label="Name"
-
+                    label="Nome"
                     name="displayName"
                     value={displayName}
                     onChange={handleChange}
@@ -123,6 +133,14 @@ function Register() {
                     name="email"
                     type="email"
                     value={email}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                />
+                <TextField
+                    label="NicknameGC"
+                    name="nickNameGC"
+                    value={nickNameGC}
                     onChange={handleChange}
                     fullWidth
                     required
@@ -146,7 +164,14 @@ function Register() {
                     required
                 />
 
-                <Button type="submit" variant="contained" color="primary" size="large" disabled={loading} fullWidth >
+                <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    disabled={loading}
+                    fullWidth
+                >
                     Register
                 </Button>
             </Box>

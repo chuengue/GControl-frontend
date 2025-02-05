@@ -15,6 +15,7 @@ import type {
     NavigationSubheaderItem
 } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
+import { getFirestore } from 'firebase/firestore';
 import * as React from 'react';
 import { Outlet } from 'react-router';
 import { GlobalSnackbar } from './components/globalSnackBar/globalSnackBar';
@@ -46,7 +47,6 @@ export const NAVIGATION: CustomNav = [
         title: 'Dashboard',
         icon: <DashboardIcon />
     },
-
     {
         segment: 'chars',
         title: 'Personagens',
@@ -97,7 +97,11 @@ export default function App() {
     const [session, setSession] = React.useState<Session | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [filteredNavigation, setFilteredNavigation] =
-        React.useState<NavigationCustom>(NAVIGATION); // Novo estado para navegação filtrada
+        React.useState<NavigationCustom>(NAVIGATION);
+    const [nickNameGC, setNickNameGC] = React.useState('');
+    const [openModal, setOpenModal] = React.useState(true);
+    const [isSaving, setIsSaving] = React.useState(false);
+    const db = getFirestore();
 
     const sessionContextValue = React.useMemo(
         () => ({
@@ -118,7 +122,9 @@ export default function App() {
                         email: user.email || '',
                         image: user.image || '',
                         displayName: user.displayName || '',
-                        uid: user.uid || ''
+                        uid: user.uid || '',
+                        role: user.additionalData?.role || 'user',
+                        nickname: user.additionalData?.nickNameGC || ''
                     }
                 });
             } else {
@@ -129,6 +135,7 @@ export default function App() {
 
         return () => unsubscribe();
     }, []);
+
     React.useEffect(() => {
         const fetchNavigation = async () => {
             const navigation = await getFilteredNavigationForUser();
