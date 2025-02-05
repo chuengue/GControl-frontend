@@ -7,6 +7,7 @@ import Layout from './layouts/dashboard';
 import DashboardPage from './pages';
 import AddUserChar from './pages/addUserChar/addUserChar';
 import CreateItem from './pages/admin/createItem';
+import RemoveItemPage from './pages/admin/removeItem';
 import MyChars from './pages/myChars/myChars';
 import register from './pages/register';
 import SignInPage from './pages/signin';
@@ -32,6 +33,14 @@ const router = createBrowserRouter([
                                 Component: () => (
                                     <PrivateRoute adminOnly>
                                         <CreateItem />
+                                    </PrivateRoute>
+                                )
+                            },
+                            {
+                                path: 'delete-item',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <RemoveItemPage />
                                     </PrivateRoute>
                                 )
                             }
