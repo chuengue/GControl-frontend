@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     Card,
     Container,
@@ -10,6 +11,7 @@ import {
 import { blue } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
+import TotalAtkCalculator from '../../components/atackTotalCalculator.ts/atackTotalCalculator';
 import SelectableImage from '../../components/selectableImage/selectableImage';
 import { Character } from '../../interfaces/char';
 import { RegisterUserCharacter } from '../../service/requests/gameChar';
@@ -25,10 +27,12 @@ function AddUserChar() {
     const [atkTotal, setAtkTotal] = useState<string>('');
     const { showSnackbar } = useSnackbarStore();
     const [loading, setLoading] = useState<boolean>(false);
-    const [level, setLevel] = useState<string>(''); // Estado para armazenar o Level
+    const [level, setLevel] = useState<string>('');
+
     const getOwnedCharIds = (charId: string) => {
         return userChars.some(userChar => userChar.gameChar.id === charId);
     };
+
     const getAllChars = async () => {
         if (!userChars || userChars.length === 0) {
             if (session) await fetchUserCharsData(session.user.uid);
@@ -113,7 +117,7 @@ function AddUserChar() {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={4}>
-                <Grid item xs={12} md={8}>
+                <Grid item xs={12} md={12}>
                     <Card
                         sx={{
                             p: 2,
@@ -124,13 +128,19 @@ function AddUserChar() {
                         }}
                     >
                         <Typography
-                            variant="h6"
+                            variant="h5"
                             sx={{ color: 'white', mb: 2 }}
                             textAlign="center"
+                            fontFamily="faktos, Roboto"
                         >
                             Selecione um Personagem
                         </Typography>
-                        <Stack direction="row" flexWrap="wrap" gap={2}>
+                        <Stack
+                            direction="row"
+                            flexWrap="wrap"
+                            gap={1}
+                            justifyContent="center"
+                        >
                             {allChars.map(char => (
                                 <SelectableImage
                                     key={char.id}
@@ -148,70 +158,120 @@ function AddUserChar() {
                 <Grid item xs={12} md={4}>
                     <Card
                         sx={{
-                            p: 2,
+                            p: 3,
                             borderRadius: '14px',
                             boxShadow: 3,
                             height: '100%'
                         }}
                     >
                         <Typography
-                            variant="h6"
-                            sx={{ mb: 3 }}
+                            variant="h5"
                             textAlign="center"
+                            fontFamily="faktos, Roboto"
                         >
                             Detalhes do Personagem
                         </Typography>
-                        {selectedChar ? (
-                            <Stack spacing={2}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                width: '100%',
+                                height: '100%',
+                                marginTop: '80px'
+                            }}
+                        >
+                            {selectedChar ? (
+                                <Stack spacing={3} width="100%">
+                                    <Card
+                                        sx={{
+                                            p: 2,
+                                            bgcolor: blue[900],
+                                            borderRadius: '14px',
+                                            marginBottom: 2
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="h4"
+                                            fontFamily="faktos"
+                                            textAlign="center"
+                                            sx={{ color: 'white' }}
+                                        >
+                                            {selectedChar.name}
+                                        </Typography>
+                                    </Card>
+                                    <TextField
+                                        sx={{
+                                            borderRadius: '5px'
+                                        }}
+                                        label="ATK Total"
+                                        variant="outlined"
+                                        fullWidth
+                                        value={atkTotal}
+                                        onChange={handleAtkTotalChange}
+                                    />
+                                    <TextField
+                                        label="Level"
+                                        variant="outlined"
+                                        fullWidth
+                                        value={level}
+                                        onChange={handleLevelChange}
+                                    />
+
+                                    <Button
+                                        variant="contained"
+                                        size="large"
+                                        fullWidth
+                                        loading={loading}
+                                        sx={{
+                                            borderRadius: '8px',
+                                            bgcolor: blue[700],
+                                            '&:hover': {
+                                                bgcolor: blue[800]
+                                            }
+                                        }}
+                                        onClick={handleRegister}
+                                    >
+                                        Registrar
+                                    </Button>
+                                </Stack>
+                            ) : (
                                 <Card
+                                    elevation={3}
                                     sx={{
-                                        p: 1,
-                                        bgcolor: blue[900],
+                                        p: 3,
                                         borderRadius: '14px',
-                                        marginBottom: '12px !important'
+                                        boxShadow: 3,
+                                        height: '50%',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center'
                                     }}
                                 >
                                     <Typography
-                                        variant="h4"
-                                        fontFamily="faktos"
+                                        variant="body1"
+                                        color="textSecondary"
                                         textAlign="center"
+                                        sx={{
+                                            width: '100%'
+                                        }}
                                     >
-                                        {selectedChar.name}
+                                        Nenhum personagem selecionado.
                                     </Typography>
                                 </Card>
-                                <TextField
-                                    sx={{
-                                        borderRadius: '5px'
-                                    }}
-                                    label="ATK Total"
-                                    variant="outlined"
-                                    fullWidth
-                                    value={atkTotal}
-                                    onChange={handleAtkTotalChange}
-                                />
-                                <TextField
-                                    label="Level"
-                                    variant="outlined"
-                                    fullWidth
-                                    value={level}
-                                    onChange={handleLevelChange}
-                                />
+                            )}
+                        </Box>
+                    </Card>
+                </Grid>
 
-                                <Button
-                                    variant="contained"
-                                    size="large"
-                                    loading={loading}
-                                    fullWidth
-                                    onClick={handleRegister}
-                                >
-                                    Registrar
-                                </Button>
-                            </Stack>
-                        ) : (
-                            <Typography variant="body1" color="textSecondary">
-                                Nenhum personagem selecionado.
-                            </Typography>
-                        )}
+                {/* Coluna do Calculador de ATK */}
+                <Grid item xs={12} md={8}>
+                    <Card
+                        sx={{
+                            p: 3,
+                            borderRadius: '14px',
+                            boxShadow: 3
+                        }}
+                    >
+                        <TotalAtkCalculator />
                     </Card>
                 </Grid>
             </Grid>

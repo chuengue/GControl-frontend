@@ -8,6 +8,7 @@ import DashboardPage from './pages';
 import AddUserChar from './pages/addUserChar/addUserChar';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
+import UserCharDetailsPage from './pages/myChars/details';
 import MyChars from './pages/myChars/myChars';
 import register from './pages/register';
 import SignInPage from './pages/signin';
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
                             {
                                 path: 'my-chars',
                                 Component: MyChars
+                            },
+                            {
+                                path: 'details/:id',
+                                Component: UserCharDetailsPage
                             },
                             {
                                 path: 'add-user-char',

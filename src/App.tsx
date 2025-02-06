@@ -15,7 +15,6 @@ import type {
     NavigationSubheaderItem
 } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
-import { getFirestore } from 'firebase/firestore';
 import * as React from 'react';
 import { Outlet } from 'react-router';
 import { GlobalSnackbar } from './components/globalSnackBar/globalSnackBar';
@@ -98,10 +97,6 @@ export default function App() {
     const [loading, setLoading] = React.useState(true);
     const [filteredNavigation, setFilteredNavigation] =
         React.useState<NavigationCustom>(NAVIGATION);
-    const [nickNameGC, setNickNameGC] = React.useState('');
-    const [openModal, setOpenModal] = React.useState(true);
-    const [isSaving, setIsSaving] = React.useState(false);
-    const db = getFirestore();
 
     const sessionContextValue = React.useMemo(
         () => ({
