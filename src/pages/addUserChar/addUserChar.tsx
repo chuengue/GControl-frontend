@@ -11,6 +11,7 @@ import {
 import { blue } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
+import { InfoOutlined } from '@mui/icons-material';
 import TotalAtkCalculator from '../../components/atackTotalCalculator.ts/atackTotalCalculator';
 import SelectableImage from '../../components/selectableImage/selectableImage';
 import { Character } from '../../interfaces/char';
@@ -20,11 +21,18 @@ import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 
 function AddUserChar() {
-    const { fetchAllCharsData, allChars, userChars, fetchUserCharsData } =
-        useCharStore();
+    const {
+        fetchAllCharsData,
+        allChars,
+        userChars,
+        fetchUserCharsData,
+        attackTotal,
+        charStats,
+        setAttackTotal,
+        SetCharStats
+    } = useCharStore();
     const [selectedChar, setSelectedChar] = useState<Character | null>(null);
     const { session } = useSession();
-    const [atkTotal, setAtkTotal] = useState<string>('');
     const { showSnackbar } = useSnackbarStore();
     const [loading, setLoading] = useState<boolean>(false);
     const [level, setLevel] = useState<string>('');
@@ -45,9 +53,25 @@ function AddUserChar() {
     }, []);
 
     const handleSelectChar = (char: Character) => {
+        if (selectedChar) {
+            SetCharStats({
+                attack: 0,
+                defense: 0,
+                hp: 0,
+                specialAttack: 0,
+                specialDefense: 0,
+                criticalStrike: 0,
+                criticalDamage: 0,
+                recHP: 0,
+                recMP: 0
+            });
+        }
+        setAttackTotal(0);
+
+        console.log(charStats);
         if (char.id === selectedChar?.id) {
             setSelectedChar(null);
-            setAtkTotal('');
+            setAttackTotal(0);
             setLevel('');
         } else {
             setSelectedChar(char);
@@ -57,7 +81,8 @@ function AddUserChar() {
     const handleAtkTotalChange = (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
-        setAtkTotal(event.target.value);
+        const value = Number(event.target.value);
+        setAttackTotal(value);
     };
 
     const handleLevelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,8 +103,9 @@ function AddUserChar() {
         if (selectedChar) {
             const data = {
                 charId: selectedChar.id,
-                atkTotal: parseInt(atkTotal, 10),
-                level: parseInt(level, 10)
+                atkTotal: attackTotal,
+                level: parseInt(level, 10),
+                stats: charStats
             };
 
             try {
@@ -95,7 +121,7 @@ function AddUserChar() {
                 });
 
                 setSelectedChar(null);
-                setAtkTotal('');
+                setAttackTotal(0);
                 setLevel('');
             } catch (err) {
                 console.log(err.message);
@@ -153,7 +179,40 @@ function AddUserChar() {
                         </Stack>
                     </Card>
                 </Grid>
+                <Grid item xs={12} md={12}>
+                    <Card
+                        elevation={3}
+                        sx={{
+                            p: 3,
+                            borderRadius: '14px',
+                            boxShadow: 3,
+                            height: '100%',
+                            width: '100%'
+                        }}
+                    >
+                        <Stack
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'row'
+                            }}
+                        >
+                            <InfoOutlined
+                                sx={{
+                                    marginRight: '8px'
+                                }}
+                            />
 
+                            <Typography>
+                                Os dados inseridos na Calculadora de Ataque
+                                Total serão associados ao seu personagem. Embora
+                                o preenchimento seja opcional, fornecer essas
+                                informações aprimora sua experiência na
+                                plataforma, permitindo cálculos mais precisos e
+                                personalizados.
+                            </Typography>
+                        </Stack>
+                    </Card>
+                </Grid>
                 {/* Coluna dos Detalhes do Personagem */}
                 <Grid item xs={12} md={4}>
                     <Card
@@ -205,7 +264,7 @@ function AddUserChar() {
                                         label="ATK Total"
                                         variant="outlined"
                                         fullWidth
-                                        value={atkTotal}
+                                        value={attackTotal}
                                         onChange={handleAtkTotalChange}
                                     />
                                     <TextField

@@ -17,11 +17,11 @@ import type {
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import * as React from 'react';
 import { Outlet } from 'react-router';
+import theme from '../theme';
 import { GlobalSnackbar } from './components/globalSnackBar/globalSnackBar';
 import { firebaseSignOut, onAuthStateChanged } from './firebase/auth';
 import SessionContext, { type Session } from './SessionContext';
 import { getFilteredNavigationForUser } from './utils/sidebarItems';
-
 export interface NavItemCustom extends NavigationPageItem {
     role?: string;
 }
@@ -142,6 +142,7 @@ export default function App() {
 
     return (
         <ReactRouterAppProvider
+            theme={theme}
             navigation={filteredNavigation}
             branding={BRANDING}
             session={session}

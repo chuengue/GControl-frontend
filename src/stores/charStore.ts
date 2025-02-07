@@ -4,11 +4,16 @@ import {
     getAllCharacters,
     getMyCharacters
 } from '../service/requests/gameChar';
+import { IUserGameCharStats } from './../service/requests/types';
 
 interface CharStore {
     allChars: Character[];
     userChars: UserCharacter[];
     loading: boolean;
+    charStats: IUserGameCharStats;
+    attackTotal: number;
+    setAttackTotal: (attackTotal: number) => void;
+    SetCharStats: (stats: IUserGameCharStats) => void;
     fetchUserCharsData: (uid: string) => Promise<void>;
     fetchAllCharsData: () => Promise<void>;
     setUserChars: (chars: UserCharacter[]) => void;
@@ -19,6 +24,18 @@ interface CharStore {
 const useCharStore = create<CharStore>(set => ({
     userChars: [],
     allChars: [],
+    attackTotal: 0,
+    charStats: {
+        attack: 0,
+        defense: 0,
+        hp: 0,
+        specialAttack: 0,
+        specialDefense: 0,
+        criticalStrike: 0,
+        criticalDamage: 0,
+        recHP: 0,
+        recMP: 0
+    },
     loading: false,
 
     fetchUserCharsData: async (uid: string) => {
@@ -56,6 +73,8 @@ const useCharStore = create<CharStore>(set => ({
         }
     },
     setUserChars: (userChars: UserCharacter[]) => set({ userChars }),
+    SetCharStats: (charStats: IUserGameCharStats) => set({ charStats }),
+    setAttackTotal: (attackTotal: number) => set({ attackTotal }),
     setAllChars: (allChars: Character[]) => set({ allChars }),
     setLoading: (loading: boolean) => set({ loading })
 }));

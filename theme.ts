@@ -5,16 +5,40 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import { createTheme } from '@mui/material/styles';
 import './index.css';
-import './src/assets/fonts/faktos.ttf';
 
-const theme = createTheme({
-    typography: {
-        fontFamily: 'Roboto, Arial, sans-serif' // Define Roboto como fonte padrão
-    },
-    cssVariables: {
-        colorSchemeSelector: 'data-toolpad-color-scheme'
-    },
-    colorSchemes: { light: true, dark: true }
+// Definição das cores personalizadas para raridades
+declare module '@mui/material/styles' {
+    interface Palette {
+        raritiesColors: {
+            common: string;
+            rare: string;
+            epic: string;
+            legendary: string;
+            ancestral: string;
+        };
+    }
+    interface PaletteOptions {
+        raritiesColors?: {
+            common: string;
+            rare: string;
+            epic: string;
+            legendary: string;
+            ancestral: string;
+        };
+    }
+}
+
+export const theme = createTheme({
+    palette: {
+        mode: 'dark',
+        raritiesColors: {
+            common: '#8a8a8a',
+            rare: '#00ccff',
+            epic: '#ffeb00',
+            legendary: '#e262e8',
+            ancestral: '#EF2F77'
+        }
+    }
 });
 
 export default theme;

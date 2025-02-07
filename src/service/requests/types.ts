@@ -1,3 +1,23 @@
+export interface IUserGameCharStats {
+    attack: number;
+    defense: number;
+    hp: number;
+    specialAttack: number;
+    specialDefense: number;
+    criticalStrike: number;
+    criticalDamage: number;
+    recHP: number;
+    recMP: number;
+}
+
+export interface IUserGameChar {
+    id: string;
+    userId: string;
+    gameCharId: string;
+    level: number;
+    atkTotal: number;
+    stats: IUserGameCharStats;
+}
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'ancestral';
 export type EquipmentType =
     | 'helmet'
@@ -24,34 +44,11 @@ export type ItemCategory =
     | 'pet'
     | 'etc'
     | 'scroll';
-
-export interface ItemStats {
-    attack?: number;
-    defense?: number;
-    hp?: number;
-}
-
-export interface GrandChaseItem {
-    id: string;
-    name: string;
-    description?: string;
-    category: ItemCategory;
-    rarity: Rarity;
-    stats: ItemStats;
-    shared?: boolean;
-    armorType?: EquipmentType;
-    accessoryType?: AccessoryType;
-    setName?: string;
-    usableBy?: string;
-    iconUrl?: string;
-    createdAt?: string;
-}
-export interface GetAllFilters {
+interface GetAllFilters {
     page?: number;
     limit?: number;
     id?: string;
     rarity?: Rarity;
-    search?: string;
     equipmentType?: EquipmentType;
     accessoryType?: AccessoryType;
     category?: ItemCategory;

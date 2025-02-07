@@ -55,7 +55,7 @@ const router = createBrowserRouter([
                                 Component: MyChars
                             },
                             {
-                                path: 'details/:id',
+                                path: 'details/:userId/:chardId',
                                 Component: UserCharDetailsPage
                             },
                             {

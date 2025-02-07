@@ -13,7 +13,9 @@ import { blue } from '@mui/material/colors';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
 import { useNavigate } from 'react-router';
+
 import { UserCharCardProps } from '../../interfaces/char';
+import { useSession } from '../../SessionContext';
 
 function CharCard({
     chars,
@@ -21,6 +23,11 @@ function CharCard({
     details = true
 }: UserCharCardProps) {
     const navigate = useNavigate();
+    const { session } = useSession();
+    const userId = session?.user.uid || '';
+    const handleDetailsClick = (UserChardId: string) => {
+        navigate(`/chars/details/${userId}/${UserChardId}`);
+    };
     return (
         <Grid
             container
@@ -130,6 +137,10 @@ function CharCard({
                                     </Card>
                                     <Button
                                         variant="contained"
+                                        size="large"
+                                        onClick={() =>
+                                            handleDetailsClick(char.id)
+                                        }
                                         startIcon={<AddCircleRoundedIcon />}
                                         sx={{
                                             bgcolor: blue[600],

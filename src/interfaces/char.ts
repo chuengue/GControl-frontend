@@ -9,6 +9,7 @@ export interface Character {
     color: string;
 }
 export interface UserCharacter {
+    id: string;
     level: number;
     atkTotal: string;
     gameChar: Character;

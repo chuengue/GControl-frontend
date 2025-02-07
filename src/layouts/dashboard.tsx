@@ -32,7 +32,6 @@ function CustomAccount() {
         />
     );
 }
-
 function useUserData(uid: string | undefined) {
     const [nickNameGC, setNickNameGC] = React.useState('');
     const [isChecking, setIsChecking] = React.useState(true);
@@ -92,7 +91,7 @@ export default function Layout() {
         }
     };
 
-    if (loading || isChecking) {
+    if (loading) {
         return <LinearProgress sx={{ width: '100%' }} />;
     }
 
@@ -103,7 +102,10 @@ export default function Layout() {
 
     return (
         <DashboardLayout
-            slots={{ toolbarAccount: CustomAccount }}
+            slots={{
+                toolbarAccount: CustomAccount,
+                toolbarActions: () => <></>
+            }}
             disableCollapsibleSidebar
         >
             {openModal && (

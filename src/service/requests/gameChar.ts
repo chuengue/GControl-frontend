@@ -1,4 +1,5 @@
 import api from '../api';
+import { IUserGameChar } from './types';
 
 export const getMyCharacters = async (userId: string) => {
     try {
@@ -12,7 +13,17 @@ export const getMyCharacters = async (userId: string) => {
         throw error; // Lança o erro para ser tratado externamente
     }
 };
+export const getUserCharDetails = async (userId: string, charId: string) => {
+    try {
+        const url = `user-char/details/${userId}/${charId}`;
 
+        const response = await api.get(url);
+        return response.data; // Retorna os dados da requisição
+    } catch (error) {
+        console.error('Erro ao buscar o personagens:', error);
+        throw error; // Lança o erro para ser tratado externamente
+    }
+};
 export const getAllCharacters = async (charId?: string) => {
     try {
         // Monta a URL com ou sem o charId
@@ -31,8 +42,19 @@ export const RegisterUserCharacter = async (
     data: {
         atkTotal: number;
         level: number;
+        stats?: {
+            attack?: number | null;
+            defense?: number | null;
+            hp?: number | null;
+            specialAttack?: number | null;
+            specialDefense?: number | null;
+            criticalStrike?: number | null;
+            criticalDamage?: number | null;
+            recHP?: number | null;
+            recMP?: number | null;
+        };
     }
-) => {
+): Promise<IUserGameChar[]> => {
     if (!userId || typeof userId !== 'string') {
         throw new Error('ID do usuário inválido.');
     }
@@ -55,7 +77,7 @@ export const RegisterUserCharacter = async (
         data.level < 1 ||
         data.level > 85
     ) {
-        throw new Error('Level deve ser um número entre 1 e 100.');
+        throw new Error('Level deve ser um número entre 1 e 85.');
     }
 
     try {
@@ -63,7 +85,8 @@ export const RegisterUserCharacter = async (
             `/user-char/create/${userId}/${charId}`,
             {
                 atkTotal: data.atkTotal,
-                level: data.level
+                level: data.level,
+                stats: data.stats || null // Envia stats como null se não fornecido
             }
         );
         return response.data; // Retorna os dados da requisição
