@@ -16,7 +16,7 @@ export const getItems = async (itemId: string) => {
 
 export const getItemsFilters = async (filters?: GetAllFilters) => {
     try {
-        let url = '/item';
+        let url = '/items';
 
         const defaultFilters = {
             page: 1,
@@ -44,7 +44,7 @@ export const getItemsFilters = async (filters?: GetAllFilters) => {
 export const deleteItem = async (itemId: string) => {
     try {
         // Monta a URL com ou sem o charId
-        const url = `/item/${itemId}`;
+        const url = `/items/${itemId}`;
 
         const response = await api.delete(url);
         return response.data; // Retorna os dados da requisição
@@ -56,7 +56,7 @@ export const deleteItem = async (itemId: string) => {
 
 export const registerItem = async (item: Omit<GrandChaseItem, 'id'>) => {
     try {
-        const response = await api.post(`/create-items`, item);
+        const response = await api.post(`/items`, item);
         return response.data; // Retorna os dados da requisição
     } catch (error) {
         if (error.status === 409) {

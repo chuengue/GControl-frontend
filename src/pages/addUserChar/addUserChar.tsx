@@ -81,8 +81,12 @@ function AddUserChar() {
     const handleAtkTotalChange = (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
-        const value = Number(event.target.value);
-        setAttackTotal(value);
+        const value = event.target.value;
+
+        // Permite apenas números e permite limpar completamente o campo
+        if (/^\d*$/.test(value)) {
+            setAttackTotal(value);
+        }
     };
 
     const handleLevelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +95,7 @@ function AddUserChar() {
 
     const handleRegister = async () => {
         setLoading(true);
-
+        console.log(attackTotal);
         if (!session?.user.uid) {
             showSnackbar('Usuário não autenticado.', 'error', {
                 vertical: 'top',
@@ -103,7 +107,7 @@ function AddUserChar() {
         if (selectedChar) {
             const data = {
                 charId: selectedChar.id,
-                atkTotal: attackTotal,
+                atkTotal: Number(attackTotal),
                 level: parseInt(level, 10),
                 stats: charStats
             };
@@ -263,6 +267,8 @@ function AddUserChar() {
                                         }}
                                         label="ATK Total"
                                         variant="outlined"
+                                        type="text"
+                                        inputMode="numeric"
                                         fullWidth
                                         value={attackTotal}
                                         onChange={handleAtkTotalChange}

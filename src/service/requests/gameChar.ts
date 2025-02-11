@@ -4,7 +4,7 @@ import { IUserGameChar } from './types';
 export const getMyCharacters = async (userId: string) => {
     try {
         // Monta a URL com ou sem o charId
-        const url = userId ? `/user-char/${userId}` : '/chars';
+        const url = `/users/${userId}/characters`;
 
         const response = await api.get(url);
         return response.data; // Retorna os dados da requisição
@@ -15,7 +15,7 @@ export const getMyCharacters = async (userId: string) => {
 };
 export const getUserCharDetails = async (userId: string, charId: string) => {
     try {
-        const url = `user-char/details/${userId}/${charId}`;
+        const url = `users/${userId}/characters/${charId}`;
 
         const response = await api.get(url);
         return response.data; // Retorna os dados da requisição
@@ -27,7 +27,7 @@ export const getUserCharDetails = async (userId: string, charId: string) => {
 export const getAllCharacters = async (charId?: string) => {
     try {
         // Monta a URL com ou sem o charId
-        const url = charId ? `/chars/${charId}` : '/chars';
+        const url = charId ? `/characters/${charId}` : '/characters';
 
         const response = await api.get(url);
         return response.data; // Retorna os dados da requisição
@@ -82,7 +82,7 @@ export const RegisterUserCharacter = async (
 
     try {
         const response = await api.post(
-            `/user-char/create/${userId}/${charId}`,
+            `/users/${userId}/characters/${charId}`,
             {
                 atkTotal: data.atkTotal,
                 level: data.level,

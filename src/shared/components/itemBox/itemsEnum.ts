@@ -19,7 +19,8 @@ export enum ITEM_CATEGORY_ENUM {
     equipment = 'Equipamento',
     accessory = 'Acessório',
     slot = 'Consumível',
-    pet = 'Pergaminho',
+    scroll = 'Pergaminho',
+    pet = 'Pet',
     etc = 'ETC'
 }
 

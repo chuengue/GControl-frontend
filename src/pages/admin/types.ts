@@ -41,6 +41,8 @@ export interface GrandChaseItem {
     shared?: boolean;
     armorType?: EquipmentType;
     accessoryType?: AccessoryType;
+    equipped?: boolean;
+    quantity?: number;
     setName?: string;
     usableBy?: string;
     iconUrl?: string;

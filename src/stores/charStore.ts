@@ -1,9 +1,13 @@
 import { create } from 'zustand';
+
 import { Character, UserCharacter } from '../interfaces/char';
 import {
     getAllCharacters,
     getMyCharacters
 } from '../service/requests/gameChar';
+import { getUserCharItems } from '../service/requests/inventory';
+import { formatItemBoxPropsItem } from '../shared/components/itemBox/formatItem';
+import { ItemBoxPropsItem } from '../shared/components/itemBox/itemBox';
 import { IUserGameCharStats } from './../service/requests/types';
 
 interface CharStore {
@@ -12,9 +16,12 @@ interface CharStore {
     loading: boolean;
     charStats: IUserGameCharStats;
     attackTotal: number;
+    userItems: ItemBoxPropsItem[];
+    setUserItems: (items: ItemBoxPropsItem[]) => void;
     setAttackTotal: (attackTotal: number) => void;
-    SetCharStats: (stats: IUserGameCharStats) => void;
+    setCharStats: (stats: IUserGameCharStats) => void;
     fetchUserCharsData: (uid: string) => Promise<void>;
+    fetchUserItems: (userCharId: string) => Promise<void>;
     fetchAllCharsData: () => Promise<void>;
     setUserChars: (chars: UserCharacter[]) => void;
     setAllChars: (chars: Character[]) => void;
@@ -24,6 +31,7 @@ interface CharStore {
 const useCharStore = create<CharStore>(set => ({
     userChars: [],
     allChars: [],
+    userItems: [],
     attackTotal: 0,
     charStats: {
         attack: 0,
@@ -45,8 +53,7 @@ const useCharStore = create<CharStore>(set => ({
         try {
             const response = await getMyCharacters(uid);
             if (Array.isArray(response.results)) {
-                console.log(response.results);
-                set({ userChars: response.results }); // Atualiza os personagens na store
+                set({ userChars: response.results });
             } else {
                 console.error('Resposta inesperada:', response);
             }
@@ -56,13 +63,14 @@ const useCharStore = create<CharStore>(set => ({
             set({ loading: false });
         }
     },
+
     fetchAllCharsData: async () => {
         set({ loading: true });
 
         try {
             const response = await getAllCharacters();
             if (Array.isArray(response.results)) {
-                set({ allChars: response.results }); // Atualiza os personagens na store
+                set({ allChars: response.results });
             } else {
                 console.error('Resposta inesperada:', response);
             }
@@ -72,10 +80,28 @@ const useCharStore = create<CharStore>(set => ({
             set({ loading: false });
         }
     },
+
+    fetchUserItems: async (userCharId: string) => {
+        set({ loading: true });
+
+        try {
+            const data = await getUserCharItems(userCharId);
+            const formattedItems = data.results.map(item =>
+                formatItemBoxPropsItem(item)
+            );
+            set({ userItems: formattedItems });
+        } catch (error) {
+            console.error('Erro ao buscar itens:', error);
+        } finally {
+            set({ loading: false });
+        }
+    },
+
     setUserChars: (userChars: UserCharacter[]) => set({ userChars }),
-    SetCharStats: (charStats: IUserGameCharStats) => set({ charStats }),
+    setCharStats: (charStats: IUserGameCharStats) => set({ charStats }),
     setAttackTotal: (attackTotal: number) => set({ attackTotal }),
     setAllChars: (allChars: Character[]) => set({ allChars }),
+    setUserItems: items => set({ userItems: items }),
     setLoading: (loading: boolean) => set({ loading })
 }));
 

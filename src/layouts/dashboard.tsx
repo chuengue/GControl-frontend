@@ -14,6 +14,7 @@ import { PageContainer } from '@toolpad/core/PageContainer';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
+
 import { useSession } from '../SessionContext';
 
 function CustomAccount() {
@@ -169,7 +170,12 @@ export default function Layout() {
                     </Paper>
                 </Backdrop>
             )}
-            <PageContainer breadcrumbs={[]}>
+            <PageContainer
+                breadcrumbs={[]}
+                sx={{
+                    maxWidth: 'max-content !important'
+                }}
+            >
                 <Outlet />
             </PageContainer>
         </DashboardLayout>
