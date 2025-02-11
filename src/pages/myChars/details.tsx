@@ -34,6 +34,10 @@ const UserCharDetailsPage = () => {
     // Verifica se chardId é válido
     if (!chardId) return <>Carregando...</>;
 
+    const userChar = userChars.find(item => item.id === chardId);
+
+    if (!userChar) return <>Personagem não encontrado...</>;
+
     const moveItemForUserInventory = async item => {
         console.log(item);
         const itemId = item.id;
@@ -76,7 +80,7 @@ const UserCharDetailsPage = () => {
             {/* Inventário do jogador */}
             <Stack sx={{ mt: 3, height: '50%' }}>
                 <Inventory
-                    onMoveTitle={`Mover `}
+                    onMoveTitle={`Mover para ${userChar.gameChar.name}`}
                     hasMoveItem
                     fetchType="allItems"
                     onMoveItem={item => moveItemForUserInventory(item)}
