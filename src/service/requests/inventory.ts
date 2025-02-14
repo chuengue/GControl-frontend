@@ -46,7 +46,7 @@ export const moveItemForWarehouse = async (
     }
 ) => {
     try {
-        const url = `/users/${userId}/inventory/${ItemId}/move/${ItemId}`;
+        const url = `/users/${userId}/inventory/${ItemId}/move/${userCharId}`;
 
         const response = await api.post(url, data);
         return response.data; // Retorna os dados da requisição

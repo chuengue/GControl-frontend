@@ -1,12 +1,9 @@
-import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
+import { Box, Card, CardContent, Grid, Skeleton, Typography } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
-import {
-    accessoriesOptions,
-    armorTypeOptions
-} from '../../../pages/admin/consts';
+import { accessoriesOptions, armorTypeOptions } from '../../../pages/admin/consts';
 import { EquipmentType, GrandChaseItem } from '../../../pages/admin/types';
 import { getUserCharDetails } from '../../../service/requests/gameChar';
 import useCharStore from '../../../stores/charStore';
@@ -55,7 +52,20 @@ const UserCharDetailsView = () => {
     };
 
     if (!userChar) {
-        return <Typography>Carregando...</Typography>;
+        return (
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    p: 3,
+                    color: '#fff',
+                    width: '100%',
+                    margin: '0 auto'
+                }}
+            >
+                <Skeleton width="650px" height="100% "animation="wave" variant='rectangular' sx={{borderRadius:"12px"}}/> 
+            </Box>
+        )
     }
 
     return (
@@ -69,7 +79,7 @@ const UserCharDetailsView = () => {
                 borderRadius: '12px',
                 boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
                 color: '#fff',
-                maxWidth: '650px',
+                width: '100%',
                 margin: '0 auto'
             }}
         >

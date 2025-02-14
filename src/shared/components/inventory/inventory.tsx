@@ -1,36 +1,12 @@
-import {
-    Box,
-    FormControl,
-    MenuItem,
-    Select,
-    Tab,
-    Tabs,
-    TextField
-} from '@mui/material';
+import { Box, FormControl, MenuItem, Select, Tab, Tabs, TextField } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
-import {
-    accessoriesOptions,
-    armorTypeOptions,
-    categoryOptions,
-    raritiesOptions
-} from '../../../pages/admin/consts';
-import {
-    deleteItem,
-    equipItem,
-    getUserCharItems,
-    unequipItem,
-    updateQuantityItem
-} from '../../../service/requests/inventory';
+import { accessoriesOptions, armorTypeOptions, categoryOptions, raritiesOptions } from '../../../pages/admin/consts';
+import { deleteItem, equipItem, getUserCharItems, unequipItem, updateQuantityItem } from '../../../service/requests/inventory';
 import { getItemsFilters } from '../../../service/requests/items';
-import {
-    AccessoryType,
-    EquipmentType,
-    ItemCategory,
-    Rarity
-} from '../../../service/requests/types';
+import { AccessoryType, EquipmentType, ItemCategory, Rarity } from '../../../service/requests/types';
 import useCharStore from '../../../stores/charStore';
 import { useSnackbarStore } from '../../../stores/snackBarStore';
 import { formatItemBoxPropsItem } from '../itemBox/formatItem';
@@ -54,6 +30,7 @@ const Inventory: React.FC<{
     hasOnEquip = false,
     onMoveTitle = '',
     hasOnUnequip = false,
+
     onMoveItem
 }) => {
     const { chardId } = useParams<{ chardId: string }>();
@@ -154,7 +131,7 @@ const Inventory: React.FC<{
         } catch (error) {
             showSnackbar(`Erro ao equipar item:', ${error}`, 'error', {
                 vertical: 'top',
-                horizontal: 'ce,nter'
+                horizontal: 'center'
             });
             console.error('Erro ao equipar item:', error);
         }
@@ -294,7 +271,7 @@ const Inventory: React.FC<{
                 sx={{
                     bgcolor: blue[600],
                     borderRadius: '12px',
-                    height: '550px'
+                   height: '550px'
                 }}
             >
                 <Box

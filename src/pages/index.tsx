@@ -1,12 +1,10 @@
 import * as React from 'react';
-import Typography from '@mui/material/Typography';
+import DashboardPage from './dashboard/dashboard';
 
 export default function HomePage() {
   
 
   return (    
-      <Typography>
-        Welcome to Toolpad Core!
-      </Typography>
+   <DashboardPage/>
   );
 }

@@ -1,17 +1,8 @@
-import {
-    Box,
-    Button,
-    Card,
-    Container,
-    Grid,
-    Stack,
-    TextField,
-    Typography
-} from '@mui/material';
+import { InfoOutlined } from '@mui/icons-material';
+import { Box, Button, Card, Container, Grid, Stack, TextField, Typography } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
-import { InfoOutlined } from '@mui/icons-material';
 import TotalAtkCalculator from '../../components/atackTotalCalculator.ts/atackTotalCalculator';
 import SelectableImage from '../../components/selectableImage/selectableImage';
 import { Character } from '../../interfaces/char';
@@ -29,7 +20,7 @@ function AddUserChar() {
         attackTotal,
         charStats,
         setAttackTotal,
-        SetCharStats
+        setCharStats
     } = useCharStore();
     const [selectedChar, setSelectedChar] = useState<Character | null>(null);
     const { session } = useSession();
@@ -54,7 +45,7 @@ function AddUserChar() {
 
     const handleSelectChar = (char: Character) => {
         if (selectedChar) {
-            SetCharStats({
+            setCharStats({
                 attack: 0,
                 defense: 0,
                 hp: 0,
@@ -67,8 +58,6 @@ function AddUserChar() {
             });
         }
         setAttackTotal(0);
-
-        console.log(charStats);
         if (char.id === selectedChar?.id) {
             setSelectedChar(null);
             setAttackTotal(0);
@@ -95,7 +84,6 @@ function AddUserChar() {
 
     const handleRegister = async () => {
         setLoading(true);
-        console.log(attackTotal);
         if (!session?.user.uid) {
             showSnackbar('Usuário não autenticado.', 'error', {
                 vertical: 'top',
@@ -128,7 +116,6 @@ function AddUserChar() {
                 setAttackTotal(0);
                 setLevel('');
             } catch (err) {
-                console.log(err.message);
                 showSnackbar(err.message, 'error', {
                     vertical: 'top',
                     horizontal: 'center'
@@ -145,7 +132,7 @@ function AddUserChar() {
     };
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4, overflowY:"auto", height:"90vh" }}>
             <Grid container spacing={4}>
                 <Grid item xs={12} md={12}>
                     <Card
@@ -239,7 +226,8 @@ function AddUserChar() {
                                 display: 'flex',
                                 width: '100%',
                                 height: '100%',
-                                marginTop: '80px'
+                                marginTop: '80px',
+                                justifyContent: 'center'
                             }}
                         >
                             {selectedChar ? (

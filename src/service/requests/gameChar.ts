@@ -1,3 +1,4 @@
+import { ApiResponseChar } from '../../shared/types';
 import api from '../api';
 import { IUserGameChar } from './types';
 
@@ -15,7 +16,7 @@ export const getMyCharacters = async (userId: string) => {
 };
 export const getUserCharDetails = async (userId: string, charId: string) => {
     try {
-        const url = `users/${userId}/characters/${charId}`;
+        const url = `/users/${userId}/characters/${charId}`;
 
         const response = await api.get(url);
         return response.data; // Retorna os dados da requisição
@@ -24,12 +25,14 @@ export const getUserCharDetails = async (userId: string, charId: string) => {
         throw error; // Lança o erro para ser tratado externamente
     }
 };
-export const getAllCharacters = async (charId?: string) => {
+export const getAllCharacters = async (
+    charId?: string
+): Promise<ApiResponseChar> => {
     try {
         // Monta a URL com ou sem o charId
         const url = charId ? `/characters/${charId}` : '/characters';
 
-        const response = await api.get(url);
+        const response = await api.get<ApiResponseChar>(url);
         return response.data; // Retorna os dados da requisição
     } catch (error) {
         console.error('Erro ao buscar o personagem:', error);

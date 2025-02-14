@@ -1,12 +1,9 @@
-import {
-    AddCircle,
-    AdminPanelSettings,
-    RemoveCircle
-} from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, RemoveCircle } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
+import { GlobalStyles } from '@mui/material';
 
 import type {
     Authentication,
@@ -141,17 +138,37 @@ export default function App() {
     }, [session]);
 
     return (
-        <ReactRouterAppProvider
-            theme={theme}
-            navigation={filteredNavigation}
-            branding={BRANDING}
-            session={session}
-            authentication={AUTHENTICATION}
-        >
-            <GlobalSnackbar />
-            <SessionContext.Provider value={sessionContextValue}>
-                <Outlet />
-            </SessionContext.Provider>
-        </ReactRouterAppProvider>
+        <>
+            <GlobalStyles
+                styles={{
+                    '*::-webkit-scrollbar': {
+                        width: '8px',
+                    },
+                    '*::-webkit-scrollbar-track': {
+                        background: '#1e1e1e',
+                    },
+                    '*::-webkit-scrollbar-thumb': {
+                        background: '#888',
+                        borderRadius: '4px',
+                    },
+                    '*::-webkit-scrollbar-thumb:hover': {
+                        background: '#555',
+                    },
+                }}
+            />
+
+            <ReactRouterAppProvider
+                theme={theme}
+                navigation={filteredNavigation}
+                branding={BRANDING}
+                session={session}
+                authentication={AUTHENTICATION}
+            >
+                <SessionContext.Provider value={sessionContextValue}>
+                    <GlobalSnackbar />
+                    <Outlet />
+                </SessionContext.Provider>
+            </ReactRouterAppProvider>
+        </>
     );
 }

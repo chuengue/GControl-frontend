@@ -1,13 +1,4 @@
-import {
-    Backdrop,
-    Button,
-    CircularProgress,
-    Container,
-    LinearProgress,
-    Paper,
-    TextField,
-    Typography
-} from '@mui/material';
+import { Backdrop, Box, Button, CircularProgress, Container, LinearProgress, Paper, TextField, Typography } from '@mui/material';
 import { Account } from '@toolpad/core/Account';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
@@ -18,166 +9,246 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { useSession } from '../SessionContext';
 
 function CustomAccount() {
-    const { session } = useSession();
+  const { session } = useSession();
 
-    return (
-        <Account
-            slotProps={{
-                preview: {
-                    slotProps: {
-                        avatarIconButton: { sx: { border: '0' } },
-                        avatar: { src: session?.user.image }
-                    }
-                }
-            }}
-        />
-    );
+  return (
+    <Account
+      slotProps={{
+        preview: {
+          slotProps: {
+            avatarIconButton: { sx: { border: '0' } },
+            avatar: { src: session?.user.image }
+          }
+        }
+      }}
+    />
+  );
 }
+
 function useUserData(uid: string | undefined) {
-    const [nickNameGC, setNickNameGC] = React.useState('');
-    const [isChecking, setIsChecking] = React.useState(true);
-    const [openModal, setOpenModal] = React.useState(false);
-    const db = getFirestore();
+  const [nickNameGC, setNickNameGC] = React.useState('');
+  const [isChecking, setIsChecking] = React.useState(true);
+  const [openModal, setOpenModal] = React.useState(false);
+  const [error, setError] = React.useState(false);
 
-    React.useEffect(() => {
-        if (!uid) return;
+  const db = getFirestore();
 
-        const fetchUserData = async () => {
-            try {
-                const userDocRef = doc(db, 'users', uid);
-                const userDoc = await getDoc(userDocRef);
-                const userData = userDoc.data();
+  React.useEffect(() => {
+    if (!uid) {
+      setIsChecking(false);
+      return;
+    }
 
-                if (userData?.nickNameGC) {
-                    setOpenModal(false);
-                } else {
-                    setOpenModal(true);
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            } finally {
-                setIsChecking(false);
-            }
-        };
+    const fetchUserData = async () => {
+      try {
+        const userDocRef = doc(db, 'users', uid);
 
-        fetchUserData();
-    }, [uid, db]);
+        // Definir um timeout para evitar loop infinito
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos de timeout
 
-    return { nickNameGC, setNickNameGC, isChecking, openModal, setOpenModal };
+        const userDoc = await getDoc(userDocRef);
+        clearTimeout(timeoutId);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setNickNameGC(userData.nickNameGC || '');
+          setOpenModal(!userData.nickNameGC);
+        } else {
+          setOpenModal(true);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+        setError(true);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    fetchUserData();
+  }, [uid, db]);
+
+  return {
+    nickNameGC,
+    setNickNameGC,
+    isChecking,
+    openModal,
+    setOpenModal,
+    error
+  };
+}
+
+function RegistrationModal({
+  open,
+  onClose,
+  nickNameGC,
+  setNickNameGC,
+  onSave,
+  isSaving
+}) {
+  return (
+    <Backdrop open={open} style={{ zIndex: 1300 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '400px',
+          margin: '0 auto',
+          padding: '20px',
+          borderRadius: '8px',
+          backgroundColor: '#1976d2',
+          color: '#fff'
+        }}
+      >
+        <Typography
+          variant="h4"
+          fontFamily="faktos"
+          gutterBottom
+          sx={{ pt: 1 }}
+        >
+          Complete seu cadastro
+        </Typography>
+        <Container
+          sx={{
+            p: '10px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <TextField
+            label="Nickname"
+            variant="outlined"
+            value={nickNameGC}
+            onChange={e => setNickNameGC(e.target.value)}
+            sx={{
+              marginBottom: '16px',
+              width: '100%',
+              marginTop: '20px'
+            }}
+          />
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onSave}
+            disabled={isSaving || !nickNameGC}
+            sx={{ width: '100%', marginTop: '16px' }}
+          >
+            {isSaving ? <CircularProgress size={24} /> : 'Salvar'}
+          </Button>
+        </Container>
+      </Paper>
+    </Backdrop>
+  );
 }
 
 export default function Layout() {
-    const { session, loading, setSession } = useSession();
-    const location = useLocation();
-    const { nickNameGC, setNickNameGC, isChecking, openModal, setOpenModal } =
-        useUserData(session?.user?.uid);
-    const [isSaving, setIsSaving] = React.useState(false);
-    const db = getFirestore();
+  const { session, loading } = useSession();
+  const location = useLocation();
+  const { nickNameGC, setNickNameGC, isChecking, openModal, setOpenModal, error } =
+    useUserData(session?.user?.uid);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const db = getFirestore();
 
-    const handleSaveNickname = async () => {
-        setIsSaving(true);
-        try {
-            if (session?.user?.uid) {
-                await setDoc(doc(db, 'users', session.user.uid), {
-                    ...session.user,
-                    nickNameGC
-                });
+  const handleSaveNickname = async () => {
+    setIsSaving(true);
+    try {
+      if (session?.user?.uid) {
+        await setDoc(doc(db, 'users', session.user.uid), {
+          ...session.user,
+          nickNameGC
+        });
 
-                setOpenModal(false);
-            }
-        } catch (error) {
-            console.error('Error saving nickname:', error);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    if (loading) {
-        return <LinearProgress sx={{ width: '100%' }} />;
+        setOpenModal(false);
+      }
+    } catch (error) {
+      console.error('Error saving nickname:', error);
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    if (!session) {
-        const redirectTo = `/sign-in?callbackUrl=${encodeURIComponent(location.pathname)}`;
-        return <Navigate to={redirectTo} replace />;
-    }
+  if (loading || isChecking) {
+    return <LinearProgress sx={{ width: '100%' }} />;
+}
 
+if (error) {
     return (
-        <DashboardLayout
-            slots={{
-                toolbarAccount: CustomAccount,
-                toolbarActions: () => <></>
-            }}
-            disableCollapsibleSidebar
-        >
-            {openModal && (
-                <Backdrop open={openModal} style={{ zIndex: 1300 }}>
-                    <Paper
-                        elevation={3}
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '400px',
-                            margin: '0 auto',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            backgroundColor: '#1976d2',
-                            color: '#fff'
-                        }}
-                    >
-                        <Typography
-                            variant="h4"
-                            fontFamily="faktos"
-                            gutterBottom
-                            sx={{ pt: 1 }}
-                        >
-                            Complete seu cadastro
-                        </Typography>
-                        <Container
-                            sx={{
-                                p: '10px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <TextField
-                                label="Nickname"
-                                variant="outlined"
-                                value={nickNameGC}
-                                onChange={e => setNickNameGC(e.target.value)}
-                                sx={{
-                                    marginBottom: '16px',
-                                    width: '100%',
-                                    marginTop: '20px'
-                                }}
-                            />
-                            <Button
-                                variant="contained"
-                                size="large"
-                                onClick={handleSaveNickname}
-                                disabled={isSaving || !nickNameGC}
-                                sx={{ width: '100%', marginTop: '16px' }}
-                            >
-                                {isSaving ? (
-                                    <CircularProgress size={24} />
-                                ) : (
-                                    'Salvar'
-                                )}
-                            </Button>
-                        </Container>
-                    </Paper>
-                </Backdrop>
-            )}
-            <PageContainer
-                breadcrumbs={[]}
-                sx={{
-                    maxWidth: 'max-content !important'
-                }}
-            >
-                <Outlet />
-            </PageContainer>
-        </DashboardLayout>
+        <Container sx={{ textAlign: 'center', mt: 4 }}>
+            <Typography variant="h6" color="error">
+                Não foi possível conectar ao servidor.
+            </Typography>
+            <Typography variant="body1">
+                Verifique sua conexão ou tente novamente mais tarde.
+            </Typography>
+        </Container>
     );
+}
+  if (!session) {
+    const redirectTo = `/sign-in?callbackUrl=${encodeURIComponent(location.pathname)}`;
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  return (
+    <DashboardLayout
+      slots={{
+        toolbarAccount: CustomAccount,
+        toolbarActions: () => <></>
+      }}
+      disableCollapsibleSidebar
+    >
+      <RegistrationModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        nickNameGC={nickNameGC}
+        setNickNameGC={setNickNameGC}
+        onSave={handleSaveNickname}
+        isSaving={isSaving}
+      />
+      <PageContainer
+        breadcrumbs={[]}
+        title=""
+        sx={{
+          maxWidth: '100% !important',
+          backgroundImage: `url(/assets/images/World_map_gc.webp)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          overflow: 'hidden'
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1
+          }}
+        />
+        <Box
+          sx={{
+            position: 'relative',
+            maxWidth: '100% !important',
+            backgroundImage: `url(/assets/images/World_map_gc.webp)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            height: '100vh'
+          }}
+        >
+          <Box sx={{ position: 'relative', zIndex: 2, width: '100%' }}>
+            <Outlet />
+          </Box>
+        </Box>
+      </PageContainer>
+    </DashboardLayout>
+  );
 }

@@ -1,4 +1,4 @@
-import { Box, Stack } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText } from '@mui/material';
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router';
 
@@ -23,27 +23,37 @@ const accessorySlots = [
 ];
 
 const UserCharDetailsPage = () => {
-    const { chardId } = useParams<{ chardId: string }>();
-    const { userId } = useParams<{ userId: string }>();
-    const { userChars, fetchUserItems } = useCharStore();
+    const { chardId } = useParams<{ chardId?: string }>(); // Permitir undefined
+    const { userId } = useParams<{ userId?: string }>(); // Permitir undefined
+    const { userChars, fetchUserItems, fetchUserCharsData } = useCharStore();
+    const [open, setOpen] = React.useState(false);
 
     useEffect(() => {
-        getUserCharDetails(userId, chardId);
-    }, []);
+        if (userId && chardId) {
+            getUserCharDetails(userId, chardId);
+            fetchUserCharsData(userId);
+        }
+    }, [userId, chardId]); // Adicionar dependências corretamente
 
-    // Verifica se chardId é válido
-    if (!chardId) return <>Carregando...</>;
+    if (!chardId) {
+        return <>ID do personagem inválido...</>;
+    }
+
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
 
     const userChar = userChars.find(item => item.id === chardId);
 
-    if (!userChar) return <>Personagem não encontrado...</>;
-
-    const moveItemForUserInventory = async item => {
+    const moveItemForUserInventory = async (item: { id: string }) => {
         console.log(item);
-        const itemId = item.id;
         try {
             await addItemToInventory(chardId, {
-                itemId,
+                itemId: item.id,
                 equipped: false,
                 quantity: 1
             });
@@ -53,39 +63,89 @@ const UserCharDetailsPage = () => {
         }
     };
 
+    const moveItemForWarehouseInventory = async (item: { id: string }) => {
+        handleClickOpen();
+    };
+
     return (
-        <Box sx={{ width: '100%' }}>
-            {/* Detalhes do personagem e inventário equipado */}
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '95vh',
+    
+            }}
+        >
             <Box
                 sx={{
-                    display: 'flex',
                     width: '100%',
-                    justifyContent: 'space-between',
-                    gap: 2 // Usando espaçamento do Material-UI
+                    maxWidth: { xs: '100%', sm: '600px', md: '900px', lg: '1200px', xl: '1400px' },
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2, // Espaçamento entre os componentes
+                    overflowY: 'auto',
+                    padding: '10px',
+                
                 }}
             >
-                <UserCharDetailsView />
-                <Stack>
-                    <Inventory
-                        hasChangeQuantity
-                        hasOnEquip
-                        hasMoveItem
-                        hasOnUnequip
-                        onMoveTitle="Mover para Armazém"
-                        fetchType="charItens"
-                    />
-                </Stack>
-            </Box>
+                {/* Primeira linha: UserCharDetailsView e Inventory charItens */}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        width: '100%',
+                        gap: 2,
+                        flex: 1
+                    }}
+                >
+                    {/* UserCharDetailsView */}
+                    <Box sx={{ flex: 1, minWidth: '300px' }}>
+                        <UserCharDetailsView />
+                    </Box>
 
-            {/* Inventário do jogador */}
-            <Stack sx={{ mt: 3, height: '50%' }}>
-                <Inventory
-                    onMoveTitle={`Mover para ${userChar.gameChar.name}`}
-                    hasMoveItem
-                    fetchType="allItems"
-                    onMoveItem={item => moveItemForUserInventory(item)}
-                />
-            </Stack>
+                    {/* Inventory charItens */}
+                    <Box sx={{ flex: 1, minWidth: '300px' }}>
+                        <Inventory
+                            hasChangeQuantity
+                            hasOnEquip
+                            hasMoveItem
+                            hasOnUnequip
+                            onMoveTitle="Mover para Armazém"
+                            fetchType="charItens"
+                            onMoveItem={moveItemForWarehouseInventory}
+                        />
+                    </Box>
+                </Box>
+
+                {/* Segunda linha: Inventory allItems */}
+                <Box sx={{ flex: 1, mt: 1, mb: '40px' }}>
+                    <Inventory
+                        onMoveTitle={`Mover para ${userChar?.gameChar.name ?? 'Personagem'}`}
+                        hasMoveItem
+                        fetchType="allItems"
+                        onMoveItem={moveItemForUserInventory}
+                    />
+                </Box>
+
+                {/* Diálogo para feedback */}
+                <Dialog
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                            Em desenvolvimento. Disponível em breve
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>OK</Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
         </Box>
     );
 };
