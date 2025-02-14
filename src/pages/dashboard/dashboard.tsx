@@ -1,11 +1,7 @@
-import { Close, DeleteForever, InfoOutlined } from '@mui/icons-material';
+import { DeleteForever, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
-import { Autocomplete, Avatar, Box, Button, Card, Divider, Grid, IconButton, MenuItem, Modal, Select, Stack, TextField, Typography, useTheme } from '@mui/material';
-import { blue, green, grey } from '@mui/material/colors';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { format, parse } from 'date-fns';
+import { Box, Button, Card, Collapse, Divider, Grid, IconButton, Paper, Stack, Typography, useTheme } from '@mui/material';
+import { blue, green } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
 import { createFarmSession, deleteFarmSession, getAllMissions, getAllUserSessions, updateFarmSession } from '../../service/requests/missions/missions';
@@ -16,6 +12,7 @@ import ConfirmationModal from '../../shared/components/confirmModal/confirmModal
 import { Character, Mission, Session } from '../../shared/types';
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
+import CreateSessionModal from './components/createSessionModal/createSessionModal';
 
 export interface IFormData {
    sessionId: string;
@@ -34,6 +31,7 @@ const DashboardPage = () => {
    const [formData, setFormData] = useState<IFormData>();
    const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
    const [selectedUserSession, setSelectedUserSession] = useState<Session>();
+   const [expandedId, setExpandedId] = useState(null);
    const { session } = useSession();
    const { showSnackbar } = useSnackbarStore();
    const { userChars, fetchUserCharsData } = useCharStore();
@@ -61,7 +59,12 @@ const DashboardPage = () => {
          return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
       }
    }
-
+   const mockData = {
+      itemName: 'Pergaminho de propriedade Selecionável',
+      totalDropped: '4',
+      dropRate: '12.50',
+      avgTimePerDrop: '2028.75'
+   };
    const fetchMissions = async () => {
       try {
          const data = await getAllMissions();
@@ -148,19 +151,9 @@ const DashboardPage = () => {
       setSelectedUserSession(session);
       setConfirmModalIsOpen(true);
    };
-
-   const getMissionTypeName = (type:string) => {
-
-      switch (type) {
-         case 'event':
-            return 'Missões Evento';
-         case 'epic':
-            return 'Desafio Épico';
-         default:
-            return type;
-      }
-   }
-
+   const handleExpand = sessionId => {
+      setExpandedId(expandedId === sessionId ? null : sessionId);
+   };
    return (
       <>
          <Card
@@ -211,7 +204,11 @@ const DashboardPage = () => {
                   sx={{
                      bgcolor: 'rgba(0, 0, 0, 0.37);',
                      mb: '10px',
-                     borderRadius: '16px'
+                     borderRadius: '16px',
+                     display: 'flex',
+                     alignItems: 'center', // Centraliza o conteúdo na vertical
+                     justifyContent: 'flex-start', // Alinha o conteúdo ao topo
+                     padding: 1
                   }}
                >
                   <Button
@@ -219,9 +216,11 @@ const DashboardPage = () => {
                      size="large"
                      onClick={() => handleOpenModal()}
                      sx={{
-                        marginBottom: 2,
                         width: '30%',
                         bgcolor: blue[700],
+                        borderRadius: '12px',
+                        color: 'white',
+
                         '&:hover': {
                            bgcolor: theme.palette.primary.dark
                         }
@@ -230,6 +229,7 @@ const DashboardPage = () => {
                      Criar Sessão
                   </Button>
                </Stack>
+
                <Box
                   sx={{
                      overflowY: 'auto',
@@ -253,18 +253,20 @@ const DashboardPage = () => {
                                  cursor: 'pointer',
                                  minHeight: '153px',
                                  boxShadow: theme.shadows[3],
-                                 '&:hover': {
-                                    boxShadow: theme.shadows[6],
-                                    transform: 'scale(1.01)'
-                                 }
+                                 position: 'relative'
                               }}
                            >
+                              {/* Área clicável para expandir */}
                               <Box
                                  sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: 2
+                                    gap: 2,
+                                    flexGrow: 1
                                  }}
+                                 onClick={() =>
+                                    handleExpand(sessionItem.sessionId)
+                                 }
                               >
                                  <Stack
                                     justifyContent="center"
@@ -304,335 +306,233 @@ const DashboardPage = () => {
                                  </Stack>
                                  <Divider orientation="vertical" flexItem />
                               </Box>
+
+                              {/* Conteúdo principal do card */}
                               <Box
                                  sx={{
                                     display: 'flex',
                                     flexDirection: 'row',
-                                    justifyContent: 'space-around',
+                                    justifyContent: 'space-between',
                                     alignItems: 'center',
                                     width: '100%',
                                     px: 2
                                  }}
                               >
-                                 <CardCustom>
-                                    <Typography variant="body2">
-                                       Tempo Total
-                                    </Typography>
-                                    <Typography
-                                       variant="body1"
-                                       fontWeight="bold"
-                                    >
-                                       {formatTime(
-                                          sessionItem?.totalTimeSpent,
-                                          'text'
-                                       )}
-                                    </Typography>
-                                 </CardCustom>
+                                 <Stack
+                                    id="infos"
+                                    sx={{
+                                       width: '100%',
+                                       display: 'flex',
+                                       flexDirection: 'row',
+                                       gap: '10px'
+                                    }}
+                                 >
+                                    <CardCustom>
+                                       <Stack
+                                          direction="row"
+                                          spacing={2}
+                                          alignItems="center"
+                                          justifyContent="space-between"
+                                       >
+                                          {/* Idas */}
+                                          <Stack
+                                             spacing={1}
+                                             alignItems="center"
+                                          >
+                                             <Typography variant="body2">
+                                                Idas
+                                             </Typography>
+                                             <Typography
+                                                variant="body1"
+                                                fontWeight="bold"
+                                             >
+                                                {sessionItem.attempts}
+                                             </Typography>
+                                          </Stack>
+                                          <Divider
+                                             orientation="vertical"
+                                             flexItem
+                                          />
+                                          {/* Tempo Total e Tempo Médio */}
+                                          <Stack
+                                             spacing={1}
+                                             sx={{
+                                                flex: 1,
+                                                textAlign: 'center'
+                                             }}
+                                          >
+                                             <Typography variant="body2">
+                                                Tempo Total
+                                             </Typography>
+                                             <Typography
+                                                variant="body1"
+                                                fontWeight="bold"
+                                             >
+                                                {formatTime(
+                                                   sessionItem?.totalTimeSpent,
+                                                   'text'
+                                                )}
+                                             </Typography>
+                                             <Divider sx={{ my: 1 }} />
+                                             <Typography variant="body2">
+                                                Tempo Médio por Ida
+                                             </Typography>
+                                             <Typography
+                                                variant="body1"
+                                                fontWeight="bold"
+                                             >
+                                                {formatTime(
+                                                   sessionItem?.avgTimePerAttempt,
+                                                   'text'
+                                                )}
+                                             </Typography>
+                                          </Stack>
+                                       </Stack>
+                                    </CardCustom>
 
-                                 <CardCustom>
-                                    <Typography variant="body2">
-                                       Idas
-                                    </Typography>
-                                    <Typography
-                                       variant="body1"
-                                       fontWeight="bold"
-                                    >
-                                       {sessionItem.attempts}
-                                    </Typography>
-                                 </CardCustom>
-                                 <CardCustom>
-                                    <Typography variant="body2">
-                                       Tempo Médio por Ida
-                                    </Typography>
-                                    <Typography
-                                       variant="body1"
-                                       fontWeight="bold"
-                                    >
-                                       {formatTime(
-                                          sessionItem?.avgTimePerAttempt,
-                                          'text'
-                                       )}
-                                    </Typography>
-                                 </CardCustom>
+                                    <CardCustom>
+                                       <Stack
+                                          spacing={1}
+                                          sx={{ textAlign: 'center' }}
+                                       >
+                                          {/* Criado em */}
+                                          <Typography variant="body2">
+                                             Criado em
+                                          </Typography>
+                                          <Typography
+                                             variant="body1"
+                                             fontWeight="bold"
+                                          >
+                                             {new Date(
+                                                sessionItem?.created_at
+                                             ).toLocaleDateString('pt-BR', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric'
+                                             })}
+                                          </Typography>
 
-                                 <CardCustom>
-                                    <Typography variant="body2">
-                                       Criado em
-                                    </Typography>
-                                    <Typography
-                                       variant="body1"
-                                       fontWeight="bold"
-                                    >
-                                       {new Date(
-                                          sessionItem?.created_at
-                                       ).toLocaleDateString()}
-                                    </Typography>
-                                 </CardCustom>
-                                 <CardCustom>
-                                    <Typography variant="body2">
-                                       Última Modificação
-                                    </Typography>
-                                    <Typography
-                                       variant="body2"
-                                       fontWeight="bold"
-                                    >
-                                       {new Date(
-                                          sessionItem?.updated_at
-                                       ).toLocaleString('pt-BR', {
-                                          year: 'numeric',
-                                          month: 'short',
-                                          day: 'numeric',
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                          hour12: false
-                                       })}
-                                    </Typography>
-                                 </CardCustom>
+                                          <Divider sx={{ my: 1 }} />
+
+                                          {/* Última Modificação */}
+                                          <Typography variant="body2">
+                                             Última Modificação
+                                          </Typography>
+                                          <Typography
+                                             variant="body1"
+                                             fontWeight="bold"
+                                          >
+                                             {new Date(
+                                                sessionItem?.updated_at
+                                             ).toLocaleString('pt-BR', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: false
+                                             })}
+                                          </Typography>
+                                       </Stack>
+                                    </CardCustom>
+                                 </Stack>
                               </Box>
-                              <IconButton
-                                 onClick={() => handleOpenModal(sessionItem)}
-                                 sx={{ color: 'white' }}
+
+                              {/* Ícones de edição e exclusão */}
+                              <Box
+                                 sx={{ display: 'flex', alignItems: 'center' }}
                               >
-                                 <EditIcon />
-                              </IconButton>
-                              <IconButton
-                                 onClick={() =>
-                                    handleOpenModalConfirm(sessionItem)
-                                 }
-                                 sx={{ color: 'white' }}
-                              >
-                                 <DeleteForever />
-                              </IconButton>
+                                 <IconButton
+                                    onClick={() => handleOpenModal(sessionItem)}
+                                    sx={{ color: 'white' }}
+                                 >
+                                    <EditIcon />
+                                 </IconButton>
+                                 <IconButton
+                                    onClick={() =>
+                                       handleOpenModalConfirm(sessionItem)
+                                    }
+                                    sx={{ color: 'white' }}
+                                 >
+                                    <DeleteForever />
+                                 </IconButton>
+                                 {/* Ícone para expandir/recolher */}
+                                 <IconButton
+                                    onClick={() =>
+                                       handleExpand(sessionItem.sessionId)
+                                    }
+                                    sx={{ color: 'white' }}
+                                 >
+                                    {expandedId === sessionItem.sessionId ? (
+                                       <ExpandLess />
+                                    ) : (
+                                       <ExpandMore />
+                                    )}
+                                 </IconButton>
+                              </Box>
                            </Card>
+
+                           {/* Área expandida */}
+                           <Collapse in={expandedId === sessionItem.sessionId}>
+                              <Box
+                                 sx={{
+                                    padding: 2,
+                                    bgcolor: blue[900],
+                                    borderRadius: '0 0 6px 6px',
+                                    marginTop: '-18px' // Para unir visualmente com o card acima
+                                 }}
+                              >
+                                 <Typography variant="h6">
+                                    Detalhes Adicionais
+                                 </Typography>
+                                 <Paper
+                                    sx={{
+                                       padding: '16px',
+                                       borderRadius: '8px',
+                                       bgcolor: 'rgba(0, 0, 0, 0.1)'
+                                    }}
+                                 >
+                                    <Stack spacing={2}>
+                                       <Typography
+                                          variant="h6"
+                                          sx={{ fontWeight: 'bold' }}
+                                       >
+                                          Item: {mockData.itemName}
+                                       </Typography>
+                                       <Typography variant="body1">
+                                          <strong>Total Dropped:</strong>{' '}
+                                          {mockData.totalDropped}
+                                       </Typography>
+                                       <Typography variant="body1">
+                                          <strong>Drop Rate:</strong>{' '}
+                                          {mockData.dropRate}%
+                                       </Typography>
+                                       <Typography variant="body1">
+                                          <strong>Avg Time Per Drop:</strong>{' '}
+                                          {mockData.avgTimePerDrop} segundos
+                                       </Typography>
+                                    </Stack>
+                                 </Paper>
+                              </Box>
+                           </Collapse>
                         </Grid>
                      ))}
                   </Grid>
 
-                  <Modal open={openModal} onClose={handleCloseModal}>
-                     <Box
-                        sx={{
-                           position: 'absolute',
-                           top: '50%',
-                           left: '50%',
-                           transform: 'translate(-50%, -50%)',
-                           width: 600,
-                           bgcolor: blue[800],
-                           boxShadow: 24,
-                           borderRadius: 4, // Cantos mais arredondados
-                           p: 4,
-                           display: 'flex',
-                           flexDirection: 'column',
-                           gap: 3,
-                           outline: 'none' // Remove o contorno ao focar
-                        }}
-                     >
-                        {/* Botão de fechar no canto superior direito */}
-                        <Box
-                           sx={{
-                              position: 'absolute',
-                              top: 16,
-                              right: 16,
-                              cursor: 'pointer',
-                              color: 'text.secondary',
-                              '&:hover': {
-                                 color: 'text.primary'
-                              }
-                           }}
-                           onClick={handleCloseModal}
-                        >
-                           <Close />
-                        </Box>
-
-                        <Typography
-                           variant="h5"
-                           marginBottom={2}
-                           align="center"
-                           fontFamily="faktos"
-                        >
-                           {isEditing ? 'Editar Sessão' : 'Criar Sessão'}
-                        </Typography>
-
-                        <Autocomplete
-                           options={missions || []}
-                           groupBy={mission => mission.type} 
-                           getOptionLabel={mission => mission.name}
-                           value={selectedMission || null}
-                           onChange={(_, newValue) =>
-                              setSelectedMission(newValue)
-                           }
-                           isOptionEqualToValue={(option, value) =>
-                              option.id === value?.id
-                           }
-                           renderInput={params => (
-                              <TextField
-                                 {...params}
-                                 label="Escolha uma missão"
-                                 fullWidth
-                                 sx={{ marginBottom: 2 }}
-                              />
-                           )}
-                           renderOption={(props, mission) => (
-                              <Box component="li" {...props} key={mission.id}>
-                                 <Stack
-                                    direction="row"
-                                    alignItems="center"
-                                    spacing={1}
-                                 >
-                                    <Avatar
-                                       alt={mission.name}
-                                       src={mission.imgUrl}
-                                       sx={{ width: 32, height: 32 }}
-                                    />
-                                    <Typography
-                                       variant="body2"
-                                       fontWeight="bold"
-                                    >
-                                       {mission.name}
-                                    </Typography>
-                                 </Stack>
-                              </Box>
-                           )}
-                           renderGroup={(params) => (
-                              <Box key={params.key} sx={{ mt: 2 }}>
-                                 <Box
-                                    sx={{
-                                       bgcolor: blue[700], // Cor de fundo azul
-                                       color: "white", // Texto branco para contraste
-                                       borderRadius: "8px", // Bordas arredondadas
-                                       padding: "8px",
-                                       textAlign: "center", // Centraliza o texto
-                                       display: "flex",
-                                       justifyContent: "center",
-                                       alignItems: "center",
-                                       width: "100%", // Ocupa toda a largura do grupo
-                                    }}
-                                 >
-                                    <Typography variant="subtitle1" fontWeight="bold">
-                                       {getMissionTypeName(params.group)}
-                                    </Typography>
-                                 </Box>
-                                 <Box
-                                    sx={{
-                                       border: `1px solid ${grey[800]}`,
-                                       borderRadius: "8px",
-                                       padding: "8px",
-                                       backgroundColor: grey[900],
-                                       mt: 1,
-                                    }}
-                                 >
-                                    {params.children} {/* Renderiza as missões dentro do grupo */}
-                                 </Box>
-                              </Box>
-                           )}
-                        />
-
-                        <Select
-                           fullWidth
-                           value={selectedCharacter?.id || ''}
-                           onChange={e => {
-                              const selectedChar =
-                                 userChars.find(
-                                    m => m.gameChar.id === e.target.value
-                                 ) || null;
-                              console.log(selectedChar);
-                              setSelectedCharacter(selectedChar?.gameChar);
-                           }}
-                           displayEmpty
-                           sx={{ marginBottom: 2 }}
-                           MenuProps={{
-                              PaperProps: {
-                                 style: {
-                                    maxHeight: 200, // Limita a altura para não ficar gigante
-                                    overflowY: 'auto' // Adiciona rolagem se necessário
-                                 }
-                              },
-                              anchorOrigin: {
-                                 vertical: 'bottom',
-                                 horizontal: 'left'
-                              },
-                              transformOrigin: {
-                                 vertical: 'top',
-                                 horizontal: 'left'
-                              }
-                           }}
-                        >
-                           <MenuItem value="" disabled>
-                              Escolha um personagem
-                           </MenuItem>
-                           {userChars?.map(char => (
-                              <MenuItem
-                                 key={char.gameChar.id}
-                                 value={char.gameChar.id}
-                              >
-                                 {char.gameChar.name}
-                              </MenuItem>
-                           ))}
-                        </Select>
-
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                           <TimePicker
-                              label="Tempo Gasto"
-                              ampm={false}
-                              value={
-                                 formData?.timeSpent
-                                    ? parse(
-                                         formData.timeSpent,
-                                         'HH:mm:ss',
-                                         new Date()
-                                      )
-                                    : null
-                              }
-                              onChange={newValue => {
-                                 const formattedTime = newValue
-                                    ? format(newValue, 'HH:mm:ss')
-                                    : '';
-                                 setFormData({
-                                    ...formData,
-                                    timeSpent: formattedTime
-                                 });
-                              }}
-                              views={['hours', 'minutes', 'seconds']}
-                              inputFormat="HH:mm:ss"
-                              renderInput={params => (
-                                 <TextField
-                                    {...params}
-                                    fullWidth
-                                    sx={{ marginBottom: 2 }}
-                                 />
-                              )}
-                           />
-                        </LocalizationProvider>
-
-                        <TextField
-                           fullWidth
-                           label="Tentativas"
-                           type="number"
-                           value={formData?.attempts || 0}
-                           onChange={e =>
-                              setFormData({
-                                 ...formData,
-                                 attempts: e.target.value
-                              })
-                           }
-                           sx={{ marginBottom: 2 }}
-                        />
-
-                        <Button
-                           variant="contained"
-                           size="large"
-                           onClick={handleSaveSession}
-                           sx={{
-                              bgcolor: theme.palette.primary.main,
-                              '&:hover': {
-                                 bgcolor: theme.palette.primary.dark
-                              },
-                              borderRadius: 2
-                           }}
-                        >
-                           {isEditing ? 'Atualizar' : 'Criar'}
-                        </Button>
-                     </Box>
-                  </Modal>
+                  <CreateSessionModal
+                     openModal={openModal}
+                     handleCloseModal={handleCloseModal}
+                     isEditing={isEditing}
+                     formData={formData}
+                     handleSaveSession={handleSaveSession}
+                     missions={missions}
+                     userChars={userChars}
+                     selectedCharacter={selectedCharacter}
+                     selectedMission={selectedMission}
+                     setFormData={setFormData}
+                     setSelectedMission={setSelectedMission}
+                     setSelectedCharacter={setSelectedCharacter}
+                  ></CreateSessionModal>
                   <ConfirmationModal
                      open={confirmModalIsOpen}
                      title="Excluir Sessão"
