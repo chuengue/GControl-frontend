@@ -546,7 +546,7 @@ const DashboardPage = () => {
                                       variant="body1"
                                       sx={{
                                         fontWeight: 'bold',
-                                        color: green[400]
+                                        color: green[400],
                                       }}
                                     >
                                       {formatTime(Number(item.avgTimePerDrop), 'text')}
