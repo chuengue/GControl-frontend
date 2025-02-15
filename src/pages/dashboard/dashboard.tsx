@@ -1,11 +1,31 @@
 import { DeleteForever, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, Button, Card, Collapse, Divider, Grid, IconButton, Paper, Stack, Typography, useTheme } from '@mui/material';
-import { blue, green } from '@mui/material/colors';
+import {
+  Box,
+  Button,
+  Card,
+  Collapse,
+  Divider,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+  useTheme
+} from '@mui/material';
+import { blue, green, grey } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
-import { createFarmSession, deleteFarmSession, getAllMissions, getAllUserSessions, updateFarmSession } from '../../service/requests/missions/missions';
+import { registerItemDropsInSession } from '../../service/requests/items';
+import {
+  createFarmSession,
+  deleteFarmSession,
+  getAllMissions,
+  getAllUserSessions,
+  getDropRateSessionReport,
+  updateFarmSession
+} from '../../service/requests/missions/missions';
 import { FarmSessionsResponse } from '../../service/requests/missions/type';
+import { DropItem, DropRateReport } from '../../service/requests/types';
 import { useSession } from '../../SessionContext';
 import { CardCustom } from '../../shared/components/cardCustom/cardCustom';
 import ConfirmationModal from '../../shared/components/confirmModal/confirmModal';
@@ -13,540 +33,582 @@ import { Character, Mission, Session } from '../../shared/types';
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 import CreateSessionModal from './components/createSessionModal/createSessionModal';
+import DropItemsModal from './components/registerDropsModal/registerDropsModal';
 
 export interface IFormData {
-   sessionId: string;
-   timeSpent: string;
-   name: string | null;
-   attempts: number;
+  sessionId: string;
+  timeSpent: string;
+  name: string | null;
+  attempts: number;
 }
 
 const DashboardPage = () => {
-   const [sessions, setSessions] = useState<FarmSessionsResponse['results']>();
-   const [missions, setMissions] = useState<Mission[]>([]);
-   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-   const [selectedCharacter, setSelectedCharacter] = useState<Character>();
-   const [openModal, setOpenModal] = useState(false);
-   const [isEditing, setIsEditing] = useState(false);
-   const [formData, setFormData] = useState<IFormData>();
-   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
-   const [selectedUserSession, setSelectedUserSession] = useState<Session>();
-   const [expandedId, setExpandedId] = useState(null);
-   const { session } = useSession();
-   const { showSnackbar } = useSnackbarStore();
-   const { userChars, fetchUserCharsData } = useCharStore();
-   const theme = useTheme();
-   const userId = session?.user.uid;
-   useEffect(() => {
-      fetchUserCharsData(userId);
-      fetchMissions();
-   }, [userId]);
-   function formatTime(totalTimeInSeconds: number, variant: 'text' | 'dots') {
-      const time = Math.floor(totalTimeInSeconds);
-      const hours = Math.floor(time / 3600);
-      const minutes = Math.floor((time % 3600) / 60);
-      const seconds = time % 60;
+  const [dropItemsModalOpen, setDropItemsModalOpen] = useState(false);
+  const [sessionDropRate, setSessionDropRate] = useState<DropRateReport['results']>();
+  const [sessions, setSessions] = useState<FarmSessionsResponse['results']>();
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character>();
+  const [openModal, setOpenModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<IFormData>();
+  const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
+  const [selectedUserSession, setSelectedUserSession] = useState<Session>();
+  const [expandedId, setExpandedId] = useState(null);
+  const { session } = useSession();
+  const { showSnackbar } = useSnackbarStore();
+  const { userChars, fetchUserCharsData } = useCharStore();
+  const theme = useTheme();
+  const userId = session?.user.uid;
+  useEffect(() => {
+    fetchUserCharsData(userId);
+    fetchMissions();
+  }, [userId]);
+  function formatTime(totalTimeInSeconds: number, variant: 'text' | 'dots') {
+    const time = Math.floor(totalTimeInSeconds);
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
 
-      if (variant === 'text') {
-         return [
-            hours ? `${hours}h` : '',
-            minutes ? `${minutes}m` : '',
-            seconds ? `${seconds}s` : ''
-         ]
-            .filter(Boolean)
-            .join(' ');
+    if (variant === 'text') {
+      return [hours ? `${hours}h` : '', minutes ? `${minutes}m` : '', seconds ? `${seconds}s` : '']
+        .filter(Boolean)
+        .join(' ');
+    } else {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+  }
+  const registerDrops = async (drops: DropItem[]) => {
+    try {
+      await registerItemDropsInSession(
+        userId,
+        selectedUserSession?.userCharId ?? '',
+        selectedUserSession?.missionId ?? '',
+        selectedUserSession?.sessionId ?? '',
+        { drops }
+      );
+    } catch (error) {
+      console.error('Erro ao registrar drops:', error);
+    }
+  };
+
+  const fetchMissions = async () => {
+    try {
+      const data = await getAllMissions();
+      const userSessions = await getAllUserSessions(userId);
+      setMissions(data.results || []);
+      setSessions(userSessions.results || []);
+    } catch (error) {
+      console.error('Erro ao buscar missões ou sessões: ', error);
+    }
+  };
+  const handleOpenDropItemsModal = (session: Session) => {
+    setSelectedUserSession(session);
+    setDropItemsModalOpen(true);
+  };
+  const handleOpenModal = (session?: Session) => {
+    setSelectedUserSession(session);
+    setIsEditing(!!session);
+    setFormData(
+      session
+        ? {
+            sessionId: session.sessionId,
+            timeSpent: formatTime(session.totalTimeSpent, 'dots'),
+            name: session.name,
+            attempts: session.attempts
+          }
+        : { sessionId: '', timeSpent: '', attempts: 0, name: '' }
+    );
+    setOpenModal(true);
+    if (session) {
+      setSelectedMission(session?.mission || null);
+      setSelectedCharacter(session?.character);
+    }
+  };
+
+  const handleCloseModal = () => setOpenModal(false);
+
+  const handleSaveSession = async () => {
+    const searchUserCharId = userChars.find(ch => ch.gameChar.id === selectedCharacter?.id);
+    try {
+      if (isEditing) {
+        await updateFarmSession(
+          searchUserCharId?.id,
+          formData.sessionId,
+          selectedMission?.id,
+          formData
+        );
       } else {
-         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        await createFarmSession(userId, searchUserCharId?.id, selectedMission?.id, formData);
       }
-   }
-   const mockData = {
-      itemName: 'Pergaminho de propriedade Selecionável',
-      totalDropped: '4',
-      dropRate: '12.50',
-      avgTimePerDrop: '2028.75'
-   };
-   const fetchMissions = async () => {
-      try {
-         const data = await getAllMissions();
-         const userSessions = await getAllUserSessions(userId);
-         setMissions(data.results || []);
-         setSessions(userSessions.results || []);
-      } catch (error) {
-         console.error('Erro ao buscar missões ou sessões: ', error);
-      }
-   };
-
-   const handleOpenModal = (session?: Session) => {
-      setSelectedUserSession(session);
-      setIsEditing(!!session);
-      setFormData(
-         session
-            ? {
-                 sessionId: session.sessionId,
-                 timeSpent: formatTime(session.totalTimeSpent, 'dots'),
-                 name: session.name,
-                 attempts: session.attempts
-              }
-            : { sessionId: '', timeSpent: '', attempts: 0, name: '' }
-      );
-      setOpenModal(true);
-      if (session) {
-         setSelectedMission(session?.mission || null);
-         setSelectedCharacter(session?.character);
-      }
-   };
-
-   const handleCloseModal = () => setOpenModal(false);
-
-   const handleSaveSession = async () => {
-      const searchUserCharId = userChars.find(
-         ch => ch.gameChar.id === selectedCharacter?.id
-      );
-      try {
-         if (isEditing) {
-            await updateFarmSession(
-               searchUserCharId?.id,
-               formData.sessionId,
-               selectedMission?.id,
-               formData
-            );
-         } else {
-            await createFarmSession(
-               userId,
-               searchUserCharId?.id,
-               selectedMission?.id,
-               formData
-            );
-         }
-         fetchMissions();
-         handleCloseModal();
-      } catch (error) {
-         console.error(error);
-      }
-   };
-   const handleDeleteFarmSession = async (sessionId: string) => {
-      try {
-         await deleteFarmSession(sessionId);
-         fetchMissions();
-         showSnackbar('Sessão excluída com sucesso', 'success', {
-            vertical: 'top',
-            horizontal: 'center'
-         });
-      } catch (error) {
-         console.error('Erro ao deletar sessão:', error);
-         showSnackbar('Erro ao tentar Excluir Sessão', 'error', {
-            vertical: 'top',
-            horizontal: 'center'
-         });
-      } finally {
-         setConfirmModalIsOpen(false);
-      }
-   };
-
-   const handleCloseModalConfirm = () => {
+      fetchMissions();
+      handleCloseModal();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleDeleteFarmSession = async (sessionId: string) => {
+    try {
+      await deleteFarmSession(sessionId);
+      fetchMissions();
+      showSnackbar('Sessão excluída com sucesso', 'success', {
+        vertical: 'top',
+        horizontal: 'center'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar sessão:', error);
+      showSnackbar('Erro ao tentar Excluir Sessão', 'error', {
+        vertical: 'top',
+        horizontal: 'center'
+      });
+    } finally {
       setConfirmModalIsOpen(false);
-   };
+    }
+  };
 
-   const handleOpenModalConfirm = (session: Session) => {
-      setSelectedUserSession(session);
-      setConfirmModalIsOpen(true);
-   };
-   const handleExpand = sessionId => {
-      setExpandedId(expandedId === sessionId ? null : sessionId);
-   };
-   return (
-      <>
-         <Card
-            elevation={3}
+  const handleCloseModalConfirm = () => {
+    setConfirmModalIsOpen(false);
+  };
+
+  const handleOpenModalConfirm = (session: Session) => {
+    setSelectedUserSession(session);
+    setConfirmModalIsOpen(true);
+  };
+  const handleExpand = async sessionId => {
+    if (expandedId === sessionId) {
+      setExpandedId(null);
+      return;
+    }
+
+    try {
+      const data = await fetchDropRateSessionReport(sessionId);
+      setSessionDropRate(data.results);
+      setExpandedId(sessionId);
+    } catch (error) {
+      console.error('Erro ao buscar relatório de drop rate:', error);
+    }
+  };
+
+  const fetchDropRateSessionReport = async sessionId => {
+    try {
+      const data = await getDropRateSessionReport(sessionId);
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar relatório de drop rate:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <>
+      <Card
+        elevation={3}
+        sx={{
+          p: 3,
+          borderRadius: '14px',
+          boxShadow: 3,
+          marginBottom: '20px',
+          marginTop: '-20px',
+          bgcolor: green[800]
+        }}
+      >
+        <Stack
+          sx={{
+            display: 'flex',
+            flexDirection: 'row'
+          }}
+        >
+          <InfoOutlined
             sx={{
-               p: 3,
-               borderRadius: '14px',
-               boxShadow: 3,
-               marginBottom: '20px',
-               marginTop: '-20px',
-               bgcolor: green[800]
+              marginRight: '8px'
             }}
-         >
-            <Stack
-               sx={{
-                  display: 'flex',
-                  flexDirection: 'row'
-               }}
-            >
-               <InfoOutlined
-                  sx={{
-                     marginRight: '8px'
-                  }}
-               />
+          />
 
-               <Typography>
-                  Gerencie suas sessões de farm de maneira eficiente! Aqui você
-                  pode criar novas sessões, registrar o tempo gasto e
-                  tentativas, além de acompanhar missões e personagens
-                  utilizados. Edite e atualize suas sessões conforme necessário
-                  para manter um controle preciso do seu progresso.
-               </Typography>
-            </Stack>
-         </Card>
-         <Box
+          <Typography>
+            Gerencie suas sessões de farm de maneira eficiente! Aqui você pode criar novas sessões,
+            registrar o tempo gasto e tentativas, além de acompanhar missões e personagens
+            utilizados. Edite e atualize suas sessões conforme necessário para manter um controle
+            preciso do seu progresso.
+          </Typography>
+        </Stack>
+      </Card>
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center'
+        }}
+      >
+        <Box
+          sx={{
+            width: '80%'
+          }}
+        >
+          <Stack
             sx={{
-               width: '100%',
-               display: 'flex',
-               justifyContent: 'center'
+              bgcolor: 'rgba(0, 0, 0, 0.37);',
+              mb: '10px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center', // Centraliza o conteúdo na vertical
+              justifyContent: 'flex-start', // Alinha o conteúdo ao topo
+              padding: 1
             }}
-         >
-            <Box
-               sx={{
-                  width: '80%'
-               }}
-            >
-               <Stack
-                  sx={{
-                     bgcolor: 'rgba(0, 0, 0, 0.37);',
-                     mb: '10px',
-                     borderRadius: '16px',
-                     display: 'flex',
-                     alignItems: 'center', // Centraliza o conteúdo na vertical
-                     justifyContent: 'flex-start', // Alinha o conteúdo ao topo
-                     padding: 1
-                  }}
-               >
-                  <Button
-                     variant="contained"
-                     size="large"
-                     onClick={() => handleOpenModal()}
-                     sx={{
-                        width: '30%',
-                        bgcolor: blue[700],
-                        borderRadius: '12px',
-                        color: 'white',
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => handleOpenModal()}
+              sx={{
+                width: '30%',
+                bgcolor: blue[700],
+                borderRadius: '12px',
+                color: 'white',
 
-                        '&:hover': {
-                           bgcolor: theme.palette.primary.dark
-                        }
-                     }}
+                '&:hover': {
+                  bgcolor: theme.palette.primary.dark
+                }
+              }}
+            >
+              Criar Sessão
+            </Button>
+          </Stack>
+
+          <Box
+            sx={{
+              overflowY: 'auto',
+              paddingX: '20px',
+              height: '72vh'
+            }}
+          >
+            <Grid container spacing={3}>
+              {sessions?.sessions?.map(sessionItem => (
+                <Grid item xs={12} key={sessionItem.sessionId}>
+                  <Card
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      bgcolor: blue[800],
+                      borderRadius: 6,
+                      padding: 2,
+                      transition: 'transform 0.2s',
+                      cursor: 'pointer',
+                      minHeight: '153px',
+                      boxShadow: theme.shadows[3],
+                      position: 'relative'
+                    }}
                   >
-                     Criar Sessão
-                  </Button>
-               </Stack>
+                    {/* Área clicável para expandir */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        flexGrow: 1
+                      }}
+                      onClick={() => handleExpand(sessionItem.sessionId)}
+                    >
+                      <Stack justifyContent="center" alignItems="center" width="180px">
+                        {sessionItem.mission && (
+                          <img
+                            src={sessionItem.mission.imgUrl}
+                            alt={sessionItem.mission.name}
+                            width="70px"
+                            height="70px"
+                          />
+                        )}
+                        <Typography variant="caption" textAlign="center">
+                          {sessionItem.mission.name}
+                        </Typography>
+                      </Stack>
+                      <Divider orientation="vertical" flexItem />
+                      <Stack
+                        sx={{
+                          marginLeft: '10px',
+                          marginRight: '10px'
+                        }}
+                      >
+                        {sessionItem.character && (
+                          <img
+                            src={sessionItem.character.thumbImgUrl}
+                            alt={sessionItem.character.name}
+                          />
+                        )}
+                      </Stack>
+                      <Divider orientation="vertical" flexItem />
+                    </Box>
 
-               <Box
-                  sx={{
-                     overflowY: 'auto',
-                     paddingX: '20px',
-                     height: '72vh'
-                  }}
-               >
-                  <Grid container spacing={3}>
-                     {sessions?.sessions?.map(sessionItem => (
-                        <Grid item xs={12} key={sessionItem.sessionId}>
-                           <Card
+                    {/* Conteúdo principal do card */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
+                        px: 2
+                      }}
+                    >
+                      <Stack
+                        id="infos"
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'row',
+                          gap: '10px'
+                        }}
+                      >
+                        <CardCustom>
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            {/* Idas */}
+                            <Stack spacing={1} alignItems="center">
+                              <Typography variant="body2">Idas</Typography>
+                              <Typography variant="body1" fontWeight="bold">
+                                {sessionItem.attempts}
+                              </Typography>
+                            </Stack>
+                            <Divider orientation="vertical" flexItem />
+                            {/* Tempo Total e Tempo Médio */}
+                            <Stack
+                              spacing={1}
                               sx={{
-                                 display: 'flex',
-                                 flexDirection: 'row',
-                                 justifyContent: 'space-between',
-                                 alignItems: 'center',
-                                 bgcolor: blue[800],
-                                 borderRadius: 6,
-                                 padding: 2,
-                                 transition: 'transform 0.2s',
-                                 cursor: 'pointer',
-                                 minHeight: '153px',
-                                 boxShadow: theme.shadows[3],
-                                 position: 'relative'
+                                flex: 1,
+                                textAlign: 'center'
                               }}
-                           >
-                              {/* Área clicável para expandir */}
-                              <Box
-                                 sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2,
-                                    flexGrow: 1
-                                 }}
-                                 onClick={() =>
-                                    handleExpand(sessionItem.sessionId)
-                                 }
-                              >
-                                 <Stack
-                                    justifyContent="center"
-                                    alignItems="center"
-                                    width="180px"
-                                 >
-                                    {sessionItem.mission && (
-                                       <img
-                                          src={sessionItem.mission.imgUrl}
-                                          alt={sessionItem.mission.name}
-                                          width="70px"
-                                          height="70px"
-                                       />
-                                    )}
-                                    <Typography
-                                       variant="caption"
-                                       textAlign="center"
-                                    >
-                                       {sessionItem.mission.name}
-                                    </Typography>
-                                 </Stack>
-                                 <Divider orientation="vertical" flexItem />
-                                 <Stack
-                                    sx={{
-                                       marginLeft: '10px',
-                                       marginRight: '10px'
-                                    }}
-                                 >
-                                    {sessionItem.character && (
-                                       <img
-                                          src={
-                                             sessionItem.character.thumbImgUrl
-                                          }
-                                          alt={sessionItem.character.name}
-                                       />
-                                    )}
-                                 </Stack>
-                                 <Divider orientation="vertical" flexItem />
-                              </Box>
+                            >
+                              <Typography variant="body2">Tempo Total</Typography>
+                              <Typography variant="body1" fontWeight="bold">
+                                {formatTime(sessionItem?.totalTimeSpent, 'text')}
+                              </Typography>
+                              <Divider sx={{ my: 1 }} />
+                              <Typography variant="body2">Tempo Médio por Ida</Typography>
+                              <Typography variant="body1" fontWeight="bold">
+                                {formatTime(sessionItem?.avgTimePerAttempt, 'text')}
+                              </Typography>
+                            </Stack>
+                          </Stack>
+                        </CardCustom>
 
-                              {/* Conteúdo principal do card */}
-                              <Box
-                                 sx={{
-                                    display: 'flex',
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
+                        <CardCustom>
+                          <Stack spacing={1} sx={{ textAlign: 'center' }}>
+                            {/* Criado em */}
+                            <Typography variant="body2">Criado em</Typography>
+                            <Typography variant="body1" fontWeight="bold">
+                              {new Date(sessionItem?.created_at).toLocaleDateString('pt-BR', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </Typography>
+
+                            <Divider sx={{ my: 1 }} />
+
+                            {/* Última Modificação */}
+                            <Typography variant="body2">Última Modificação</Typography>
+                            <Typography variant="body1" fontWeight="bold">
+                              {new Date(sessionItem?.updated_at).toLocaleString('pt-BR', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })}
+                            </Typography>
+                          </Stack>
+                        </CardCustom>
+                      </Stack>
+                      <Button
+                        variant="contained"
+                        onClick={() => handleOpenDropItemsModal(sessionItem)}
+                        sx={{ mt: 2 }}
+                      >
+                        Cadastrar Itens Dropados
+                      </Button>
+                    </Box>
+
+                    {/* Ícones de edição e exclusão */}
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <IconButton
+                        onClick={() => handleOpenModal(sessionItem)}
+                        sx={{ color: 'white' }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleOpenModalConfirm(sessionItem)}
+                        sx={{ color: 'white' }}
+                      >
+                        <DeleteForever />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleExpand(sessionItem.sessionId)}
+                        sx={{ color: 'white' }}
+                      >
+                        {expandedId === sessionItem.sessionId ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
+                    </Box>
+                  </Card>
+                  <Collapse in={expandedId === sessionItem.sessionId}>
+                    <Box
+                      sx={{
+                        padding: 2,
+                        bgcolor: blue[900],
+                        borderRadius: '0 0 6px 6px',
+                        marginTop: '-18px' // Para unir visualmente com o card acima
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold" sx={{ my: 1, color: 'white' }}>
+                        Estatísticas de DropRate
+                      </Typography>
+                      <Box
+                        sx={{
+                          padding: '16px',
+                          borderRadius: '8px'
+                        }}
+                      >
+                        <Grid container spacing={2}>
+                          {sessionDropRate?.dropRates && sessionDropRate.dropRates.length > 0 ? (
+                            sessionDropRate.dropRates.map(item => (
+                              <Grid item xs={2} sm={2} key={item.itemName}>
+                                <Card
+                                  elevation={3}
+                                  sx={{
                                     width: '100%',
-                                    px: 2
-                                 }}
-                              >
-                                 <Stack
-                                    id="infos"
+                                    p: 2,
+                                    borderRadius: '8px',
+                                    bgcolor: blue[800]
+                                  }}
+                                >
+                                  <Stack
+                                    spacing={1}
                                     sx={{
-                                       width: '100%',
-                                       display: 'flex',
-                                       flexDirection: 'row',
-                                       gap: '10px'
+                                      alignItems: 'center'
                                     }}
-                                 >
-                                    <CardCustom>
-                                       <Stack
-                                          direction="row"
-                                          spacing={2}
-                                          alignItems="center"
-                                          justifyContent="space-between"
-                                       >
-                                          {/* Idas */}
-                                          <Stack
-                                             spacing={1}
-                                             alignItems="center"
-                                          >
-                                             <Typography variant="body2">
-                                                Idas
-                                             </Typography>
-                                             <Typography
-                                                variant="body1"
-                                                fontWeight="bold"
-                                             >
-                                                {sessionItem.attempts}
-                                             </Typography>
-                                          </Stack>
-                                          <Divider
-                                             orientation="vertical"
-                                             flexItem
-                                          />
-                                          {/* Tempo Total e Tempo Médio */}
-                                          <Stack
-                                             spacing={1}
-                                             sx={{
-                                                flex: 1,
-                                                textAlign: 'center'
-                                             }}
-                                          >
-                                             <Typography variant="body2">
-                                                Tempo Total
-                                             </Typography>
-                                             <Typography
-                                                variant="body1"
-                                                fontWeight="bold"
-                                             >
-                                                {formatTime(
-                                                   sessionItem?.totalTimeSpent,
-                                                   'text'
-                                                )}
-                                             </Typography>
-                                             <Divider sx={{ my: 1 }} />
-                                             <Typography variant="body2">
-                                                Tempo Médio por Ida
-                                             </Typography>
-                                             <Typography
-                                                variant="body1"
-                                                fontWeight="bold"
-                                             >
-                                                {formatTime(
-                                                   sessionItem?.avgTimePerAttempt,
-                                                   'text'
-                                                )}
-                                             </Typography>
-                                          </Stack>
-                                       </Stack>
-                                    </CardCustom>
+                                  >
+                                    <Typography
+                                      variant="body1"
+                                      sx={{
+                                        fontWeight: 'bold'
+                                      }}
+                                    >
+                                      {item.totalDropped}x{''} {item.itemName}
+                                    </Typography>
 
-                                    <CardCustom>
-                                       <Stack
-                                          spacing={1}
-                                          sx={{ textAlign: 'center' }}
-                                       >
-                                          {/* Criado em */}
-                                          <Typography variant="body2">
-                                             Criado em
-                                          </Typography>
-                                          <Typography
-                                             variant="body1"
-                                             fontWeight="bold"
-                                          >
-                                             {new Date(
-                                                sessionItem?.created_at
-                                             ).toLocaleDateString('pt-BR', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric'
-                                             })}
-                                          </Typography>
+                                    <Box
+                                      sx={{
+                                        width: '80%',
+                                        height: 1,
+                                        bgcolor: grey[300],
+                                        borderRadius: '4px',
+                                        my: 1
+                                      }}
+                                    />
+                                    <Stack flexDirection="row">
 
-                                          <Divider sx={{ my: 1 }} />
-
-                                          {/* Última Modificação */}
-                                          <Typography variant="body2">
-                                             Última Modificação
-                                          </Typography>
-                                          <Typography
-                                             variant="body1"
-                                             fontWeight="bold"
-                                          >
-                                             {new Date(
-                                                sessionItem?.updated_at
-                                             ).toLocaleString('pt-BR', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                hour12: false
-                                             })}
-                                          </Typography>
-                                       </Stack>
-                                    </CardCustom>
-                                 </Stack>
-                              </Box>
-
-                              {/* Ícones de edição e exclusão */}
-                              <Box
-                                 sx={{ display: 'flex', alignItems: 'center' }}
-                              >
-                                 <IconButton
-                                    onClick={() => handleOpenModal(sessionItem)}
-                                    sx={{ color: 'white' }}
-                                 >
-                                    <EditIcon />
-                                 </IconButton>
-                                 <IconButton
-                                    onClick={() =>
-                                       handleOpenModalConfirm(sessionItem)
-                                    }
-                                    sx={{ color: 'white' }}
-                                 >
-                                    <DeleteForever />
-                                 </IconButton>
-                                 {/* Ícone para expandir/recolher */}
-                                 <IconButton
-                                    onClick={() =>
-                                       handleExpand(sessionItem.sessionId)
-                                    }
-                                    sx={{ color: 'white' }}
-                                 >
-                                    {expandedId === sessionItem.sessionId ? (
-                                       <ExpandLess />
-                                    ) : (
-                                       <ExpandMore />
-                                    )}
-                                 </IconButton>
-                              </Box>
-                           </Card>
-
-                           {/* Área expandida */}
-                           <Collapse in={expandedId === sessionItem.sessionId}>
-                              <Box
-                                 sx={{
-                                    padding: 2,
-                                    bgcolor: blue[900],
-                                    borderRadius: '0 0 6px 6px',
-                                    marginTop: '-18px' // Para unir visualmente com o card acima
-                                 }}
-                              >
-                                 <Typography variant="h6">
-                                    Detalhes Adicionais
-                                 </Typography>
-                                 <Paper
-                                    sx={{
-                                       padding: '16px',
-                                       borderRadius: '8px',
-                                       bgcolor: 'rgba(0, 0, 0, 0.1)'
-                                    }}
-                                 >
-                                    <Stack spacing={2}>
-                                       <Typography
-                                          variant="h6"
-                                          sx={{ fontWeight: 'bold' }}
-                                       >
-                                          Item: {mockData.itemName}
-                                       </Typography>
-                                       <Typography variant="body1">
-                                          <strong>Total Dropped:</strong>{' '}
-                                          {mockData.totalDropped}
-                                       </Typography>
-                                       <Typography variant="body1">
-                                          <strong>Drop Rate:</strong>{' '}
-                                          {mockData.dropRate}%
-                                       </Typography>
-                                       <Typography variant="body1">
-                                          <strong>Avg Time Per Drop:</strong>{' '}
-                                          {mockData.avgTimePerDrop} segundos
-                                       </Typography>
+                                    <Typography
+                                      variant="body1"
+                                      sx={{
+                                        olor: grey[200],
+                                        fontWeight: 'bold',
+                                        mr:"5px"
+                                      }}
+                                    >
+                                      Drop Rate:
+                                    </Typography>
+                                    <Typography
+                                      variant="body1"
+                                      sx={{
+                                        color: green[400],
+                                        fontWeight: 'bold'
+                                      }}
+                                    >
+                                     {item.dropRate}%
+                                    </Typography>
                                     </Stack>
-                                 </Paper>
-                              </Box>
-                           </Collapse>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontWeight: 'bold',
+                                        color: grey[200]
+                                      }}
+                                    >
+                                      Tempo Médio por Drop:
+                                    </Typography>
+                                    <Typography
+                                      variant="body1"
+                                      sx={{
+                                        fontWeight: 'bold',
+                                        color: green[400]
+                                      }}
+                                    >
+                                      {formatTime(Number(item.avgTimePerDrop), 'text')}
+                                    </Typography>
+                                  </Stack>
+                                </Card>
+                              </Grid>
+                            ))
+                          ) : (
+                            <Grid item xs={12}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  textAlign: 'center',
+                                  color: 'gray'
+                                }}
+                              >
+                                Nenhum dado disponível
+                              </Typography>
+                            </Grid>
+                          )}
                         </Grid>
-                     ))}
-                  </Grid>
+                      </Box>
+                    </Box>
+                  </Collapse>
+                </Grid>
+              ))}
+            </Grid>
 
-                  <CreateSessionModal
-                     openModal={openModal}
-                     handleCloseModal={handleCloseModal}
-                     isEditing={isEditing}
-                     formData={formData}
-                     handleSaveSession={handleSaveSession}
-                     missions={missions}
-                     userChars={userChars}
-                     selectedCharacter={selectedCharacter}
-                     selectedMission={selectedMission}
-                     setFormData={setFormData}
-                     setSelectedMission={setSelectedMission}
-                     setSelectedCharacter={setSelectedCharacter}
-                  ></CreateSessionModal>
-                  <ConfirmationModal
-                     open={confirmModalIsOpen}
-                     title="Excluir Sessão"
-                     message="Tem certeza que deseja excluir esta sessão?"
-                     onClose={handleCloseModalConfirm}
-                     onConfirm={() =>
-                        handleDeleteFarmSession(selectedUserSession?.sessionId)
-                     }
-                  ></ConfirmationModal>
-               </Box>
-            </Box>
-         </Box>
-      </>
-   );
+            <CreateSessionModal
+              openModal={openModal}
+              handleCloseModal={handleCloseModal}
+              isEditing={isEditing}
+              formData={formData}
+              handleSaveSession={handleSaveSession}
+              missions={missions}
+              userChars={userChars}
+              selectedCharacter={selectedCharacter}
+              selectedMission={selectedMission}
+              setFormData={setFormData}
+              setSelectedMission={setSelectedMission}
+              setSelectedCharacter={setSelectedCharacter}
+            ></CreateSessionModal>
+            <ConfirmationModal
+              open={confirmModalIsOpen}
+              title="Excluir Sessão"
+              message="Tem certeza que deseja excluir esta sessão?"
+              onClose={handleCloseModalConfirm}
+              onConfirm={() => handleDeleteFarmSession(selectedUserSession?.sessionId)}
+            ></ConfirmationModal>
+            <DropItemsModal
+              open={dropItemsModalOpen}
+              onClose={() => setDropItemsModalOpen(false)}
+              onSave={drops => {
+                registerDrops(drops);
+              }}
+            />
+          </Box>
+        </Box>
+      </Box>
+    </>
+  );
 };
 
 export default DashboardPage;

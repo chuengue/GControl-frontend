@@ -53,3 +53,30 @@ interface GetAllFilters {
     accessoryType?: AccessoryType;
     category?: ItemCategory;
 }
+
+export interface DropItem {
+    itemId: string;
+    quantity: number;
+ }
+ 
+ export interface DropData {
+    drops: DropItem[];
+ }
+
+ export interface DropRateReport {
+    success: boolean;
+    results: {
+       sessionId: string;
+       attempts: number;
+       totalTimeSpent: number;
+       avgTimePerAttempt: number;
+       dropRates: DropRateItem[];
+    };
+ }
+ 
+ export interface DropRateItem {
+    itemName: string;
+    totalDropped: string; // Se o backend retornar como string, manter assim. Caso contrário, alterar para `number`.
+    dropRate: string; // Se for sempre um número, alterar para `number`.
+    avgTimePerDrop: string; // Alterar para `number` se necessário.
+ }

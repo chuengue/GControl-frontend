@@ -1,33 +1,9 @@
 import { Add, CheckCircle, Inventory, Remove } from '@mui/icons-material';
-import {
-    Box,
-    Card,
-    CardContent,
-    Container,
-    Divider,
-    IconButton,
-    Menu,
-    MenuItem,
-    Popover,
-    Stack,
-    Typography,
-    useTheme
-} from '@mui/material';
+import { Box, Card, CardContent, Container, Divider, IconButton, Menu, MenuItem, Popover, Stack, Typography, useTheme } from '@mui/material';
 import React, { useState } from 'react';
 
-import {
-    AccessoryType,
-    EquipmentType,
-    ItemCategory,
-    ItemStats,
-    Rarity
-} from '../../../pages/admin/types';
-import {
-    ACCESSORY_TYPES_ENUM,
-    EQUIPMENT_TYPE_ENUM,
-    ITEM_CATEGORY_ENUM,
-    RARITIES_ENUM,
-} from './itemsEnum';
+import { AccessoryType, EquipmentType, ItemCategory, ItemStats, Rarity } from '../../../pages/admin/types';
+import { ACCESSORY_TYPES_ENUM, EQUIPMENT_TYPE_ENUM, ITEM_CATEGORY_ENUM, RARITIES_ENUM } from './itemsEnum';
 
 export interface ItemBoxPropsItem {
     id: string;
@@ -49,15 +25,16 @@ const ItemBox: React.FC<{
     item: ItemBoxPropsItem;
     IsDefault?: boolean;
     defaultType?: EquipmentType;
-    hasChangeQuantity: boolean;
+    hasChangeQuantity?: boolean;
     hasMoveItem?: boolean;
-    hasOnEquip: boolean;
-    hasOnUnequip: boolean;
-    onMoveTitle: string;
+    hasOnEquip?: boolean;
+    hasOnUnequip?: boolean;
+    onMoveTitle?: string;
     onChangeQuantity?: (item, value) => void;
     onMoveItem?: (item) => void;
     onEquip?: (item) => void;
     onUnequip?: (item) => void;
+    hasDetails?:boolean;
 }> = ({
     item,
     IsDefault = false,
@@ -68,6 +45,7 @@ const ItemBox: React.FC<{
     onMoveTitle,
     hasOnUnequip = false,
     onChangeQuantity,
+    hasDetails = true,
     onMoveItem,
     onEquip,
     onUnequip
@@ -136,10 +114,6 @@ const ItemBox: React.FC<{
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 cursor: 'pointer',
-                transition: IsDefault ? 'none' : 'transform 0.2s',
-                '&:hover': {
-                    transform: IsDefault ? 'none' : 'scale(1.1)'
-                },
                 position: 'relative' // Adicionado para posicionar o contador
             }}
             onMouseEnter={handlePopoverOpen}
@@ -202,7 +176,7 @@ const ItemBox: React.FC<{
                     </Box>
                 )}
             </CardContent>
-            {!IsDefault && (
+            {!IsDefault && hasDetails && (
                 <Popover
                     id="mouse-over-popover"
                     aria-owns={open ? 'mouse-over-popover' : undefined}
