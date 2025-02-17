@@ -174,7 +174,7 @@ const DropItemsModal = ({ open, onClose, onSave }) => {
                               selected => selected.itemId === item.id
                            )}
                            component="div"
-                           sx={{ mb: 1, display: 'flex', alignItems: 'center' }}
+                           sx={{ mb: 1, display: 'flex', alignItems: 'center', cursor: 'pointer', borderRadius:"12px"}}
                         >
                            <Stack
                               direction="row"

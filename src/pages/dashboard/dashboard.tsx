@@ -1,29 +1,11 @@
-import { DeleteForever, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material';
+import { DeleteForever, ExpandLess, ExpandMore, InfoOutlined, Pause, PlayArrow, Stop } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
-import {
-  Box,
-  Button,
-  Card,
-  Collapse,
-  Divider,
-  Grid,
-  IconButton,
-  Stack,
-  Typography,
-  useTheme
-} from '@mui/material';
+import { Box, Button, Card, Collapse, Divider, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { blue, green, grey } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
 import { registerItemDropsInSession } from '../../service/requests/items';
-import {
-  createFarmSession,
-  deleteFarmSession,
-  getAllMissions,
-  getAllUserSessions,
-  getDropRateSessionReport,
-  updateFarmSession
-} from '../../service/requests/missions/missions';
+import { createFarmSession, deleteFarmSession, getAllMissions, getAllUserSessions, getDropRateSessionReport, updateFarmSession } from '../../service/requests/missions/missions';
 import { FarmSessionsResponse } from '../../service/requests/missions/type';
 import { DropItem, DropRateReport } from '../../service/requests/types';
 import { useSession } from '../../SessionContext';
@@ -58,12 +40,148 @@ const DashboardPage = () => {
   const { session } = useSession();
   const { showSnackbar } = useSnackbarStore();
   const { userChars, fetchUserCharsData } = useCharStore();
+  const [isRunning, setIsRunning] = useState(false); // Estado para controlar se o cronômetro está ativo
+  const [elapsedTime, setElapsedTime] = useState(0); // Tempo decorrido em segundos
+  const [startTime, setStartTime] = useState<number | null>(null); // Tempo inicial do cronômetro
   const theme = useTheme();
   const userId = session?.user.uid;
   useEffect(() => {
     fetchUserCharsData(userId);
     fetchMissions();
   }, [userId]);
+
+  const startTimer = (session: Session) => {
+    if (!isRunning) {
+      setElapsedTime(session.totalTimeSpent); // Inicializa o elapsedTime com o totalTimeSpent da sessão
+      setSelectedUserSession(session);
+      setIsRunning(true);
+      setStartTime(Date.now() - session.totalTimeSpent * 1000); // Ajusta o tempo inicial para continuar de onde parou
+    }
+  };
+
+  const pauseTimer = async (session: Session) => {
+    setSelectedUserSession(session);
+
+    if (isRunning) {
+      setIsRunning(false);
+
+      // Atualiza o tempo decorrido
+      const currentTime = Date.now();
+      const newElapsedTime = Math.floor((currentTime - (startTime || 0)) / 1000);
+      setElapsedTime(newElapsedTime);
+
+      // Faz o update do timeSpent no backend
+      if (selectedUserSession) {
+        const newTime = newElapsedTime;
+
+        try {
+          // Atualiza o tempo no backend
+          await updateFarmSession(
+            selectedUserSession.userCharId,
+            selectedUserSession.sessionId,
+            selectedUserSession.missionId,
+            { timeSpent: formatTime(newTime, 'dots') }
+          );
+
+          // Atualiza o estado local das sessões
+          if (sessions && sessions.sessions) {
+            const updatedSessions = sessions.sessions.map(s => {
+              if (s.sessionId === session.sessionId) {
+                return {
+                  ...s,
+                  totalTimeSpent: newTime,
+                  avgTimePerAttempt: newTime / s.attempts // Atualiza o totalTimeSpent
+                };
+              }
+              return s;
+            });
+
+            // Atualiza o estado das sessões
+            setSessions(prevSessions => ({
+              ...prevSessions,
+              sessions: updatedSessions
+            }));
+          }
+
+          showSnackbar('Tempo atualizado com sucesso!', 'success');
+        } catch (error) {
+          console.error('Erro ao atualizar o tempo:', error);
+          showSnackbar('Erro ao atualizar o tempo', 'error');
+        }
+      }
+    }
+  };
+
+  const resetTimer = async (session: Session) => {
+    setSelectedUserSession(session);
+
+    setIsRunning(false);
+    setElapsedTime(0);
+    setStartTime(null);
+
+    // Atualiza o tempo no backend para 0
+    try {
+      await updateFarmSession(session.userCharId, session.sessionId, session.missionId, {
+        timeSpent: formatTime(0, 'dots')
+      });
+
+      // Atualiza o estado local das sessões
+      if (sessions && sessions.sessions) {
+        const updatedSessions = sessions.sessions.map(s => {
+          if (s.sessionId === session.sessionId) {
+            return {
+              ...s,
+              totalTimeSpent: 0,
+              avgTimePerAttempt: 0 // Atualiza o totalTimeSpent
+            };
+          }
+          return s;
+        });
+
+        // Atualiza o estado das sessões
+        setSessions(prevSessions => ({
+          ...prevSessions,
+          sessions: updatedSessions
+        }));
+      }
+
+      showSnackbar('Timer resetado com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao resetar o timer:', error);
+      showSnackbar('Erro ao resetar o timer', 'error');
+    }
+  };
+  useEffect(() => {
+    let interval: any;
+    if (isRunning) {
+      interval = setInterval(() => {
+        const currentTime = Date.now();
+        const newElapsedTime = Math.floor((currentTime - (startTime || 0)) / 1000);
+        setElapsedTime(newElapsedTime);
+
+        // Atualiza o estado local das sessões em tempo real
+        if (selectedUserSession && sessions && sessions.sessions) {
+          const updatedSessions = sessions.sessions.map(s => {
+            if (s.sessionId === selectedUserSession.sessionId) {
+              return {
+                ...s,
+                totalTimeSpent: newElapsedTime,
+                avgTimePerAttempt: newElapsedTime / s.attempts // Atualiza o totalTimeSpent
+              };
+            }
+            return s;
+          });
+
+          // Atualiza o estado das sessões
+          setSessions(prevSessions => ({
+            ...prevSessions,
+            sessions: updatedSessions
+          }));
+        }
+      }, 1000); // Atualiza a cada segundo
+    }
+    return () => clearInterval(interval); // Limpa o intervalo quando o componente é desmontado ou o cronômetro é pausado
+  }, [isRunning, startTime, selectedUserSession, sessions]);
   function formatTime(totalTimeInSeconds: number, variant: 'text' | 'dots') {
     const time = Math.floor(totalTimeInSeconds);
     const hours = Math.floor(time / 3600);
@@ -107,6 +225,7 @@ const DashboardPage = () => {
     setDropItemsModalOpen(true);
   };
   const handleOpenModal = (session?: Session) => {
+    if (session) pauseTimer(session);
     setSelectedUserSession(session);
     setIsEditing(!!session);
     setFormData(
@@ -357,6 +476,7 @@ const DashboardPage = () => {
                           width: '100%',
                           display: 'flex',
                           flexDirection: 'row',
+                          alignItems: 'center',
                           gap: '10px'
                         }}
                       >
@@ -395,7 +515,34 @@ const DashboardPage = () => {
                             </Stack>
                           </Stack>
                         </CardCustom>
-
+                        <CardCustom>
+                          <Stack direction="column">
+                            <Tooltip title="Iniciar Sessão" placement="top-start">
+                              <IconButton
+                                onClick={() => startTimer(sessionItem)}
+                                disabled={isRunning}
+                              >
+                                <PlayArrow />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Pausar Sessão" placement="top-start">
+                              <IconButton
+                                onClick={() => pauseTimer(sessionItem)}
+                                disabled={!isRunning}
+                              >
+                                <Pause />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Resetar Timer da Sessão" placement="top-start">
+                              <IconButton
+                                onClick={() => resetTimer(sessionItem)}
+                                disabled={!isRunning && elapsedTime === 0}
+                              >
+                                <Stop />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </CardCustom>
                         <CardCustom>
                           <Stack spacing={1} sx={{ textAlign: 'center' }}>
                             {/* Criado em */}
@@ -410,7 +557,6 @@ const DashboardPage = () => {
 
                             <Divider sx={{ my: 1 }} />
 
-                            {/* Última Modificação */}
                             <Typography variant="body2">Última Modificação</Typography>
                             <Typography variant="body1" fontWeight="bold">
                               {new Date(sessionItem?.updated_at).toLocaleString('pt-BR', {
@@ -424,15 +570,18 @@ const DashboardPage = () => {
                             </Typography>
                           </Stack>
                         </CardCustom>
-                      </Stack>
+                      <Box>
                       <Button
                         variant="contained"
                         onClick={() => handleOpenDropItemsModal(sessionItem)}
-                        sx={{ mt: 2 }}
+                        sx={{  maxWidth: 120, padding: 2, borderRadius:"12px", color:"white", bgcolor:blue[600], ml:"40px" }}
                       >
-                        Cadastrar Itens Dropados
+                        Registrar Itens Dropados
                       </Button>
                     </Box>
+                      </Stack>
+                    </Box>
+               
 
                     {/* Ícones de edição e exclusão */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -512,26 +661,25 @@ const DashboardPage = () => {
                                       }}
                                     />
                                     <Stack flexDirection="row">
-
-                                    <Typography
-                                      variant="body1"
-                                      sx={{
-                                        olor: grey[200],
-                                        fontWeight: 'bold',
-                                        mr:"5px"
-                                      }}
-                                    >
-                                      Drop Rate:
-                                    </Typography>
-                                    <Typography
-                                      variant="body1"
-                                      sx={{
-                                        color: green[400],
-                                        fontWeight: 'bold'
-                                      }}
-                                    >
-                                     {item.dropRate}%
-                                    </Typography>
+                                      <Typography
+                                        variant="body1"
+                                        sx={{
+                                          olor: grey[200],
+                                          fontWeight: 'bold',
+                                          mr: '5px'
+                                        }}
+                                      >
+                                        Drop Rate:
+                                      </Typography>
+                                      <Typography
+                                        variant="body1"
+                                        sx={{
+                                          color: green[400],
+                                          fontWeight: 'bold'
+                                        }}
+                                      >
+                                        {item.dropRate}%
+                                      </Typography>
                                     </Stack>
                                     <Typography
                                       variant="body2"
@@ -546,7 +694,7 @@ const DashboardPage = () => {
                                       variant="body1"
                                       sx={{
                                         fontWeight: 'bold',
-                                        color: green[400],
+                                        color: green[400]
                                       }}
                                     >
                                       {formatTime(Number(item.avgTimePerDrop), 'text')}
