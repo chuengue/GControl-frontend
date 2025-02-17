@@ -110,7 +110,7 @@ function Register() {
                     variant="h4"
                     component="h1"
                     textAlign="center"
-                    fontFamily={'Faktos'}
+                    fontFamily={'faktos'}
                 >
                     Cadastro
                 </Typography>

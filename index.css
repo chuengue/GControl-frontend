@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'faktos';
-    src: url('./src/assets/fonts/faktos.ttf') format('truetype'); /* Ajuste o caminho */
+    src: url('/public/fonts/faktos.ttf') format('truetype'); /* Ajuste o caminho */
     font-weight: bold;
     font-style: normal;
 }

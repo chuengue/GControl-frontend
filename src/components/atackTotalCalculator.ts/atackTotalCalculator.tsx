@@ -123,7 +123,7 @@ function TotalattackCalculator() {
         >
             <Typography
                 variant="h4"
-                fontFamily="Faktos"
+                fontFamily="faktos"
                 sx={{
                     textAlign: 'center',
                     color: 'white',
