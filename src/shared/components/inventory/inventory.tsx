@@ -12,7 +12,6 @@ import { useSnackbarStore } from '../../../stores/snackBarStore';
 import { formatItemBoxPropsItem } from '../itemBox/formatItem';
 import ItemBox from '../itemBox/itemBox';
 
-const categories = ['equipment', 'accessory', 'slot', 'pet', 'etc', 'scroll'];
 
 const Inventory: React.FC<{
     fetchType?: 'allItems' | 'charItens';
@@ -24,7 +23,6 @@ const Inventory: React.FC<{
     onMoveItem?: (item) => void;
 }> = ({
     fetchType = 'allItems',
-
     hasChangeQuantity = false,
     hasMoveItem = false,
     hasOnEquip = false,
@@ -37,7 +35,7 @@ const Inventory: React.FC<{
     const { showSnackbar } = useSnackbarStore();
     const { userItems, setUserItems } = useCharStore();
     const [selectedCategory, setSelectedCategory] =
-        useState<ItemCategory>('equipment');
+        useState<ItemCategory>('');
     const [search, setSearch] = useState('');
     const [selectedRarity, setSelectedRarity] = useState<Rarity>('');
     const [selectedAccessoryType, setSelectedAccessoryType] =

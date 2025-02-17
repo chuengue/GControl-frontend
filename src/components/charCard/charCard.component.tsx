@@ -1,14 +1,5 @@
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
-import {
-    Avatar,
-    Box,
-    Button,
-    Card,
-    IconButton,
-    Stack,
-    Tooltip,
-    Typography
-} from '@mui/material';
+import { Avatar, Box, Button, Card, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
@@ -169,7 +160,7 @@ function CharCard({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        height: '100%' // Garantindo que o card de adição ocupe toda a altura disponível
+                        height: chars.length ?"100%" : "500px" // Garantindo que o card de adição ocupe toda a altura disponível
                     }}
                 >
                     <Tooltip title="Adiciona Personagem">

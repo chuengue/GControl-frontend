@@ -505,12 +505,16 @@ const DashboardPage = () => {
                             >
                               <Typography variant="body2">Tempo Total</Typography>
                               <Typography variant="body1" fontWeight="bold">
-                                {formatTime(sessionItem?.totalTimeSpent, 'text')}
+                                {sessionItem?.totalTimeSpent
+                                  ? formatTime(sessionItem?.totalTimeSpent, 'text')
+                                  : '00:00:00'}
                               </Typography>
                               <Divider sx={{ my: 1 }} />
                               <Typography variant="body2">Tempo Médio por Ida</Typography>
                               <Typography variant="body1" fontWeight="bold">
-                                {formatTime(sessionItem?.avgTimePerAttempt, 'text')}
+                                {sessionItem.avgTimePerAttempt
+                                  ? formatTime(sessionItem?.avgTimePerAttempt, 'text')
+                                  : '00:00:00'}
                               </Typography>
                             </Stack>
                           </Stack>
@@ -570,18 +574,24 @@ const DashboardPage = () => {
                             </Typography>
                           </Stack>
                         </CardCustom>
-                      <Box>
-                      <Button
-                        variant="contained"
-                        onClick={() => handleOpenDropItemsModal(sessionItem)}
-                        sx={{  maxWidth: 120, padding: 2, borderRadius:"12px", color:"white", bgcolor:blue[600], ml:"40px" }}
-                      >
-                        Registrar Itens Dropados
-                      </Button>
-                    </Box>
+                        <Box>
+                          <Button
+                            variant="contained"
+                            onClick={() => handleOpenDropItemsModal(sessionItem)}
+                            sx={{
+                              maxWidth: 120,
+                              padding: 2,
+                              borderRadius: '12px',
+                              color: 'white',
+                              bgcolor: blue[600],
+                              ml: '40px'
+                            }}
+                          >
+                            Registrar Itens Dropados
+                          </Button>
+                        </Box>
                       </Stack>
                     </Box>
-               
 
                     {/* Ícones de edição e exclusão */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -642,14 +652,27 @@ const DashboardPage = () => {
                                       alignItems: 'center'
                                     }}
                                   >
-                                    <Typography
-                                      variant="body1"
-                                      sx={{
-                                        fontWeight: 'bold'
-                                      }}
-                                    >
-                                      {item.totalDropped}x{''} {item.itemName}
-                                    </Typography>
+                                    <Stack flexDirection="row">
+                                      <Typography
+                                        variant="body2"
+                                        gutterBottom={true}
+                                        sx={{
+                                          fontWeight: 'bold',
+                                          mr: '5px'
+                                        }}
+                                      >
+                                        {item.totalDropped}x
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        gutterBottom={true}
+                                        sx={{
+                                          fontWeight: 'bold'
+                                        }}
+                                      >
+                                        {item.itemName}
+                                      </Typography>
+                                    </Stack>
 
                                     <Box
                                       sx={{
@@ -697,7 +720,9 @@ const DashboardPage = () => {
                                         color: green[400]
                                       }}
                                     >
-                                      {formatTime(Number(item.avgTimePerDrop), 'text')}
+                                      {item.avgTimePerDrop
+                                        ? formatTime(Number(item.avgTimePerDrop), 'text')
+                                        : '00:00:00'}
                                     </Typography>
                                   </Stack>
                                 </Card>

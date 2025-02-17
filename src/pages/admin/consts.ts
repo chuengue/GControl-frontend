@@ -1,4 +1,5 @@
 export const categoryOptions = [
+    { label: 'Todos', value: '' },
     { label: 'Equipamento', value: 'equipment' },
     { label: 'Acessório', value: 'accessory' },
     { label: 'Consumível', value: 'slot' },
