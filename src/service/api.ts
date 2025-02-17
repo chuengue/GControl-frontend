@@ -1,12 +1,11 @@
 import axios from 'axios';
 
 import { getAuth } from 'firebase/auth';
-
+const baseURL = import.meta.env.VITE_API_URL
+console.log(import.meta.env.VITE_API_URL)
 const api = axios.create({
-    baseURL: 'http://localhost:3333/api' // Substitua pela sua API
+    baseURL: baseURL
 });
-
-// Adiciona o token a cada requisição
 api.interceptors.request.use(
     async config => {
         const auth = getAuth();

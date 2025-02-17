@@ -37,9 +37,13 @@ next-env.d.ts
 /.vscode
 .env
 .env.development.local
+.env.development
 .env.test.local
 .env.production.local
+.env.production
 .env.local
 dist-ssr
 build/Release
 pnpm-lock.yaml
+/build
+.envxxx
