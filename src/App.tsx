@@ -81,7 +81,7 @@ export const NAVIGATION: CustomNav = [
 ];
 
 const BRANDING = {
-    title: 'teste-gc-with-firebase'
+    title: 'Chase Tracker'
 };
 
 const AUTHENTICATION: Authentication = {
