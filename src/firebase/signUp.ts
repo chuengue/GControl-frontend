@@ -1,9 +1,6 @@
-import {
-    createUserWithEmailAndPassword,
-    getAuth,
-    updateProfile
-} from 'firebase/auth';
 import { doc, getFirestore, setDoc } from 'firebase/firestore';
+
+import { createUserWithEmailAndPassword, getAuth, updateProfile } from 'firebase/auth';
 
 const auth = getAuth();
 const db = getFirestore();
@@ -37,7 +34,6 @@ export const registerUser = async (
                 photoURL: user.photoURL
             });
 
-            console.log('Profile updated successfully');
         }
 
         return userCredential;

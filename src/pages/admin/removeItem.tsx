@@ -1,5 +1,6 @@
 import { Box, Button, Container, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
+
 import { deleteItem } from '../../service/requests/items';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 
@@ -18,7 +19,6 @@ const RemoveItemPage = () => {
                 horizontal: 'center'
             });
         } catch (err) {
-            console.log(err);
             showSnackbar(err.response.data.error, 'error', {
                 vertical: 'top',
                 horizontal: 'center'

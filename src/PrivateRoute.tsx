@@ -24,7 +24,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, adminOnly }) => {
                     // Verifica se o usuário é admin
                     setIsAdmin(!!idTokenResult.claims.admin);
                 } catch (error) {
-                    console.log('Erro ao verificar o papel do usuário:', error);
+                  /*   console.log('Erro ao verificar o papel do usuário:', error); */
                 }
             }
             setLoading(false);

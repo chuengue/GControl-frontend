@@ -7,12 +7,14 @@ import { accessoriesOptions, armorTypeOptions } from '../../../pages/admin/const
 import { EquipmentType, GrandChaseItem } from '../../../pages/admin/types';
 import { getUserCharDetails } from '../../../service/requests/gameChar';
 import useCharStore from '../../../stores/charStore';
+import { useSnackbarStore } from '../../../stores/snackBarStore';
 import ItemBox from '../itemBox/itemBox';
 
 const UserCharDetailsView = () => {
     const { chardId, userId } = useParams();
     const [userChar, setUserChar] = useState<any>(null);
     const { userItems, setUserItems } = useCharStore();
+    const { showSnackbar } = useSnackbarStore();
 
     useEffect(() => {
         const fetchUserCharDetails = async () => {
@@ -23,7 +25,8 @@ const UserCharDetailsView = () => {
                 );
                 setUserChar(userCharDetails);
             } catch (error) {
-                console.log(error);
+                showSnackbar(error.message, 'error');
+
             }
         };
 

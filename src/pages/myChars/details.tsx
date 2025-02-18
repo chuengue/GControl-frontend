@@ -7,6 +7,7 @@ import { addItemToInventory } from '../../service/requests/inventory';
 import Inventory from '../../shared/components/inventory/inventory';
 import UserCharDetailsView from '../../shared/components/userCharDetailsView/userCharDetailsView';
 import useCharStore from '../../stores/charStore';
+import { useSnackbarStore } from '../../stores/snackBarStore';
 
 const equipmentSlots = ['Elmo', 'Luvas', 'Cota', 'Calça', 'Sapato'];
 const accessorySlots = [
@@ -26,6 +27,7 @@ const UserCharDetailsPage = () => {
     const { chardId } = useParams<{ chardId?: string }>(); // Permitir undefined
     const { userId } = useParams<{ userId?: string }>(); // Permitir undefined
     const { userChars, fetchUserItems, fetchUserCharsData } = useCharStore();
+    const { showSnackbar } = useSnackbarStore();
     const [open, setOpen] = React.useState(false);
 
     useEffect(() => {
@@ -50,7 +52,6 @@ const UserCharDetailsPage = () => {
     const userChar = userChars.find(item => item.id === chardId);
 
     const moveItemForUserInventory = async (item: { id: string }) => {
-        console.log(item);
         try {
             await addItemToInventory(chardId, {
                 itemId: item.id,
@@ -60,6 +61,8 @@ const UserCharDetailsPage = () => {
             await fetchUserItems(chardId);
         } catch (error) {
             console.error('Erro ao mover item:', error);
+            showSnackbar(error.message, 'success');
+
         }
     };
 

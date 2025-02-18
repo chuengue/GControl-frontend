@@ -12,18 +12,18 @@ export const getFilteredNavigationForUser =
 
                 // Verificando se o usuário é admin
                 if (idTokenResult.claims.admin) {
-                    console.log('Usuário é admin');
+                   /*  console.log('Usuário é admin'); */
                     return NAVIGATION; // Retorna a navegação com todos os itens, incluindo os de admin
                 } else {
-                    console.log('Usuário regular');
+                    /* console.log('Usuário regular'); */
                     return NAVIGATION.filter(item => item.role !== 'admin'); // Filtra a navegação para não incluir itens de admin
                 }
             } else {
-                console.log('Usuário não autenticado');
+                /* console.log('Usuário não autenticado'); */
                 return NAVIGATION.filter(item => item.role !== 'admin'); // Retorna a navegação sem itens de admin se o usuário não estiver autenticado
             }
         } catch (error) {
-            console.log('Erro ao verificar o papel do usuário:', error);
+            /* console.log('Erro ao verificar o papel do usuário:', error); */
             return NAVIGATION; // Retorna a navegação padrão em caso de erro
         }
     };
