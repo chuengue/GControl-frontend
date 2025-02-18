@@ -1,5 +1,5 @@
 import api from '../../api';
-import { DropRateReport } from '../types';
+import { DropRateReport, DropRateResponse } from '../types';
 import { FarmSessionsResponse, MissionResponse } from './type';
 
 // Obtém todas as missões
@@ -88,3 +88,13 @@ export const getDropRateSessionReport = async (sessionId: string): Promise<DropR
        throw error;
     }
  };
+
+ export const getDropRateMissionReport = async (userId: string, userCharId: string, missionId: string): Promise<DropRateResponse> => {
+    try {
+        const response = await api.get<DropRateResponse>(`/users/${userId}/${userCharId}/mission/${missionId}/drop-rate-report`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao obter o relatório de taxa de drop da missão:', error);
+        throw error;
+    }
+};
