@@ -122,7 +122,7 @@ function CharCard({
                                     >
                                         <Stack>
                                             <Typography sx={{ color: 'white' }}>
-                                                Ataque Total: {char.atkTotal}
+                                            Ataque Total: {new Intl.NumberFormat().format(Number(char.atkTotal))}
                                             </Typography>
                                         </Stack>
                                     </Card>

@@ -18,7 +18,7 @@ export const CardCustom = ({ children }: CardCustomProps) => {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        paddingX: "24px",
+        paddingX: {lg:"8px",xl:"24px"},
       }}
     >
       {children}

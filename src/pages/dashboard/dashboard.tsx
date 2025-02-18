@@ -3,6 +3,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { Box, Button, Card, CircularProgress, Divider, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { blue, green } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
 
 import { registerItemDropsInSession } from '../../service/requests/items';
 import { createFarmSession, deleteFarmSession, getAllMissions, getAllUserSessions, getDropRateSessionReport, updateFarmSession } from '../../service/requests/missions/missions';
@@ -45,10 +46,11 @@ const FarmSessionPage = () => {
   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
   const [selectedUserSession, setSelectedUserSession] = useState<Session>();
   const [expandedId, setExpandedId] = useState(null);
-  const { session} = useSession();
+  const { session } = useSession();
   const { showSnackbar } = useSnackbarStore();
   const { userChars, fetchUserCharsData } = useCharStore();
-
+  const isLarge = useMediaQuery({ maxWidth: 1366 }); // lg
+  const isExtraLarge = useMediaQuery({ minWidth: 1367 }); // xl
   const theme = useTheme();
   const userId = session?.user.uid;
 
@@ -91,7 +93,10 @@ const FarmSessionPage = () => {
       await updateFarmSession(session.userCharId, session.sessionId, session.missionId, {
         timeSpent: formatTime(timers[session.sessionId]?.elapsedTime || 0, 'dots')
       });
-      showSnackbar('Timer Pausado!', 'success');
+      showSnackbar('Timer Pausado!', 'success', {
+        vertical:"top",
+        horizontal: "center"
+      } );
     } catch (error) {
       console.error('Erro ao atualizar o tempo:', error);
       showSnackbar('Erro ao atualizar o tempo', 'error');
@@ -183,7 +188,7 @@ const FarmSessionPage = () => {
         selectedUserSession?.sessionId ?? '',
         { drops }
       );
-      fetchDropRateSessionReport(selectedUserSession?.sessionId)
+      fetchDropRateSessionReport(selectedUserSession?.sessionId);
       showSnackbar('Drops registrados com sucesso!', 'success');
     } catch (error) {
       showSnackbar('Erro ao registrar drops', 'error');
@@ -197,8 +202,7 @@ const FarmSessionPage = () => {
       const userSessions = await getAllUserSessions(userId);
       setSessions(userSessions.results || []);
     } catch (error) {
-      showSnackbar(error.message ||"Erro ao buscar sessões, Tente novamente.", 'error');
-
+      showSnackbar(error.message || 'Erro ao buscar sessões, Tente novamente.', 'error');
     } finally {
       setRefetchLoading(false);
     }
@@ -209,7 +213,7 @@ const FarmSessionPage = () => {
       const data = await getAllMissions();
       setMissions(data.results || []);
     } catch (error) {
-      showSnackbar(error.message ||"Erro ao buscar missões, Tente novamente.", 'error');
+      showSnackbar(error.message || 'Erro ao buscar missões, Tente novamente.', 'error');
     }
   };
   const handleOpenDropItemsModal = (session: Session) => {
@@ -217,7 +221,7 @@ const FarmSessionPage = () => {
     setDropItemsModalOpen(true);
   };
   const handleOpenModal = (session?: Session) => {
-    if (session) pauseTimer(session);
+    if (session && timers[session.sessionId]?.isRunning) pauseTimer(session);
     setSelectedUserSession(session);
     setIsEditing(!!session);
     setFormData(
@@ -322,7 +326,7 @@ const FarmSessionPage = () => {
           boxShadow: 3,
           marginBottom: '20px',
           marginTop: '-20px',
-          bgcolor: green[800]
+          bgcolor: theme.palette.info.main
         }}
       >
         <Stack
@@ -354,7 +358,7 @@ const FarmSessionPage = () => {
       >
         <Box
           sx={{
-            width: '80%'
+            width: { lg: '100%', xl: '80%' }
           }}
         >
           <Stack
@@ -398,7 +402,7 @@ const FarmSessionPage = () => {
             sx={{
               overflowY: 'auto',
               paddingX: '20px',
-              height: '72vh'
+              height: {lg:"60vh",xl:'72vh'}
             }}
           >
             <Grid container spacing={3}>
@@ -429,7 +433,13 @@ const FarmSessionPage = () => {
                       }}
                       onClick={() => handleExpand(sessionItem.sessionId)}
                     >
-                      <Stack justifyContent="center" alignItems="center" width="180px">
+                      <Stack
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{
+                          width: { lg: '100px', xl: '130px' }
+                        }}
+                      >
                         {sessionItem.mission && (
                           <img
                             src={sessionItem.mission.imgUrl}
@@ -479,22 +489,8 @@ const FarmSessionPage = () => {
                           gap: '10px'
                         }}
                       >
-                        <CardCustom>
-                          <Stack
-                            direction="row"
-                            spacing={2}
-                            alignItems="center"
-                            justifyContent="space-between"
-                          >
-                            {/* Idas */}
-                            <Stack spacing={1} alignItems="center">
-                              <Typography variant="body2">Idas</Typography>
-                              <Typography variant="body1" fontWeight="bold">
-                                {sessionItem.attempts}
-                              </Typography>
-                            </Stack>
-                            <Divider orientation="vertical" flexItem />
-                            {/* Tempo Total e Tempo Médio */}
+                        {isLarge && (
+                          <CardCustom>
                             <Stack
                               spacing={1}
                               sx={{
@@ -502,22 +498,72 @@ const FarmSessionPage = () => {
                                 textAlign: 'center'
                               }}
                             >
-                              <Typography variant="body2">Tempo Total</Typography>
                               <Typography variant="body1" fontWeight="bold">
+                                Idas: {sessionItem.attempts}
+                              </Typography>
+                              <Divider sx={{ my: 1 }} />
+
+                              <Typography variant="body2" fontWeight="bold" width={"120px"}>
+                                Tempo Total:
+                              </Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
                                 {sessionItem?.totalTimeSpent
                                   ? formatTime(sessionItem?.totalTimeSpent, 'text')
                                   : '00:00:00'}
                               </Typography>
                               <Divider sx={{ my: 1 }} />
-                              <Typography variant="body2">Tempo Médio por Ida</Typography>
-                              <Typography variant="body1" fontWeight="bold">
+                              <Typography variant="body2" fontWeight="bold" >
+                                T. Médio/Ida
+                              </Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
                                 {sessionItem.avgTimePerAttempt
                                   ? formatTime(sessionItem?.avgTimePerAttempt, 'text')
                                   : '00:00:00'}
                               </Typography>
                             </Stack>
-                          </Stack>
-                        </CardCustom>
+                          </CardCustom>
+                        )}
+                        {isExtraLarge && (
+                          <CardCustom>
+                            <Stack
+                              direction="row"
+                              spacing={{ lg: 1, xl: 2 }}
+                              alignItems="center"
+                              justifyContent="space-between"
+                            >
+                              {/* Idas */}
+                              <Stack spacing={1} alignItems="center">
+                                <Typography variant="body2">Idas</Typography>
+                                <Typography variant="body1" fontWeight="bold">
+                                  {sessionItem.attempts}
+                                </Typography>
+                              </Stack>
+                              <Divider orientation="vertical" flexItem />
+                              {/* Tempo Total e Tempo Médio */}
+                              <Stack
+                                spacing={1}
+                                sx={{
+                                  flex: 1,
+                                  textAlign: 'center'
+                                }}
+                              >
+                                <Typography variant="body2">Tempo Total</Typography>
+                                <Typography variant="body1" fontWeight="bold">
+                                  {sessionItem?.totalTimeSpent
+                                    ? formatTime(sessionItem?.totalTimeSpent, 'text')
+                                    : '00:00:00'}
+                                </Typography>
+                                <Divider sx={{ my: 1 }} />
+                                <Typography variant="body2">Tempo Médio por Ida</Typography>
+                                <Typography variant="body1" fontWeight="bold">
+                                  {sessionItem.avgTimePerAttempt
+                                    ? formatTime(sessionItem?.avgTimePerAttempt, 'text')
+                                    : '00:00:00'}
+                                </Typography>
+                              </Stack>
+                            </Stack>
+                          </CardCustom>
+                        )}
                         <CardCustom>
                           <Stack direction="column">
                             <Tooltip title="Iniciar Sessão" placement="top-start">
@@ -546,11 +592,42 @@ const FarmSessionPage = () => {
                             </Tooltip>
                           </Stack>
                         </CardCustom>
+                        {isLarge && (
+                          <CardCustom>
+                            <Stack spacing={1} sx={{ textAlign: 'center' }}>
+                              {/* Criado em */}
+                              <Typography variant="body2">Criado em</Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
+                                {new Date(sessionItem?.created_at).toLocaleDateString('pt-BR', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </Typography>
+
+                              <Divider sx={{ my: 1 }} />
+
+                              <Typography variant="body2">Última Modificação</Typography>
+                              <Typography variant="body2" fontWeight="bold" color={green[200]}>
+                                {new Date(sessionItem?.updated_at).toLocaleString('pt-BR', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false
+                                })}
+                              </Typography>
+                            </Stack>
+                          </CardCustom>
+                        )}
+                        {isExtraLarge &&(
+
                         <CardCustom>
                           <Stack spacing={1} sx={{ textAlign: 'center' }}>
                             {/* Criado em */}
                             <Typography variant="body2">Criado em</Typography>
-                            <Typography variant="body1" fontWeight="bold">
+                            <Typography variant="body1" fontWeight="bold" color={green[200]}>
                               {new Date(sessionItem?.created_at).toLocaleDateString('pt-BR', {
                                 year: 'numeric',
                                 month: 'short',
@@ -561,7 +638,7 @@ const FarmSessionPage = () => {
                             <Divider sx={{ my: 1 }} />
 
                             <Typography variant="body2">Última Modificação</Typography>
-                            <Typography variant="body1" fontWeight="bold">
+                            <Typography variant="body1" fontWeight="bold" color={green[200]}>
                               {new Date(sessionItem?.updated_at).toLocaleString('pt-BR', {
                                 year: 'numeric',
                                 month: 'short',
@@ -573,6 +650,7 @@ const FarmSessionPage = () => {
                             </Typography>
                           </Stack>
                         </CardCustom>
+                        )}
                         <Box>
                           <Tooltip
                             title="Você ainda não registrou nenhuma ida."
@@ -591,7 +669,7 @@ const FarmSessionPage = () => {
                                   borderRadius: '12px',
                                   color: 'white',
                                   bgcolor: blue[600],
-                                  ml: '40px'
+                                  ml: {lg:"10px", xl:"20px"}
                                 }}
                               >
                                 Registrar Drops

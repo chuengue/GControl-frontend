@@ -7,29 +7,29 @@ import * as React from 'react';
 
 export default function HomePage() {
   return (
-    <Box sx={{ padding: 4, minHeight: '100vh' }}>
+    <Box sx={{ padding:  {lg:1, xl:4}, minHeight: '100vh', mt:{lg:-4,xl:"0px"} }}>
       {/* Introdução */}
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
-      <Typography
-  variant="h2"
-  gutterBottom
-  sx={{
-    fontWeight: '900',
-    color: '#1976d2',
-    fontFamily: 'Anton',
-    letterSpacing: '1px',
-    backgroundColor: '#e3f2fd',  // Cor de fundo suave
-    padding: '15px 30px', // Espaçamento interno (como padding)
-    borderRadius: '50px',  // Borda arredondada para suavizar
-    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)', // Sombras suaves para destacar
-    display: 'inline-block',  // Faz com que o texto e o fundo fiquem juntos
-    textAlign: 'center',  // Centraliza o texto
-    margin: '20px auto' // Margem para separar do restante do conteúdo
-  }}
->
-  Chase Tracker
-</Typography>
-        <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+      <Box sx={{ textAlign: 'center', mb: {lg:2, xl:8}}}>
+        <Typography
+          variant="h2"
+          gutterBottom
+          sx={{
+            fontWeight: '900',
+            color: '#1976d2',
+            fontFamily: 'Anton',
+            letterSpacing: '1px',
+            backgroundColor: '#e3f2fd', // Cor de fundo suave
+            padding: '15px 30px', // Espaçamento interno (como padding)
+            borderRadius: '50px', // Borda arredondada para suavizar
+            boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)', // Sombras suaves para destacar
+            display: 'inline-block', // Faz com que o texto e o fundo fiquem juntos
+            textAlign: 'center', // Centraliza o texto
+            margin: {lg:"5px auto", xl:"20px auto"}, // Margem para separar do restante do conteúdo
+          }}
+        >
+          Chase Tracker
+        </Typography>
+        <Typography variant="h6" sx={{ color: 'text.secondary', fontSize:{xl:"1.25rem", lg:"1.1rem"}}}>
           Gerencie seus personagens, equipamentos, sessões de farm e analise suas estatísticas de
           drops de forma eficiente.
         </Typography>

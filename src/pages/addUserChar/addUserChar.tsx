@@ -132,7 +132,7 @@ function AddUserChar() {
     };
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4, overflowY:"auto", height:"90vh" }}>
+        <Container maxWidth="xl" sx={{ mt: 4, marginBottom: 4, overflowY:"auto", height:{lg:"82vh", xl:"90vh"} }}>
             <Grid container spacing={4}>
                 <Grid item xs={12} md={12}>
                     <Card
@@ -211,7 +211,7 @@ function AddUserChar() {
                             p: 3,
                             borderRadius: '14px',
                             boxShadow: 3,
-                            height: '100%'
+                            height: '100%',
                         }}
                     >
                         <Typography
@@ -227,11 +227,11 @@ function AddUserChar() {
                                 width: '100%',
                                 height: '100%',
                                 marginTop: '80px',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
                             }}
                         >
                             {selectedChar ? (
-                                <Stack spacing={3} width="100%">
+                                <Stack spacing={3} width="100%" >
                                     <Card
                                         sx={{
                                             p: 2,
@@ -316,7 +316,7 @@ function AddUserChar() {
                 </Grid>
 
                 {/* Coluna do Calculador de ATK */}
-                <Grid item xs={12} md={8}>
+                <Grid item xs={12} lg={8}>
                     <Card
                         sx={{
                             p: 3,
