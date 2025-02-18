@@ -1,4 +1,4 @@
-import { AddCircle, AdminPanelSettings, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, RemoveCircle } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Groups2Icon from '@mui/icons-material/Groups2';
@@ -61,6 +61,13 @@ export const NAVIGATION: CustomNav = [
         ]
     },
     {
+        title: 'Sessões de Farm',
+        segment:"farm-sessions",
+        icon: < Agriculture />,
+       
+        
+    },
+    {
         title: 'Admin',
         segment: 'admin',
         role: 'admin',
@@ -81,7 +88,7 @@ export const NAVIGATION: CustomNav = [
 ];
 
 const BRANDING = {
-    title: 'teste-gc-with-firebase'
+    title: 'Chase Tracker'
 };
 
 const AUTHENTICATION: Authentication = {

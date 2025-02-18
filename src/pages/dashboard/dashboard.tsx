@@ -25,7 +25,7 @@ export interface IFormData {
   attempts: number;
 }
 
-const DashboardPage = () => {
+const FarmSessionPage = () => {
   const [dropItemsModalOpen, setDropItemsModalOpen] = useState(false);
   const [sessionDropRate, setSessionDropRate] = useState<DropRateReport['results']>();
   const [sessions, setSessions] = useState<FarmSessionsResponse['results']>();
@@ -673,4 +673,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default FarmSessionPage;
