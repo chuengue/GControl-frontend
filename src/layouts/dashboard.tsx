@@ -1,11 +1,12 @@
 import { Backdrop, Box, Button, CircularProgress, Container, LinearProgress, Paper, TextField, Typography } from '@mui/material';
 import { Account } from '@toolpad/core/Account';
-import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { DashboardLayout, SidebarFooterProps } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 
+import packageJson from "../../package.json";
 import { useSession } from '../SessionContext';
 
 function CustomAccount() {
@@ -144,6 +145,16 @@ function RegistrationModal({
     </Backdrop>
   );
 }
+function SidebarFooter({ mini }: SidebarFooterProps) {
+  return (
+    <Typography
+      variant="caption"
+      sx={{ m: 1, whiteSpace: 'nowrap', overflow: 'hidden' }}
+    >
+      {mini ? '©' : `© ${new Date().getFullYear()} Chase Tracker V ${packageJson.version}`}
+    </Typography>
+  );
+}
 
 export default function Layout() {
   const { session, loading } = useSession();
@@ -196,7 +207,9 @@ if (error) {
     <DashboardLayout
       slots={{
         toolbarAccount: CustomAccount,
-        toolbarActions: () => <></>
+        toolbarActions: () => <></>,
+        sidebarFooter: SidebarFooter,
+
       }}
       disableCollapsibleSidebar
     >
