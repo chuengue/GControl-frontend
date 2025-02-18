@@ -1,15 +1,8 @@
-import {
-    Box,
-    Button,
-    Grid,
-    Paper,
-    Snackbar,
-    TextField,
-    Typography
-} from '@mui/material';
+import { Box, Button, Grid, Paper, Snackbar, TextField, Typography } from '@mui/material';
 import MuiAlert, { AlertProps } from '@mui/material/Alert';
 import { blue, grey } from '@mui/material/colors';
 import React, { useState } from 'react';
+
 import { IUserGameCharStats } from '../../service/requests/types';
 import useCharStore from '../../stores/charStore';
 
@@ -61,7 +54,6 @@ function TotalattackCalculator() {
             recMP: parseFloat(String(charStats.recMP) || '0')
         };
 
-        console.log(values);
         const missingFields = checkError(values);
 
         if (Object.keys(missingFields).length === 0) {

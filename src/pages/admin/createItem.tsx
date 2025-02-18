@@ -62,7 +62,6 @@ const CreateItem = () => {
         horizontal: 'center'
       });
     } catch (err) {
-      console.log(err);
       showSnackbar(err.response.data.error, 'error', {
         vertical: 'top',
         horizontal: 'center'
@@ -70,7 +69,6 @@ const CreateItem = () => {
     } finally {
       setLoading(false);
     }
-    console.log(item);
   };
 
   return (

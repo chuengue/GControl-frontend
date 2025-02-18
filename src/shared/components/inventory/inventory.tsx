@@ -69,7 +69,7 @@ const Inventory: React.FC<{
       });
       setItems(data.results);
     } catch (error) {
-      console.error('Erro ao buscar itens:', error);
+      showSnackbar(error.message, 'error', error.stack);
     }
   };
 
@@ -86,7 +86,7 @@ const Inventory: React.FC<{
       setUserItems(itemOnly);
     } catch (error) {
       setUserItems([]);
-      console.error('Erro ao buscar itens:', error);
+      showSnackbar(error.message, 'error', error.stack);
     }
   };
 
@@ -126,7 +126,6 @@ const Inventory: React.FC<{
         vertical: 'top',
         horizontal: 'center'
       });
-      console.error('Erro ao equipar item:', error);
     }
   };
 
@@ -143,7 +142,6 @@ const Inventory: React.FC<{
         vertical: 'top',
         horizontal: 'center'
       });
-      console.error('Erro ao equipar item:', error);
     }
   };
 
@@ -162,7 +160,7 @@ const Inventory: React.FC<{
       await updateQuantityItem(chardId, userItemId, data);
       fetchUserItems();
     } catch (error) {
-      console.log(error);
+      showSnackbar(error.message, 'error', error.stack);
     }
   };
 

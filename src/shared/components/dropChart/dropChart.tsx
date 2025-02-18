@@ -20,7 +20,6 @@ const DropRateChart: React.FC<DropRateChartProps> = ({ userId, userCharId, missi
     const fetchDropRatesSessions = async () => {
       try {
         const data = await getDropRateMissionReport(userId, userCharId, missionId);
-        console.log(data.results.dropRates)
         setDropRates(data.results);
       } catch (error) {
         console.error('Error fetching drop rates:', error);

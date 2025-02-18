@@ -45,12 +45,10 @@ const FarmSessionPage = () => {
   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
   const [selectedUserSession, setSelectedUserSession] = useState<Session>();
   const [expandedId, setExpandedId] = useState(null);
-  const { session, setLoading } = useSession();
+  const { session} = useSession();
   const { showSnackbar } = useSnackbarStore();
   const { userChars, fetchUserCharsData } = useCharStore();
-  const [isRunning, setIsRunning] = useState(false); // Estado para controlar se o cronômetro está ativo
-  const [elapsedTime, setElapsedTime] = useState(0); // Tempo decorrido em segundos
-  const [startTime, setStartTime] = useState<number | null>(null); // Tempo inicial do cronômetro
+
   const theme = useTheme();
   const userId = session?.user.uid;
 
@@ -117,7 +115,6 @@ const FarmSessionPage = () => {
       });
       showSnackbar('Timer resetado com sucesso!', 'success');
     } catch (error) {
-      console.error('Erro ao resetar o timer:', error);
       showSnackbar('Erro ao resetar o timer', 'error');
     }
   };
@@ -188,7 +185,6 @@ const FarmSessionPage = () => {
       );
       showSnackbar('Drops registrados com sucesso!', 'success');
     } catch (error) {
-      console.error('Erro ao registrar drops:', error);
       showSnackbar('Erro ao registrar drops', 'error');
     } finally {
       setLoadingRegisterDrops(false);
@@ -200,7 +196,8 @@ const FarmSessionPage = () => {
       const userSessions = await getAllUserSessions(userId);
       setSessions(userSessions.results || []);
     } catch (error) {
-      console.error('Erro ao buscar sessões: ', error);
+      showSnackbar(error.message ||"Erro ao buscar sessões, Tente novamente.", 'error');
+
     } finally {
       setRefetchLoading(false);
     }
@@ -211,7 +208,7 @@ const FarmSessionPage = () => {
       const data = await getAllMissions();
       setMissions(data.results || []);
     } catch (error) {
-      console.error('Erro ao buscar missões: ', error);
+      showSnackbar(error.message ||"Erro ao buscar missões, Tente novamente.", 'error');
     }
   };
   const handleOpenDropItemsModal = (session: Session) => {
@@ -577,7 +574,7 @@ const FarmSessionPage = () => {
                         </CardCustom>
                         <Box>
                           <Tooltip
-                            title="Você ainda não registrou nenhuma tentativa."
+                            title="Você ainda não registrou nenhuma ida."
                             placement="top-start"
                             arrow
                             disableHoverListener={sessionItem.attempts !== 0} // Só exibe se attempts for 0
@@ -617,12 +614,20 @@ const FarmSessionPage = () => {
                       >
                         <DeleteForever />
                       </IconButton>
-                      <IconButton
-                        onClick={() => handleExpand(sessionItem.sessionId)}
-                        sx={{ color: 'white' }}
+                      <Tooltip
+                        title="Você ainda não registrou nenhuma ida."
+                        placement="top-start"
+                        arrow
+                        disableHoverListener={sessionItem.attempts !== 0}
                       >
-                        {expandedId === sessionItem.sessionId ? <ExpandLess /> : <ExpandMore />}
-                      </IconButton>
+                        <IconButton
+                          onClick={() => handleExpand(sessionItem.sessionId)}
+                          disabled={sessionItem.attempts === 0}
+                          sx={{ color: 'white' }}
+                        >
+                          {expandedId === sessionItem.sessionId ? <ExpandLess /> : <ExpandMore />}
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   </Card>
                   {sessionDropRate && (
