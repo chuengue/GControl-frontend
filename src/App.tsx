@@ -1,4 +1,4 @@
-import { AddCircle, AdminPanelSettings, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, RemoveCircle } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Groups2Icon from '@mui/icons-material/Groups2';
@@ -59,6 +59,13 @@ export const NAVIGATION: CustomNav = [
                 icon: <AddCircleRoundedIcon />
             }
         ]
+    },
+    {
+        title: 'Sessões de Farm',
+        segment:"farm-sessions",
+        icon: < Agriculture />,
+       
+        
     },
     {
         title: 'Admin',

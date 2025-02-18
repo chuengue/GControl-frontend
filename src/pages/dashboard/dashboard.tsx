@@ -1,7 +1,7 @@
 import { DeleteForever, ExpandLess, ExpandMore, InfoOutlined, Pause, PlayArrow, Stop } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, Button, Card, Collapse, Divider, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
-import { blue, green, grey } from '@mui/material/colors';
+import { Box, Button, Card, CircularProgress, Divider, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import { blue, green } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
 import { registerItemDropsInSession } from '../../service/requests/items';
@@ -15,6 +15,7 @@ import { Character, Mission, Session } from '../../shared/types';
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 import CreateSessionModal from './components/createSessionModal/createSessionModal';
+import DropRateStats from './components/dropRateStats/dropRateStats';
 import DropItemsModal from './components/registerDropsModal/registerDropsModal';
 
 export interface IFormData {
@@ -24,7 +25,7 @@ export interface IFormData {
   attempts: number;
 }
 
-const DashboardPage = () => {
+const FarmSessionPage = () => {
   const [dropItemsModalOpen, setDropItemsModalOpen] = useState(false);
   const [sessionDropRate, setSessionDropRate] = useState<DropRateReport['results']>();
   const [sessions, setSessions] = useState<FarmSessionsResponse['results']>();
@@ -34,10 +35,17 @@ const DashboardPage = () => {
   const [openModal, setOpenModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<IFormData>();
+  const [loadingRegisterDrops, setLoadingRegisterDrops] = useState(false);
+  const [timers, setTimers] = useState<{
+    [key: string]: { isRunning: boolean; elapsedTime: number; startTime: number | null };
+  }>({});
+
+  const [loadingCreateSession, setLoadingCreateSession] = useState(false);
+  const [refetchLoading, setRefetchLoading] = useState(false);
   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
   const [selectedUserSession, setSelectedUserSession] = useState<Session>();
   const [expandedId, setExpandedId] = useState(null);
-  const { session } = useSession();
+  const { session, setLoading } = useSession();
   const { showSnackbar } = useSnackbarStore();
   const { userChars, fetchUserCharsData } = useCharStore();
   const [isRunning, setIsRunning] = useState(false); // Estado para controlar se o cronômetro está ativo
@@ -45,106 +53,68 @@ const DashboardPage = () => {
   const [startTime, setStartTime] = useState<number | null>(null); // Tempo inicial do cronômetro
   const theme = useTheme();
   const userId = session?.user.uid;
+
   useEffect(() => {
     fetchUserCharsData(userId);
     fetchMissions();
+    fetchUserSessions();
   }, [userId]);
 
   const startTimer = (session: Session) => {
-    if (!isRunning) {
-      setElapsedTime(session.totalTimeSpent); // Inicializa o elapsedTime com o totalTimeSpent da sessão
-      setSelectedUserSession(session);
-      setIsRunning(true);
-      setStartTime(Date.now() - session.totalTimeSpent * 1000); // Ajusta o tempo inicial para continuar de onde parou
-    }
+    setTimers(prevTimers => ({
+      ...prevTimers,
+      [session.sessionId]: {
+        isRunning: true,
+        elapsedTime: session.totalTimeSpent,
+        startTime: Date.now() - session.totalTimeSpent * 1000
+      }
+    }));
   };
 
   const pauseTimer = async (session: Session) => {
-    setSelectedUserSession(session);
+    setTimers(prevTimers => {
+      const currentTimer = prevTimers[session.sessionId];
+      if (!currentTimer?.isRunning) return prevTimers;
 
-    if (isRunning) {
-      setIsRunning(false);
+      const newElapsedTime = Math.floor((Date.now() - (currentTimer.startTime || 0)) / 1000);
 
-      // Atualiza o tempo decorrido
-      const currentTime = Date.now();
-      const newElapsedTime = Math.floor((currentTime - (startTime || 0)) / 1000);
-      setElapsedTime(newElapsedTime);
-
-      // Faz o update do timeSpent no backend
-      if (selectedUserSession) {
-        const newTime = newElapsedTime;
-
-        try {
-          // Atualiza o tempo no backend
-          await updateFarmSession(
-            selectedUserSession.userCharId,
-            selectedUserSession.sessionId,
-            selectedUserSession.missionId,
-            { timeSpent: formatTime(newTime, 'dots') }
-          );
-
-          // Atualiza o estado local das sessões
-          if (sessions && sessions.sessions) {
-            const updatedSessions = sessions.sessions.map(s => {
-              if (s.sessionId === session.sessionId) {
-                return {
-                  ...s,
-                  totalTimeSpent: newTime,
-                  avgTimePerAttempt: newTime / s.attempts // Atualiza o totalTimeSpent
-                };
-              }
-              return s;
-            });
-
-            // Atualiza o estado das sessões
-            setSessions(prevSessions => ({
-              ...prevSessions,
-              sessions: updatedSessions
-            }));
-          }
-
-          showSnackbar('Tempo atualizado com sucesso!', 'success');
-        } catch (error) {
-          console.error('Erro ao atualizar o tempo:', error);
-          showSnackbar('Erro ao atualizar o tempo', 'error');
+      return {
+        ...prevTimers,
+        [session.sessionId]: {
+          isRunning: false,
+          elapsedTime: newElapsedTime,
+          startTime: null
         }
-      }
+      };
+    });
+
+    // Atualizar no backend
+    try {
+      await updateFarmSession(session.userCharId, session.sessionId, session.missionId, {
+        timeSpent: formatTime(timers[session.sessionId]?.elapsedTime || 0, 'dots')
+      });
+      showSnackbar('Tempo atualizado com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao atualizar o tempo:', error);
+      showSnackbar('Erro ao atualizar o tempo', 'error');
     }
   };
 
   const resetTimer = async (session: Session) => {
-    setSelectedUserSession(session);
+    setTimers(prevTimers => ({
+      ...prevTimers,
+      [session.sessionId]: {
+        isRunning: false,
+        elapsedTime: 0,
+        startTime: null
+      }
+    }));
 
-    setIsRunning(false);
-    setElapsedTime(0);
-    setStartTime(null);
-
-    // Atualiza o tempo no backend para 0
+    // Atualizar no backend
     try {
       await updateFarmSession(session.userCharId, session.sessionId, session.missionId, {
         timeSpent: formatTime(0, 'dots')
       });
-
-      // Atualiza o estado local das sessões
-      if (sessions && sessions.sessions) {
-        const updatedSessions = sessions.sessions.map(s => {
-          if (s.sessionId === session.sessionId) {
-            return {
-              ...s,
-              totalTimeSpent: 0,
-              avgTimePerAttempt: 0 // Atualiza o totalTimeSpent
-            };
-          }
-          return s;
-        });
-
-        // Atualiza o estado das sessões
-        setSessions(prevSessions => ({
-          ...prevSessions,
-          sessions: updatedSessions
-        }));
-      }
-
       showSnackbar('Timer resetado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao resetar o timer:', error);
@@ -152,36 +122,46 @@ const DashboardPage = () => {
     }
   };
   useEffect(() => {
-    let interval: any;
-    if (isRunning) {
-      interval = setInterval(() => {
-        const currentTime = Date.now();
-        const newElapsedTime = Math.floor((currentTime - (startTime || 0)) / 1000);
-        setElapsedTime(newElapsedTime);
+    const intervals: { [key: string]: any } = {};
 
-        // Atualiza o estado local das sessões em tempo real
-        if (selectedUserSession && sessions && sessions.sessions) {
-          const updatedSessions = sessions.sessions.map(s => {
-            if (s.sessionId === selectedUserSession.sessionId) {
-              return {
-                ...s,
-                totalTimeSpent: newElapsedTime,
-                avgTimePerAttempt: newElapsedTime / s.attempts // Atualiza o totalTimeSpent
-              };
+    Object.keys(timers).forEach(sessionId => {
+      const sessionTimer = timers[sessionId];
+
+      if (sessionTimer.isRunning) {
+        intervals[sessionId] = setInterval(() => {
+          const currentTime = Date.now();
+          const newElapsedTime = Math.floor((currentTime - (sessionTimer.startTime || 0)) / 1000);
+
+          setTimers(prevTimers => ({
+            ...prevTimers,
+            [sessionId]: {
+              ...prevTimers[sessionId],
+              elapsedTime: newElapsedTime
             }
-            return s;
-          });
+          }));
 
-          // Atualiza o estado das sessões
+          // Atualiza o estado local das sessões em tempo real
           setSessions(prevSessions => ({
             ...prevSessions,
-            sessions: updatedSessions
+            sessions: prevSessions.sessions.map(s =>
+              s.sessionId === sessionId
+                ? {
+                    ...s,
+                    totalTimeSpent: newElapsedTime,
+                    avgTimePerAttempt: newElapsedTime / s.attempts
+                  }
+                : s
+            )
           }));
-        }
-      }, 1000); // Atualiza a cada segundo
-    }
-    return () => clearInterval(interval); // Limpa o intervalo quando o componente é desmontado ou o cronômetro é pausado
-  }, [isRunning, startTime, selectedUserSession, sessions]);
+        }, 1000);
+      }
+    });
+
+    return () => {
+      Object.values(intervals).forEach(clearInterval);
+    };
+  }, [timers]);
+
   function formatTime(totalTimeInSeconds: number, variant: 'text' | 'dots') {
     const time = Math.floor(totalTimeInSeconds);
     const hours = Math.floor(time / 3600);
@@ -197,6 +177,7 @@ const DashboardPage = () => {
     }
   }
   const registerDrops = async (drops: DropItem[]) => {
+    setLoadingRegisterDrops(true);
     try {
       await registerItemDropsInSession(
         userId,
@@ -205,19 +186,32 @@ const DashboardPage = () => {
         selectedUserSession?.sessionId ?? '',
         { drops }
       );
+      showSnackbar('Drops registrados com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao registrar drops:', error);
+      showSnackbar('Erro ao registrar drops', 'error');
+    } finally {
+      setLoadingRegisterDrops(false);
+    }
+  };
+  const fetchUserSessions = async () => {
+    setRefetchLoading(true);
+    try {
+      const userSessions = await getAllUserSessions(userId);
+      setSessions(userSessions.results || []);
+    } catch (error) {
+      console.error('Erro ao buscar sessões: ', error);
+    } finally {
+      setRefetchLoading(false);
     }
   };
 
   const fetchMissions = async () => {
     try {
       const data = await getAllMissions();
-      const userSessions = await getAllUserSessions(userId);
       setMissions(data.results || []);
-      setSessions(userSessions.results || []);
     } catch (error) {
-      console.error('Erro ao buscar missões ou sessões: ', error);
+      console.error('Erro ao buscar missões: ', error);
     }
   };
   const handleOpenDropItemsModal = (session: Session) => {
@@ -248,6 +242,7 @@ const DashboardPage = () => {
   const handleCloseModal = () => setOpenModal(false);
 
   const handleSaveSession = async () => {
+    setLoadingCreateSession(true);
     const searchUserCharId = userChars.find(ch => ch.gameChar.id === selectedCharacter?.id);
     try {
       if (isEditing) {
@@ -260,16 +255,17 @@ const DashboardPage = () => {
       } else {
         await createFarmSession(userId, searchUserCharId?.id, selectedMission?.id, formData);
       }
-      fetchMissions();
-      handleCloseModal();
+      fetchUserSessions();
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoadingCreateSession(false);
     }
   };
   const handleDeleteFarmSession = async (sessionId: string) => {
     try {
       await deleteFarmSession(sessionId);
-      fetchMissions();
+      fetchUserSessions();
       showSnackbar('Sessão excluída com sucesso', 'success', {
         vertical: 'top',
         horizontal: 'center'
@@ -374,23 +370,30 @@ const DashboardPage = () => {
               padding: 1
             }}
           >
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => handleOpenModal()}
-              sx={{
-                width: '30%',
-                bgcolor: blue[700],
-                borderRadius: '12px',
-                color: 'white',
+            {refetchLoading ? (
+              <Stack alignItems="center">
+                <CircularProgress />
+                <Typography variant="caption">Buscando sessões...</Typography>
+              </Stack>
+            ) : (
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => handleOpenModal()}
+                sx={{
+                  width: '30%',
+                  bgcolor: blue[700],
+                  borderRadius: '12px',
+                  color: 'white',
 
-                '&:hover': {
-                  bgcolor: theme.palette.primary.dark
-                }
-              }}
-            >
-              Criar Sessão
-            </Button>
+                  '&:hover': {
+                    bgcolor: theme.palette.primary.dark
+                  }
+                }}
+              >
+                Criar Sessão
+              </Button>
+            )}
           </Stack>
 
           <Box
@@ -419,7 +422,6 @@ const DashboardPage = () => {
                       position: 'relative'
                     }}
                   >
-                    {/* Área clicável para expandir */}
                     <Box
                       sx={{
                         display: 'flex',
@@ -459,7 +461,6 @@ const DashboardPage = () => {
                       <Divider orientation="vertical" flexItem />
                     </Box>
 
-                    {/* Conteúdo principal do card */}
                     <Box
                       sx={{
                         display: 'flex',
@@ -524,7 +525,7 @@ const DashboardPage = () => {
                             <Tooltip title="Iniciar Sessão" placement="top-start">
                               <IconButton
                                 onClick={() => startTimer(sessionItem)}
-                                disabled={isRunning}
+                                disabled={timers[sessionItem.sessionId]?.isRunning}
                               >
                                 <PlayArrow />
                               </IconButton>
@@ -532,7 +533,7 @@ const DashboardPage = () => {
                             <Tooltip title="Pausar Sessão" placement="top-start">
                               <IconButton
                                 onClick={() => pauseTimer(sessionItem)}
-                                disabled={!isRunning}
+                                disabled={!timers[sessionItem.sessionId]?.isRunning}
                               >
                                 <Pause />
                               </IconButton>
@@ -540,7 +541,7 @@ const DashboardPage = () => {
                             <Tooltip title="Resetar Timer da Sessão" placement="top-start">
                               <IconButton
                                 onClick={() => resetTimer(sessionItem)}
-                                disabled={!isRunning && elapsedTime === 0}
+                                disabled={!timers[sessionItem.sessionId]?.elapsedTime}
                               >
                                 <Stop />
                               </IconButton>
@@ -575,25 +576,34 @@ const DashboardPage = () => {
                           </Stack>
                         </CardCustom>
                         <Box>
-                          <Button
-                            variant="contained"
-                            onClick={() => handleOpenDropItemsModal(sessionItem)}
-                            sx={{
-                              maxWidth: 120,
-                              padding: 2,
-                              borderRadius: '12px',
-                              color: 'white',
-                              bgcolor: blue[600],
-                              ml: '40px'
-                            }}
+                          <Tooltip
+                            title="Você ainda não registrou nenhuma tentativa."
+                            placement="top-start"
+                            arrow
+                            disableHoverListener={sessionItem.attempts !== 0} // Só exibe se attempts for 0
                           >
-                            Registrar Itens Dropados
-                          </Button>
+                            <Box>
+                              <Button
+                                disabled={sessionItem.attempts === 0}
+                                variant="contained"
+                                onClick={() => handleOpenDropItemsModal(sessionItem)}
+                                sx={{
+                                  maxWidth: 120,
+                                  padding: 2,
+                                  borderRadius: '12px',
+                                  color: 'white',
+                                  bgcolor: blue[600],
+                                  ml: '40px'
+                                }}
+                              >
+                                Registrar Drops
+                              </Button>
+                            </Box>
+                          </Tooltip>
                         </Box>
                       </Stack>
                     </Box>
 
-                    {/* Ícones de edição e exclusão */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <IconButton
                         onClick={() => handleOpenModal(sessionItem)}
@@ -615,142 +625,20 @@ const DashboardPage = () => {
                       </IconButton>
                     </Box>
                   </Card>
-                  <Collapse in={expandedId === sessionItem.sessionId}>
-                    <Box
-                      sx={{
-                        padding: 2,
-                        bgcolor: blue[900],
-                        borderRadius: '0 0 6px 6px',
-                        marginTop: '-18px' // Para unir visualmente com o card acima
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight="bold" sx={{ my: 1, color: 'white' }}>
-                        Estatísticas de DropRate
-                      </Typography>
-                      <Box
-                        sx={{
-                          padding: '16px',
-                          borderRadius: '8px'
-                        }}
-                      >
-                        <Grid container spacing={2}>
-                          {sessionDropRate?.dropRates && sessionDropRate.dropRates.length > 0 ? (
-                            sessionDropRate.dropRates.map(item => (
-                              <Grid item xs={2} sm={2} key={item.itemName}>
-                                <Card
-                                  elevation={3}
-                                  sx={{
-                                    width: '100%',
-                                    p: 2,
-                                    borderRadius: '8px',
-                                    bgcolor: blue[800]
-                                  }}
-                                >
-                                  <Stack
-                                    spacing={1}
-                                    sx={{
-                                      alignItems: 'center'
-                                    }}
-                                  >
-                                    <Stack flexDirection="row">
-                                      <Typography
-                                        variant="body2"
-                                        gutterBottom={true}
-                                        sx={{
-                                          fontWeight: 'bold',
-                                          mr: '5px'
-                                        }}
-                                      >
-                                        {item.totalDropped}x
-                                      </Typography>
-                                      <Typography
-                                        variant="body2"
-                                        gutterBottom={true}
-                                        sx={{
-                                          fontWeight: 'bold'
-                                        }}
-                                      >
-                                        {item.itemName}
-                                      </Typography>
-                                    </Stack>
-
-                                    <Box
-                                      sx={{
-                                        width: '80%',
-                                        height: 1,
-                                        bgcolor: grey[300],
-                                        borderRadius: '4px',
-                                        my: 1
-                                      }}
-                                    />
-                                    <Stack flexDirection="row">
-                                      <Typography
-                                        variant="body1"
-                                        sx={{
-                                          olor: grey[200],
-                                          fontWeight: 'bold',
-                                          mr: '5px'
-                                        }}
-                                      >
-                                        Drop Rate:
-                                      </Typography>
-                                      <Typography
-                                        variant="body1"
-                                        sx={{
-                                          color: green[400],
-                                          fontWeight: 'bold'
-                                        }}
-                                      >
-                                        {item.dropRate}%
-                                      </Typography>
-                                    </Stack>
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        fontWeight: 'bold',
-                                        color: grey[200]
-                                      }}
-                                    >
-                                      Tempo Médio por Drop:
-                                    </Typography>
-                                    <Typography
-                                      variant="body1"
-                                      sx={{
-                                        fontWeight: 'bold',
-                                        color: green[400]
-                                      }}
-                                    >
-                                      {item.avgTimePerDrop
-                                        ? formatTime(Number(item.avgTimePerDrop), 'text')
-                                        : '00:00:00'}
-                                    </Typography>
-                                  </Stack>
-                                </Card>
-                              </Grid>
-                            ))
-                          ) : (
-                            <Grid item xs={12}>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  textAlign: 'center',
-                                  color: 'gray'
-                                }}
-                              >
-                                Nenhum dado disponível
-                              </Typography>
-                            </Grid>
-                          )}
-                        </Grid>
-                      </Box>
-                    </Box>
-                  </Collapse>
+                  {sessionDropRate && (
+                    <DropRateStats
+                      expandedId={expandedId}
+                      sessionItemId={sessionItem.sessionId}
+                      sessionDropRate={sessionDropRate}
+                      formatTime={formatTime}
+                    />
+                  )}
                 </Grid>
               ))}
             </Grid>
-
             <CreateSessionModal
               openModal={openModal}
+              isLoading={loadingCreateSession}
               handleCloseModal={handleCloseModal}
               isEditing={isEditing}
               formData={formData}
@@ -773,6 +661,7 @@ const DashboardPage = () => {
             <DropItemsModal
               open={dropItemsModalOpen}
               onClose={() => setDropItemsModalOpen(false)}
+              isLoading={loadingRegisterDrops}
               onSave={drops => {
                 registerDrops(drops);
               }}
@@ -784,4 +673,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default FarmSessionPage;

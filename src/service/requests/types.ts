@@ -80,3 +80,24 @@ export interface DropItem {
     dropRate: string; // Se for sempre um número, alterar para `number`.
     avgTimePerDrop: string; // Alterar para `number` se necessário.
  }
+
+ export interface DropRateItemGeral {
+    itemName: string;
+    totalDropped: string;
+    dropRate: number;
+    avgTimePerDrop: number;
+    dropTimestamp: string;
+}
+
+export interface DropRateResults {
+    userCharId: string;
+    totalAttempts: string;
+    totalTimeSpent: string;
+    avgTimePerAttempt: number;
+    dropRates: DropRateItemGeral[];
+}
+
+export interface DropRateResponse {
+    success: boolean;
+    results: DropRateResults;
+}
