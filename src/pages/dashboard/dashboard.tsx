@@ -91,7 +91,7 @@ const FarmSessionPage = () => {
       await updateFarmSession(session.userCharId, session.sessionId, session.missionId, {
         timeSpent: formatTime(timers[session.sessionId]?.elapsedTime || 0, 'dots')
       });
-      showSnackbar('Tempo atualizado com sucesso!', 'success');
+      showSnackbar('Timer Pausado!', 'success');
     } catch (error) {
       console.error('Erro ao atualizar o tempo:', error);
       showSnackbar('Erro ao atualizar o tempo', 'error');
@@ -183,6 +183,7 @@ const FarmSessionPage = () => {
         selectedUserSession?.sessionId ?? '',
         { drops }
       );
+      fetchDropRateSessionReport(selectedUserSession?.sessionId)
       showSnackbar('Drops registrados com sucesso!', 'success');
     } catch (error) {
       showSnackbar('Erro ao registrar drops', 'error');
