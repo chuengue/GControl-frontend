@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import App from './App';
 import Layout from './layouts/dashboard';
 import DashboardPage from './pages';
+import AboutPage from './pages/about/about';
 import AddUserChar from './pages/addUserChar/addUserChar';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
@@ -69,6 +70,10 @@ const router = createBrowserRouter([
                     {
                         path: 'farm-sessions',
                        Component: FarmSessionPage
+                    },
+                    {
+                        path: 'about',
+                       Component: AboutPage
                     },
                 ]
             },

@@ -1,4 +1,4 @@
-import { AddCircle, AdminPanelSettings, Agriculture, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, Info, RemoveCircle } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Groups2Icon from '@mui/icons-material/Groups2';
@@ -84,7 +84,14 @@ export const NAVIGATION: CustomNav = [
                 icon: <RemoveCircle />
             }
         ]
-    }
+    },
+    {
+        title: 'Sobre',
+        segment:"about",
+        icon: < Info />,
+       
+        
+    },
 ];
 
 const BRANDING = {
