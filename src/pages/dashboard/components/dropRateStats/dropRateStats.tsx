@@ -104,7 +104,7 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
                       Tempo Médio por Drop:
                     </Typography>
                     <Typography variant="body1" fontWeight="bold" color={green[400]}>
-                      {item.avgTimePerDrop
+                      {item.avgTimePerDrop && isFinite(Number(item.avgTimePerDrop))
                         ? formatTime(Math.round(Number(item.avgTimePerDrop)), 'text')
                         : '00:00:00'}
                     </Typography>
@@ -115,7 +115,8 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
           ) : (
             <Grid item xs={12}>
               <Typography variant="body2" color={grey[300]}>
-                Não há dados disponíveis para esta sessão. Atualize a página para verificar as estatísticas.
+                Não há dados disponíveis para esta sessão. Atualize a página para verificar as
+                estatísticas.
               </Typography>
             </Grid>
           )}
