@@ -116,6 +116,7 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
   };
   const handleSave = () => {
     onSave(selectedItems);
+    setSelectedItems([])
     
   };
   useEffect(()=>{
