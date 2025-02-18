@@ -9,6 +9,7 @@ import AddUserChar from './pages/addUserChar/addUserChar';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
 import FarmSessionPage from './pages/dashboard/dashboard';
+import ForgotPassword from './pages/forgotPassword';
 import UserCharDetailsPage from './pages/myChars/details';
 import MyChars from './pages/myChars/myChars';
 import register from './pages/register';
@@ -79,6 +80,10 @@ const router = createBrowserRouter([
             {
                 path: '/sign-up',
                 Component: register
+            },
+            {
+                path: '/forgot-password',
+                Component: ForgotPassword
             }
         ]
     }
