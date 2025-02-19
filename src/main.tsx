@@ -10,6 +10,7 @@ import AddUserChar from './pages/addUserChar/addUserChar';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
 import FarmSessionPage from './pages/dashboard/dashboard';
+import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
 import UserCharDetailsPage from './pages/myChars/details';
 import MyChars from './pages/myChars/myChars';
@@ -70,6 +71,10 @@ const router = createBrowserRouter([
                     {
                         path: 'farm-sessions',
                        Component: FarmSessionPage
+                    },
+                    {
+                        path: 'farm-tool',
+                       Component: FarmToolsPage
                     },
                     {
                         path: 'about',

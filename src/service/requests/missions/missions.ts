@@ -110,3 +110,14 @@ export const deleteDropItem = async (itemDropId:string) => {
        throw error; // Lança o erro para ser tratado externamente
     }
  };
+export const getGeneralReportDrops = async (userId:string, groupBy: "mission" | "userChar") => {
+    try {
+       const url = `/session/${userId}/general-drop-rate-report/${groupBy}`;
+ 
+       const response = await api.get(url);
+       return response.data; // Retorna os dados da requisição
+    } catch (error) {
+       console.error('Erro gerar Relatório:', error);
+       throw error; // Lança o erro para ser tratado externamente
+    }
+ };
