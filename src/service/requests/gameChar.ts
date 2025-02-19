@@ -39,6 +39,18 @@ export const getAllCharacters = async (
         throw error; // Lança o erro para ser tratado externamente
     }
 };
+export const deleteUserGameChar = async (userId:string,userCharId: string) => {
+    try {
+       // Monta a URL com ou sem o charId
+       const url = `/users/${userId}/characters/${userCharId}`;
+ 
+       const response = await api.delete(url);
+       return response.data; // Retorna os dados da requisição
+    } catch (error) {
+       console.error('Erro ao excluir personagem:', error);
+       throw error; // Lança o erro para ser tratado externamente
+    }
+ };
 export const RegisterUserCharacter = async (
     userId: string,
     charId: string,

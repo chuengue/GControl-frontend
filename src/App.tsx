@@ -1,6 +1,5 @@
-import { AddCircle, AdminPanelSettings, Agriculture, Info, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, Handyman, Home, Info, RemoveCircle } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
 import { GlobalStyles } from '@mui/material';
@@ -37,11 +36,11 @@ interface CustomNav extends NavigationCustom {
 export const NAVIGATION: CustomNav = [
     {
         kind: 'header',
-        title: 'Gcontrol'
+        title: 'Chase Tracker'
     },
     {
-        title: 'Dashboard',
-        icon: <DashboardIcon />
+        title: 'Home',
+        icon: <Home />
     },
     {
         segment: 'chars',
@@ -64,8 +63,11 @@ export const NAVIGATION: CustomNav = [
         title: 'Sessões de Farm',
         segment:"farm-sessions",
         icon: < Agriculture />,
-       
-        
+    },
+    {
+        title: 'Ferramenta de Farm',
+        segment:"farm-tool",
+        icon: < Handyman />,
     },
     {
         title: 'Admin',

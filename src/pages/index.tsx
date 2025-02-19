@@ -1,11 +1,13 @@
-import { Calculate as CalcIcon, SportsEsports as EquipIcon, Agriculture as FarmIcon, Person as PersonIcon, BarChart as StatsIcon } from '@mui/icons-material';
+import { Calculate as CalcIcon, SportsEsports as EquipIcon, Agriculture as FarmIcon, Person as PersonIcon, BarChart as StatsIcon, TrendingUp } from '@mui/icons-material';
 import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
-import { blue, cyan, green, orange, red } from '@mui/material/colors';
+import { blue, cyan, green, orange, purple, red } from '@mui/material/colors';
 import * as React from 'react';
+import { useNavigate } from 'react-router';
 
 // Ícones para as funcionalidades
 
 export default function HomePage() {
+  const navigate = useNavigate()
   return (
     <Box sx={{ padding:  {lg:1, xl:4}, minHeight: '100vh', mt:{lg:-4,xl:"0px"} }}>
       {/* Introdução */}
@@ -40,9 +42,11 @@ export default function HomePage() {
         {/* Cadastro de Personagem */}
         <Grid item xs={12} sm={6} md={4}>
           <Card
+            onClick={() => navigate("/chars/add-user-char")}
             sx={{
               height: '100%',
               borderRadius: '12px',
+              cursor: 'pointer',
               boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
               background: `linear-gradient(145deg, ${blue['50']}, ${blue[700]})`,
               transition: 'transform 0.3s, box-shadow 0.3s',
@@ -73,11 +77,7 @@ export default function HomePage() {
               borderRadius: '12px',
               boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
               background: `linear-gradient(145deg, ${orange['100']}, ${orange[600]})`,
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              '&:hover': {
-                transform: 'translateY(-8px)',
-                boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.2)'
-              }
+             
             }}
           >
             <CardContent sx={{ textAlign: 'center', p: 3 }}>
@@ -95,6 +95,7 @@ export default function HomePage() {
         {/* Calculadora de Ataque Total */}
         <Grid item xs={12} sm={6} md={4}>
           <Card
+            onClick={() => navigate("/chars/add-user-char")}
             sx={{
               height: '100%',
               borderRadius: '12px',
@@ -122,6 +123,8 @@ export default function HomePage() {
         {/* Sessões de Farm */}
         <Grid item xs={12} sm={6} md={4}>
           <Card
+
+            onClick={() => navigate("/farm-sessions")}
             sx={{
               height: '100%',
               borderRadius: '12px',
@@ -147,9 +150,38 @@ export default function HomePage() {
           </Card>
         </Grid>
 
+          {/* Novo Card - Gráficos */}
+          <Grid item xs={12} sm={6} md={4}>
+          <Card
+          onClick={() => navigate("/farm-tool")}
+            sx={{
+              height: '100%',
+              borderRadius: '12px',
+              boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+              background: `linear-gradient(145deg, ${purple['100']}, ${purple[700]})`,
+              transition: 'transform 0.3s, box-shadow 0.3s',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.2)'
+              }
+            }}
+          >
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <TrendingUp sx={{ fontSize: '3rem', color: '#6a1b9a', mb: 2 }} />
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#6a1b9a' }}>
+                Visualização de Gráficos
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Analise seus dados através de gráficos interativos para otimizar suas estratégias de farm.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Análise de Drops */}
         <Grid item xs={12} sm={6} md={4}>
           <Card
+          onClick={() => navigate("/farm-sessions")}
             sx={{
               height: '100%',
               borderRadius: '12px',
