@@ -94,9 +94,9 @@ const FarmSessionPage = () => {
         timeSpent: formatTime(timers[session.sessionId]?.elapsedTime || 0, 'dots')
       });
       showSnackbar('Timer Pausado!', 'success', {
-        vertical:"top",
-        horizontal: "center"
-      } );
+        vertical: 'top',
+        horizontal: 'center'
+      });
     } catch (error) {
       console.error('Erro ao atualizar o tempo:', error);
       showSnackbar('Erro ao atualizar o tempo', 'error');
@@ -299,7 +299,6 @@ const FarmSessionPage = () => {
 
     try {
       const data = await fetchDropRateSessionReport(sessionId);
-      setSessionDropRate(data.results);
       setExpandedId(sessionId);
     } catch (error) {
       console.error('Erro ao buscar relatório de drop rate:', error);
@@ -309,6 +308,7 @@ const FarmSessionPage = () => {
   const fetchDropRateSessionReport = async sessionId => {
     try {
       const data = await getDropRateSessionReport(sessionId);
+      setSessionDropRate(data.results);
       return data;
     } catch (error) {
       console.error('Erro ao buscar relatório de drop rate:', error);
@@ -402,7 +402,7 @@ const FarmSessionPage = () => {
             sx={{
               overflowY: 'auto',
               paddingX: '20px',
-              height: {lg:"60vh",xl:'72vh'}
+              height: { lg: '60vh', xl: '72vh' }
             }}
           >
             <Grid container spacing={3}>
@@ -503,7 +503,7 @@ const FarmSessionPage = () => {
                               </Typography>
                               <Divider sx={{ my: 1 }} />
 
-                              <Typography variant="body2" fontWeight="bold" width={"120px"}>
+                              <Typography variant="body2" fontWeight="bold" width={'120px'}>
                                 Tempo Total:
                               </Typography>
                               <Typography variant="body1" fontWeight="bold" color={green[200]}>
@@ -512,7 +512,7 @@ const FarmSessionPage = () => {
                                   : '00:00:00'}
                               </Typography>
                               <Divider sx={{ my: 1 }} />
-                              <Typography variant="body2" fontWeight="bold" >
+                              <Typography variant="body2" fontWeight="bold">
                                 T. Médio/Ida
                               </Typography>
                               <Typography variant="body1" fontWeight="bold" color={green[200]}>
@@ -621,35 +621,34 @@ const FarmSessionPage = () => {
                             </Stack>
                           </CardCustom>
                         )}
-                        {isExtraLarge &&(
+                        {isExtraLarge && (
+                          <CardCustom>
+                            <Stack spacing={1} sx={{ textAlign: 'center' }}>
+                              {/* Criado em */}
+                              <Typography variant="body2">Criado em</Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
+                                {new Date(sessionItem?.created_at).toLocaleDateString('pt-BR', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </Typography>
 
-                        <CardCustom>
-                          <Stack spacing={1} sx={{ textAlign: 'center' }}>
-                            {/* Criado em */}
-                            <Typography variant="body2">Criado em</Typography>
-                            <Typography variant="body1" fontWeight="bold" color={green[200]}>
-                              {new Date(sessionItem?.created_at).toLocaleDateString('pt-BR', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </Typography>
+                              <Divider sx={{ my: 1 }} />
 
-                            <Divider sx={{ my: 1 }} />
-
-                            <Typography variant="body2">Última Modificação</Typography>
-                            <Typography variant="body1" fontWeight="bold" color={green[200]}>
-                              {new Date(sessionItem?.updated_at).toLocaleString('pt-BR', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })}
-                            </Typography>
-                          </Stack>
-                        </CardCustom>
+                              <Typography variant="body2">Última Modificação</Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
+                                {new Date(sessionItem?.updated_at).toLocaleString('pt-BR', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false
+                                })}
+                              </Typography>
+                            </Stack>
+                          </CardCustom>
                         )}
                         <Box>
                           <Tooltip
@@ -669,7 +668,7 @@ const FarmSessionPage = () => {
                                   borderRadius: '12px',
                                   color: 'white',
                                   bgcolor: blue[600],
-                                  ml: {lg:"10px", xl:"20px"}
+                                  ml: { lg: '10px', xl: '20px' }
                                 }}
                               >
                                 Registrar Drops

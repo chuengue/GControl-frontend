@@ -98,3 +98,15 @@ export const getDropRateSessionReport = async (sessionId: string): Promise<DropR
         throw error;
     }
 };
+export const deleteDropItem = async (itemDropId:string) => {
+    try {
+       // Monta a URL com ou sem o charId
+       const url = `/sessions/drops/${itemDropId}`;
+ 
+       const response = await api.delete(url);
+       return response.data; // Retorna os dados da requisição
+    } catch (error) {
+       console.error('Erro ao excluir item:', error);
+       throw error; // Lança o erro para ser tratado externamente
+    }
+ };

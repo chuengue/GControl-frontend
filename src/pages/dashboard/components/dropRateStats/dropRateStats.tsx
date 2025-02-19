@@ -1,8 +1,11 @@
-import { Box, Card, Collapse, Grid, Stack, Tooltip, Typography } from '@mui/material';
-import { blue, green, grey } from '@mui/material/colors';
-import React from 'react';
+import { DeleteForever } from '@mui/icons-material';
+import { Box, Card, Collapse, Grid, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { blue, green, grey, red } from '@mui/material/colors';
+import React, { useEffect, useState } from 'react';
 
+import { deleteDropItem } from '../../../../service/requests/missions/missions';
 import { DropRateReport } from '../../../../service/requests/types';
+import { useSnackbarStore } from '../../../../stores/snackBarStore';
 
 interface DropRateStatsProps {
   expandedId: string | null;
@@ -17,6 +20,26 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
   sessionDropRate,
   formatTime
 }) => {
+  const [sessionDropRateList, setSessionDropRateList] = useState(sessionDropRate.dropRates);
+  const { showSnackbar } = useSnackbarStore();
+
+  useEffect(()=>{
+    setSessionDropRateList(sessionDropRate.dropRates);
+  },[sessionDropRate])
+
+  const handleDeleteDroppedItem = async (id: string) => {
+    try {
+      const data = await deleteDropItem(id);
+  
+      setSessionDropRateList((prevItems) => prevItems.filter((item) => item.id !== id));
+  
+      showSnackbar(data.results?.message || 'Item removido com sucesso!', 'success');
+    } catch (error) {
+      showSnackbar(error.message || 'Erro ao excluir o item.', 'error');
+    }
+  };
+  
+  
   return (
     <Collapse in={expandedId === sessionItemId}>
       <Box
@@ -33,8 +56,8 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
         </Typography>
 
         <Grid container spacing={2}>
-          {sessionDropRate.dropRates && sessionDropRate.dropRates.length > 0 ? (
-            sessionDropRate.dropRates.map(item => (
+          {sessionDropRateList && sessionDropRateList.length > 0 ? (
+            sessionDropRateList.map(item => (
               <Grid item xs={6} sm={4} md={3} lg={2} key={item.itemName}>
                 <Card
                   sx={{
@@ -90,13 +113,28 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
                     />
 
                     {/* Drop Rate */}
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Typography variant="body1" fontWeight="bold" color={grey[200]}>
-                        Drop Rate:
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold" color={green[400]}>
-                        {item.dropRate}%
-                      </Typography>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Typography variant="body1" fontWeight="bold" color={grey[200]}>
+                          Drop Rate:
+                        </Typography>
+                        <Typography variant="body1" fontWeight="bold" color={green[400]}>
+                          {item.dropRate}%
+                        </Typography>
+                      </Stack>
+
+                      {/* Botão de exclusão sutil */}
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteDroppedItem(item.id)}
+                        sx={{
+                          color: grey[500], 
+                        
+                          '&:hover': { color: red[400] } // Destaca ao passar o mouse
+                        }}
+                      >
+                        <DeleteForever fontSize="small" />
+                      </IconButton>
                     </Stack>
 
                     {/* Tempo Médio por Drop */}

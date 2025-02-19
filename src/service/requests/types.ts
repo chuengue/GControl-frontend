@@ -75,6 +75,7 @@ export interface DropItem {
  }
  
  export interface DropRateItem {
+    id:string
     itemName: string;
     totalDropped: string; // Se o backend retornar como string, manter assim. Caso contrário, alterar para `number`.
     dropRate: string; // Se for sempre um número, alterar para `number`.
