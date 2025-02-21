@@ -12,6 +12,16 @@ export const getAllLimitedMissions = async (): Promise<ApiGetAllLimitedMissionRe
     throw error; // Lança o erro para ser tratado externamente
   }
 };
+export const removeLimitedMissions = async (missionId: string): Promise<void> => {
+  try {
+    const url = `/limited-missions/${missionId}`;
+
+    await api.delete(url);
+  } catch (error) {
+    console.error('Erro ao excluir missão:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};
 
 export const getUserMissionsLogs = async (userId: string): Promise<ApiResponse> => {
   try {
@@ -49,6 +59,20 @@ export const removeRegisterCompletedMission = async (
     await api.delete(url);
   } catch (error) {
     console.error('Erro ao remover registro de missão:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};
+export const createLimitedMission = async (data: {
+  missionId: string;
+  type: string;
+  max_attempts: number;
+}): Promise<void> => {
+  try {
+    const url = `/limited-missions`;
+
+    await api.post(url, data);
+  } catch (error) {
+    console.error('Erro ao registrar de missão:', error);
     throw error; // Lança o erro para ser tratado externamente
   }
 };

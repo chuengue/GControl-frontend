@@ -19,7 +19,7 @@ export interface ApiResponse {
 export interface MissionResult {
     id: string;
     missionId: string;
-    type: 'daily' | 'weekly';
+    type: string;
     max_attempts: number;
     mission_name: string;
     mission_imgUrl: string;

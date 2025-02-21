@@ -1,4 +1,4 @@
-import { AddCircle, AdminPanelSettings, Agriculture, Handyman, Home, Info, RemoveCircle, TableChartRounded } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Handyman, Home, Info, RemoveCircle, TableChartRounded } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
@@ -89,6 +89,11 @@ export const NAVIGATION: CustomNav = [
                 segment: 'delete-item',
                 title: 'Excluir Item',
                 icon: <RemoveCircle />
+            },
+            {
+                segment: 'add-limited-missions',
+                title: 'Adicionar Missão Limitada',
+                icon: <DataSaverOn />
             }
         ]
     },

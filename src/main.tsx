@@ -7,6 +7,7 @@ import Layout from './layouts/dashboard';
 import DashboardPage from './pages';
 import AboutPage from './pages/about/about';
 import AddUserChar from './pages/addUserChar/addUserChar';
+import AddLimitedMission from './pages/admin/addLimitedMissions';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
 import DailyControl from './pages/dailyControl/dailyControl';
@@ -47,6 +48,14 @@ const router = createBrowserRouter([
                                 Component: () => (
                                     <PrivateRoute adminOnly>
                                         <RemoveItemPage />
+                                    </PrivateRoute>
+                                )
+                            },
+                            {
+                                path: 'add-limited-missions',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <AddLimitedMission />
                                     </PrivateRoute>
                                 )
                             }
