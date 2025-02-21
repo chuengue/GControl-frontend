@@ -1,0 +1,54 @@
+import api from '../../api';
+import { ApiGetAllLimitedMissionResponse, ApiResponse } from './types';
+
+export const getAllLimitedMissions = async (): Promise<ApiGetAllLimitedMissionResponse> => {
+  try {
+    const url = `/limited-missions`;
+
+    const response = await api.get<ApiGetAllLimitedMissionResponse>(url);
+    return response.data; // Retorna os dados da requisição
+  } catch (error) {
+    console.error('Erro missões limitadas:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};
+
+export const getUserMissionsLogs = async (userId: string): Promise<ApiResponse> => {
+  try {
+    const url = `/limited-missions-log/${userId}`;
+
+    const response = await api.get<ApiResponse>(url);
+    return response.data; // Retorna os dados da requisição
+  } catch (error) {
+    console.error('Erro recuperar logs de missão:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};
+
+export const registerCompletedMission = async (
+  userId: string,
+  userCharId: string,
+  limitedMissionId: string
+): Promise<void> => {
+  try {
+    const url = `/users/${userId}/${userCharId}/limited-missions-log/${limitedMissionId}`;
+
+    await api.post(url);
+  } catch (error) {
+    console.error('Erro ao completar missão:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};
+export const removeRegisterCompletedMission = async (
+  userCharId: string,
+  limitedMissionId: string
+): Promise<void> => {
+  try {
+    const url = `/${userCharId}/limited-missions-log/${limitedMissionId}`;
+
+    await api.delete(url);
+  } catch (error) {
+    console.error('Erro ao remover registro de missão:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};

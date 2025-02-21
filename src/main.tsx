@@ -9,6 +9,7 @@ import AboutPage from './pages/about/about';
 import AddUserChar from './pages/addUserChar/addUserChar';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
+import DailyControl from './pages/dailyControl/dailyControl';
 import FarmSessionPage from './pages/dashboard/dashboard';
 import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
@@ -71,6 +72,10 @@ const router = createBrowserRouter([
                     {
                         path: 'farm-sessions',
                        Component: FarmSessionPage
+                    },
+                    {
+                        path: 'daily-control',
+                       Component: DailyControl
                     },
                     {
                         path: 'farm-tool',
