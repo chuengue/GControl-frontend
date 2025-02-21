@@ -141,7 +141,7 @@ export default function HomePage() {
             <CardContent sx={{ textAlign: 'center', p: 3 }}>
               <FarmIcon sx={{ fontSize: '3rem', color: '#388e3c', mb: 2 }} />
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#388e3c' }}>
-                Sessões de Farm
+              Controle de Farm
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Registre suas sessões de farm, acompanhe os drops e calcule o tempo médio por item.
