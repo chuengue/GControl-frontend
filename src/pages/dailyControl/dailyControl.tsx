@@ -10,26 +10,34 @@ import {
 import { CharacterMissions, MissionResult } from '../../service/requests/limitedMissions/types';
 import { useSession } from '../../SessionContext';
 import useCharStore from '../../stores/charStore';
+import { useSnackbarStore } from '../../stores/snackBarStore';
 import MissionControlTable from './components/controllerTable/controllerTable';
 
 const DailyControl = () => {
   const [limitedMissions, setLimitedMissions] = useState<MissionResult[]>();
   const [logs, setLogs] = useState<CharacterMissions[]>();
-  const { session } = useSession();
+
   const { fetchUserCharsData, userChars } = useCharStore();
+  const { session } = useSession();
+  const {showSnackbar} =  useSnackbarStore()
 
   const fetchLimitedMissions = async () => {
     try {
       const data = await getAllLimitedMissions();
       setLimitedMissions(data.results);
-    } catch (error) {}
+    } catch (error) {
+      showSnackbar("Erro ao atualizar Missão", 'error');
+
+    }
   };
   const fetchUserMissionLogs = async () => {
     if (!session) return;
     try {
       const data = await getUserMissionsLogs(session?.user.uid);
       setLogs(data.results);
-    } catch (error) {}
+    } catch (error) {
+      showSnackbar("Erro ao atualizar Missão", 'error');
+    }
   };
 
   React.useEffect(() => {

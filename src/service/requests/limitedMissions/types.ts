@@ -1,32 +1,20 @@
-// Representação do status da missão com attemptId e status
-export interface MissionStatus {
-    attemptId: string;
-    status: boolean;
-}
-
-// Representação de uma missão concluída por um personagem
-export interface MissionCompleted {
+export interface LimitedMission {
     name: string;
     imgUrl: string;
-    status: MissionStatus[]; // Array de status com attemptId e status
+    status: boolean[];
 }
 
-// Representação de um personagem com suas missões
-export interface CharacterLogMissions {
+export interface CharacterMissions {
     id: string;
     name: string;
     thumbImgUrl: string;
-    missionsCompleted: {
-        [missionId: string]: MissionCompleted; // Map de missões completadas por ID de missão
-    };
+    missionsCompleted: Record<string, LimitedMission>; // O ID da missão como chave
 }
 
-// Estrutura da resposta com o resultado da consulta
-interface MissionResponse {
+export interface ApiResponse {
     success: boolean;
-    results: CharacterLogMissions[];
+    results: CharacterMissions[];
 }
-
 
 export interface MissionResult {
     id: string;

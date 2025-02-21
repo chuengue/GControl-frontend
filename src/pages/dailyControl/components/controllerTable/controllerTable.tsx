@@ -1,5 +1,7 @@
 import {
+  Box,
   Checkbox,
+  Paper,
   Skeleton,
   Table,
   TableBody,
@@ -9,18 +11,24 @@ import {
   TableRow
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import theme from '../../../../../theme';
 import { UserCharacter } from '../../../../interfaces/char';
 import {
-  CharacterLogMissions,
+  CharacterMissions,
   MissionResult
 } from '../../../../service/requests/limitedMissions/types';
 import { useSession } from '../../../../SessionContext';
 
 interface Props {
   missions: MissionResult[] | undefined;
-  UserCharsLogs: CharacterLogMissions[] | undefined;
+  UserCharsLogs: CharacterMissions[] | undefined;
   userChars: UserCharacter[] | undefined;
-  handleRegisterMission: (data :{characterId: string, missionId: string, attemptIndex: number, completed:boolean}) => void;
+  handleRegisterMission: (data: {
+    characterId: string;
+    missionId: string;
+    attemptIndex: number;
+    completed: boolean;
+  }) => void;
 }
 
 const MissionControlTable: React.FC<Props> = ({
@@ -73,8 +81,13 @@ const MissionControlTable: React.FC<Props> = ({
     });
   };
 
-  const handleCheckbox = (characterId: string, missionId: string, attemptIndex: number, completed:boolean) => {
-    console.log(completed)
+  const handleCheckbox = (
+    characterId: string,
+    missionId: string,
+    attemptIndex: number,
+    completed: boolean
+  ) => {
+    console.log(completed);
     handleRegisterMission({
       characterId,
       missionId,
@@ -86,7 +99,7 @@ const MissionControlTable: React.FC<Props> = ({
 
   if (!missions || !userChars || missions.length === 0 || userChars.length === 0) {
     return (
-      <TableContainer>
+      <TableContainer component={Paper} sx={{}}>
         <Table>
           <TableHead>
             <TableRow>
@@ -135,13 +148,31 @@ const MissionControlTable: React.FC<Props> = ({
   }
 
   return (
-    <TableContainer>
+    <TableContainer
+      component={Paper}
+      elevation={4}
+      sx={{
+        borderRadius: '12px',
+        bgcolor: theme.palette.grey[900],
+        overflow: 'auto', // Adiciona scroll horizontal
+        maxWidth: '100%' ,
+      }}
+    >
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Personagem</TableCell>
+            <TableCell
+              sx={{
+                position: 'sticky',
+                left: 0,
+                zIndex: 1,
+                bgcolor: theme.palette.grey[900]
+              }}
+            >
+              Personagem
+            </TableCell>
             {missions.map(mission => (
-              <TableCell key={mission.id} align="center">
+              <TableCell key={mission.id} align="center" sx={{ minWidth: '160px' }}>
                 {mission.mission_imgUrl ? (
                   <img src={mission.mission_imgUrl} alt={mission.mission_name} width={30} />
                 ) : (
@@ -156,25 +187,35 @@ const MissionControlTable: React.FC<Props> = ({
         <TableBody>
           {userChars.map(character => (
             <TableRow key={character.id}>
-              <TableCell>
+              <TableCell
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 1,
+                  bgcolor: theme.palette.grey[900]
+                }}
+              >
                 {character.gameChar?.thumbImgUrl ? (
-                  <img
-                    src={character.gameChar.thumbImgUrl}
-                    alt={character.gameChar.name}
-                    width={40}
-                    style={{ borderRadius: '8px' }}
-                  />
+                  <Box justifyContent="center" alignContent="center" display="flex">
+                    <img
+                      src={character.gameChar.thumbImgUrl}
+                      alt={character.gameChar.name}
+                      width={50}
+                      style={{ borderRadius: '8px' }}
+                    />
+                  </Box>
                 ) : (
                   <Skeleton variant="circular" width={30} height={30} />
                 )}
               </TableCell>
               {missions.map(mission => (
-                <TableCell key={mission.id} align="center">
+                <TableCell key={mission.id} align="center" sx={{ width: '200px' }}>
                   {completedMissions[character.id]?.[mission.id]?.map((completed, index) => (
                     <Checkbox
                       key={index}
+                      color="success"
                       checked={completed}
-                      onChange={() => console.log(completedMissions)}
+                      onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
                     />
                   )) || <Skeleton variant="rectangular" width={24} height={24} />}
                 </TableCell>
