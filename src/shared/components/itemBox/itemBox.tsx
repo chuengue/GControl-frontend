@@ -67,6 +67,8 @@ const ItemBox: React.FC<{
 
   const open = Boolean(anchorEl);
   const getIconUrl = (rarity: string) => {
+
+
     if (IsDefault) return '/assets/images/inv/bg_common.png';
     switch (rarity) {
       case 'common':
@@ -96,9 +98,9 @@ const ItemBox: React.FC<{
 
   const getColor = () => {
     if (IsDefault) {
-      return 'white ';
+      return 'white';
     }
-    theme.palette.raritiesColors[item.rarity];
+    return theme.palette.raritiesColors[item?.rarity || 'common'];
   };
   return (
     <Card

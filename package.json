@@ -1,6 +1,6 @@
 {
     "name": "Chase Tracker",
-    "version": "0.1.05",
+    "version": "0.1.08",
     "scripts": {
         "dev": "vite",
         "preview": "vite preview"
@@ -14,9 +14,10 @@
         "@mui/material": "^6",
         "@mui/material-nextjs": "^6",
         "@mui/x-date-pickers": "^7.26.0",
+        "@mui/x-date-pickers-pro": "^7.27.0",
         "@toolpad/core": "0.12.0",
         "axios": "^1.7.9",
-        "date-fns": "^2.29.3",
+        "date-fns": "^4.1.0",
         "dictionary-pt": "^4.0.0",
         "dictionary-pt-br": "^3.0.0",
         "firebase": "^11.2.0",
@@ -24,6 +25,7 @@
         "lodash-es": "^4.17.21",
         "nspell": "^2.1.5",
         "react": "^19",
+        "react-date-range": "^2.0.1",
         "react-dom": "^19",
         "react-responsive": "^10.0.0",
         "react-router": "^7",

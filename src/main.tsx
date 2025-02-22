@@ -7,8 +7,11 @@ import Layout from './layouts/dashboard';
 import DashboardPage from './pages';
 import AboutPage from './pages/about/about';
 import AddUserChar from './pages/addUserChar/addUserChar';
+import AddLimitedMission from './pages/admin/addLimitedMissions';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
+import DailyControl from './pages/dailyControl/dailyControl';
+import MissionHistoricPage from './pages/dailyControl/dailyControlHistoric';
 import FarmSessionPage from './pages/dashboard/dashboard';
 import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
@@ -48,6 +51,14 @@ const router = createBrowserRouter([
                                         <RemoveItemPage />
                                     </PrivateRoute>
                                 )
+                            },
+                            {
+                                path: 'add-limited-missions',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <AddLimitedMission />
+                                    </PrivateRoute>
+                                )
                             }
                         ]
                     },
@@ -71,6 +82,14 @@ const router = createBrowserRouter([
                     {
                         path: 'farm-sessions',
                        Component: FarmSessionPage
+                    },
+                    {
+                        path: 'daily-control',
+                       Component: DailyControl
+                    },
+                    {
+                        path: 'missions-historic',
+                       Component: MissionHistoricPage
                     },
                     {
                         path: 'farm-tool',

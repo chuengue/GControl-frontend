@@ -9,7 +9,14 @@ import { useNavigate } from 'react-router';
 export default function HomePage() {
   const navigate = useNavigate()
   return (
-    <Box sx={{ padding:  {lg:1, xl:4}, minHeight: '100vh', mt:{lg:-4,xl:"0px"} }}>
+    <Box 
+    sx={{
+      height: '90vh',
+      overflowY:"auto"
+    }}
+    >
+
+    <Box sx={{ padding:  {lg:1, xl:4}, mt:{lg:-4,xl:"0px"}, overflowY:"auto" }}>
       {/* Introdução */}
       <Box sx={{ textAlign: 'center', mb: {lg:2, xl:8}}}>
         <Typography
@@ -141,7 +148,7 @@ export default function HomePage() {
             <CardContent sx={{ textAlign: 'center', p: 3 }}>
               <FarmIcon sx={{ fontSize: '3rem', color: '#388e3c', mb: 2 }} />
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#388e3c' }}>
-                Sessões de Farm
+              Controle de Farm
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Registre suas sessões de farm, acompanhe os drops e calcule o tempo médio por item.
@@ -207,6 +214,7 @@ export default function HomePage() {
           </Card>
         </Grid>
       </Grid>
+    </Box>
     </Box>
   );
 }

@@ -4,6 +4,7 @@ import { Box, Button, Card, CircularProgress, Divider, Grid, IconButton, Stack, 
 import { blue, green } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
+import { useNavigate } from 'react-router';
 
 import { registerItemDropsInSession } from '../../service/requests/items';
 import { createFarmSession, deleteFarmSession, getAllMissions, getAllUserSessions, getDropRateSessionReport, updateFarmSession } from '../../service/requests/missions/missions';
@@ -51,8 +52,10 @@ const FarmSessionPage = () => {
   const { userChars, fetchUserCharsData } = useCharStore();
   const isLarge = useMediaQuery({ maxWidth: 1366 }); // lg
   const isExtraLarge = useMediaQuery({ minWidth: 1367 }); // xl
+  const isMobile = useMediaQuery({ minWidth: 500 });
   const theme = useTheme();
   const userId = session?.user.uid;
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUserCharsData(userId);
@@ -317,7 +320,12 @@ const FarmSessionPage = () => {
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        overflowY: 'auto',
+        height: 'calc(100vh - 100px)'
+      }}
+    >
       <Card
         elevation={3}
         sx={{
@@ -325,7 +333,6 @@ const FarmSessionPage = () => {
           borderRadius: '14px',
           boxShadow: 3,
           marginBottom: '20px',
-          marginTop: '-20px',
           bgcolor: theme.palette.info.main
         }}
       >
@@ -361,57 +368,89 @@ const FarmSessionPage = () => {
             width: { lg: '100%', xl: '80%' }
           }}
         >
-          <Stack
-            sx={{
-              bgcolor: 'rgba(0, 0, 0, 0.37);',
-              mb: '10px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center', // Centraliza o conteúdo na vertical
-              justifyContent: 'flex-start', // Alinha o conteúdo ao topo
-              padding: 1
-            }}
-          >
-            {refetchLoading ? (
-              <Stack alignItems="center">
-                <CircularProgress />
-                <Typography variant="caption">Buscando sessões...</Typography>
-              </Stack>
-            ) : (
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => handleOpenModal()}
-                sx={{
-                  width: '30%',
-                  bgcolor: blue[700],
-                  borderRadius: '12px',
-                  color: 'white',
+          {userChars && userChars.length > 0 && (
+            <Stack
+              sx={{
+                bgcolor: 'rgba(0, 0, 0, 0.37);',
+                mb: '10px',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center', // Centraliza o conteúdo na vertical
+                justifyContent: 'flex-start', // Alinha o conteúdo ao topo
+                padding: 1
+              }}
+            >
+              {refetchLoading ? (
+                <Stack alignItems="center">
+                  <CircularProgress />
+                  <Typography variant="caption">Buscando sessões...</Typography>
+                </Stack>
+              ) : (
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => handleOpenModal()}
+                  sx={{
+                    width: {xs:"80%", lg:"30%"},
+                    bgcolor: blue[700],
+                    borderRadius: '12px',
+                    color: 'white',
 
-                  '&:hover': {
-                    bgcolor: theme.palette.primary.dark
-                  }
-                }}
-              >
-                Criar Sessão
-              </Button>
-            )}
-          </Stack>
-
+                    '&:hover': {
+                      bgcolor: theme.palette.primary.dark
+                    }
+                  }}
+                >
+                  Criar Sessão
+                </Button>
+              )}
+            </Stack>
+          )}
           <Box
             sx={{
-              overflowY: 'auto',
-              paddingX: '20px',
-              height: { lg: '60vh', xl: '72vh' }
+              overflowY: { xs: 'unset', md: 'auto' },
+              paddingX: { xs: 'unset', md: '20px' },
+              height: { xs: 'unset', lg: '60vh', xl: '72vh' }
             }}
           >
             <Grid container spacing={3}>
+              {userChars.length <= 0 && userChars && (
+                <Box
+                  sx={{
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexDirection: 'column',
+                    textAlign: 'center',
+                    mt: '400px'
+                  }}
+                >
+                  <Typography variant="h6" color="textSecondary" sx={{ whiteSpace: 'pre-line' }}>
+                    Para começar a criar sessões, é necessário cadastrar primeiro um personagem.{' '}
+                    <a
+                      style={{ color: green[300], cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => navigate('/chars/add-user-char')}
+                    >
+                      Vamos lá?
+                    </a>
+                  </Typography>
+                </Box>
+              )}
               {sessions?.sessions?.map(sessionItem => (
-                <Grid item xs={12} key={sessionItem.sessionId}>
+                <Grid
+                  item
+                  xs={12}
+                  key={sessionItem.sessionId}
+                  sx={{
+                    width: { xs: '90vw', md: 'auto' }
+                  }}
+                >
                   <Card
                     sx={{
                       display: 'flex',
-                      flexDirection: 'row',
+                      flexDirection: { xs: 'column', lg: 'row' },
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       bgcolor: blue[800],
@@ -466,7 +505,7 @@ const FarmSessionPage = () => {
                           />
                         )}
                       </Stack>
-                      <Divider orientation="vertical" flexItem />
+                      {isMobile && <Divider orientation="vertical" flexItem />}
                     </Box>
 
                     <Box
@@ -484,12 +523,80 @@ const FarmSessionPage = () => {
                         sx={{
                           width: '100%',
                           display: 'flex',
-                          flexDirection: 'row',
+                          flexDirection: { xs: 'column', md: 'row' },
                           alignItems: 'center',
                           gap: '10px'
                         }}
                       >
-                        {isLarge && (
+                        {!isMobile && (
+                        <Stack sx={{
+                          flexDirection:"row",
+                          gap: '10px'
+                        }}>
+
+                          <CardCustom>
+                            <Stack
+                              spacing={1}
+                              sx={{
+                                flex: 1,
+                                textAlign: 'center'
+                              }}
+                            >
+                              <Typography variant="body1" fontWeight="bold">
+                                Idas: {sessionItem.attempts}
+                              </Typography>
+                              <Divider sx={{ my: 1 }} />
+
+                              <Typography variant="body2" fontWeight="bold" width={'120px'}>
+                                Tempo Total:
+                              </Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
+                                {sessionItem?.totalTimeSpent
+                                  ? formatTime(sessionItem?.totalTimeSpent, 'text')
+                                  : '00:00:00'}
+                              </Typography>
+                              <Divider sx={{ my: 1 }} />
+                              <Typography variant="body2" fontWeight="bold">
+                                T. Médio/Ida
+                              </Typography>
+                              <Typography variant="body1" fontWeight="bold" color={green[200]}>
+                                {sessionItem.avgTimePerAttempt
+                                  ? formatTime(sessionItem?.avgTimePerAttempt, 'text')
+                                  : '00:00:00'}
+                              </Typography>
+                            </Stack>
+                          </CardCustom>
+                          <CardCustom>
+                          <Stack direction="column">
+                            <Tooltip title="Iniciar Sessão" placement="top-start">
+                              <IconButton
+                                onClick={() => startTimer(sessionItem)}
+                                disabled={timers[sessionItem.sessionId]?.isRunning}
+                              >
+                                <PlayArrow />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Pausar Sessão" placement="top-start">
+                              <IconButton
+                                onClick={() => pauseTimer(sessionItem)}
+                                disabled={!timers[sessionItem.sessionId]?.isRunning}
+                              >
+                                <Pause />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Resetar Timer da Sessão" placement="top-start">
+                              <IconButton
+                                onClick={() => resetTimer(sessionItem)}
+                                disabled={!timers[sessionItem.sessionId]?.elapsedTime}
+                              >
+                                <Stop />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </CardCustom>
+                        </Stack>
+                        )}
+                        {isLarge && isMobile && (
                           <CardCustom>
                             <Stack
                               spacing={1}
@@ -564,6 +671,8 @@ const FarmSessionPage = () => {
                             </Stack>
                           </CardCustom>
                         )}
+                        {isMobile && (
+
                         <CardCustom>
                           <Stack direction="column">
                             <Tooltip title="Iniciar Sessão" placement="top-start">
@@ -592,6 +701,8 @@ const FarmSessionPage = () => {
                             </Tooltip>
                           </Stack>
                         </CardCustom>
+                        )}
+  
                         {isLarge && (
                           <CardCustom>
                             <Stack spacing={1} sx={{ textAlign: 'center' }}>
@@ -752,7 +863,7 @@ const FarmSessionPage = () => {
           </Box>
         </Box>
       </Box>
-    </>
+    </Box>
   );
 };
 

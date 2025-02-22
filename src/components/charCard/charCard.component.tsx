@@ -10,6 +10,7 @@ import { UserCharCardProps } from '../../interfaces/char';
 import { deleteUserGameChar } from '../../service/requests/gameChar';
 import { useSession } from '../../SessionContext';
 import ConfirmationModal from '../../shared/components/confirmModal/confirmModal';
+import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 
 function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) {
@@ -19,6 +20,7 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
 
   const navigate = useNavigate();
   const { session } = useSession();
+  const {fetchUserCharsData} = useCharStore()
   const userId = session?.user.uid || '';
   const { showSnackbar } = useSnackbarStore();
 
@@ -39,10 +41,12 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
   };
 
   const handleDeleteUserChar = async () => {
+    if(!session) return;
+    if(userCharIdSelected)
     try {
       const data = await deleteUserGameChar(session?.user.uid, userCharIdSelected);
       showSnackbar(data.results.message, 'success');
-  
+      fetchUserCharsData(session?.user.uid)
       // Atualiza a lista de personagens, removendo o excluído
       setCharList((prevChars) => prevChars.filter((char) => char.id !== userCharIdSelected));
   
