@@ -1,28 +1,15 @@
-import {
-  Box,
-  Checkbox,
-  Paper,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
-} from '@mui/material';
+import { Box, Checkbox, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+
 import theme from '../../../../../theme';
 import { UserCharacter } from '../../../../interfaces/char';
-import {
-  CharacterMissions,
-  MissionResult
-} from '../../../../service/requests/limitedMissions/types';
-import { useSession } from '../../../../SessionContext';
+import { CharacterMissions, MissionResult } from '../../../../service/requests/limitedMissions/types';
 
 interface Props {
   missions: MissionResult[] | undefined;
   UserCharsLogs: CharacterMissions[] | undefined;
   userChars: UserCharacter[] | undefined;
+  loading: boolean
   handleRegisterMission: (data: {
     characterId: string;
     missionId: string;
@@ -35,12 +22,12 @@ const MissionControlTable: React.FC<Props> = ({
   missions,
   UserCharsLogs,
   userChars,
+  loading,
   handleRegisterMission
 }) => {
   const [completedMissions, setCompletedMissions] = useState<
     Record<string, Record<string, boolean[]>>
   >({});
-  const { session } = useSession();
 
   useEffect(() => {
     if (
@@ -87,7 +74,7 @@ const MissionControlTable: React.FC<Props> = ({
     attemptIndex: number,
     completed: boolean
   ) => {
-    console.log(completed);
+
     handleRegisterMission({
       characterId,
       missionId,
@@ -95,6 +82,26 @@ const MissionControlTable: React.FC<Props> = ({
       completed
     });
     handleCheckboxChange(characterId, missionId, attemptIndex);
+  };
+  useEffect(()=>{
+    if(loading){
+      document.body.style.cursor = 'progress'
+    }else{
+      document.body.style.cursor = 'default'
+
+    }
+  },[loading])
+  // Função para calcular o progresso de cada personagem
+  const calculateProgress = (characterId: string) => {
+    if (!missions || !completedMissions[characterId]) return 0;
+
+    const totalMissions = missions.length;
+    const completedCount = missions.filter(mission => {
+      const attempts = completedMissions[characterId][mission.id];
+      return attempts && attempts.some(attempt => attempt);
+    }).length;
+
+    return (completedCount / totalMissions) * 100;
   };
 
   if (!missions || !userChars || missions.length === 0 || userChars.length === 0) {
@@ -155,7 +162,8 @@ const MissionControlTable: React.FC<Props> = ({
         borderRadius: '12px',
         bgcolor: theme.palette.grey[900],
         overflow: 'auto', // Adiciona scroll horizontal
-        maxWidth: '100%' ,
+        maxWidth: '100%',
+        height: 'calc(100vh - 140px)',
       }}
     >
       <Table>
@@ -192,28 +200,58 @@ const MissionControlTable: React.FC<Props> = ({
                   position: 'sticky',
                   left: 0,
                   zIndex: 1,
-                  bgcolor: theme.palette.grey[900]
+                  bgcolor: theme.palette.grey[900],
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2
                 }}
               >
                 {character.gameChar?.thumbImgUrl ? (
-                  <Box justifyContent="center" alignContent="center" display="flex">
+                  <Box
+                    justifyContent="space-between"
+                    alignContent="center"
+                    display="flex"
+                    flexDirection="column"
+                  >
                     <img
                       src={character.gameChar.thumbImgUrl}
                       alt={character.gameChar.name}
                       width={50}
                       style={{ borderRadius: '8px' }}
                     />
+                    <LinearProgress
+                      variant="determinate"
+                      value={calculateProgress(character.id)}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        mt: 1,
+                        bgcolor: theme.palette.grey[800],
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 4,
+                          bgcolor: theme.palette.success.main
+                        }
+                      }}
+                    />
+
+                    <Box sx={{ flexGrow: 1, ml: 2 }}>
+                      <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                        {Math.round(calculateProgress(character.id))}%
+                      </Typography>
+                    </Box>
                   </Box>
                 ) : (
                   <Skeleton variant="circular" width={30} height={30} />
                 )}
               </TableCell>
+
               {missions.map(mission => (
                 <TableCell key={mission.id} align="center" sx={{ width: '200px' }}>
                   {completedMissions[character.id]?.[mission.id]?.map((completed, index) => (
                     <Checkbox
                       key={index}
                       color="success"
+                      disabled={loading}
                       checked={completed}
                       onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
                     />

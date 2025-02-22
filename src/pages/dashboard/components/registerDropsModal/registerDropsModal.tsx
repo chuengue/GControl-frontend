@@ -1,6 +1,6 @@
 import { Add, DeleteForever, Remove } from '@mui/icons-material';
 // Importando ícones
-import { Box, Button, Card, Divider, IconButton, List, ListItem, Modal, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, Divider, IconButton, List, ListItem, Modal, Skeleton, Stack, TextField, Typography } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -12,7 +12,7 @@ const modalStyle = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 800,
+  width: { xs: '100%', md: '800px' },
   bgcolor: blue[700],
   boxShadow: 24,
   p: 4,
@@ -69,11 +69,12 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
 
   // Seleciona/Deseleciona um item
   const handleSelectItem = item => {
+    console.log(selectedItems)
     const isSelected = selectedItems.some(selected => selected.itemId === item.id);
     if (isSelected) {
       setSelectedItems(selectedItems.filter(selected => selected.itemId !== item.id));
     } else {
-      setSelectedItems([...selectedItems, { itemId: item.id, quantity: 1 }]);
+      setSelectedItems([...selectedItems, { itemId: item.id, quantity: 1, rarity:item.rarity, iconUrl:item.iconUrl, name: item.name, category: item.category}]);
     }
   };
 
@@ -116,18 +117,16 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
   };
   const handleSave = () => {
     onSave(selectedItems);
-    setSelectedItems([])
-    
+    setSelectedItems([]);
   };
-  useEffect(()=>{
-    if(isLoading){
-      document.body.style.cursor = 'wait'
-    }else{
-      document.body.style.cursor = 'default'
+  useEffect(() => {
+    if (isLoading) {
+      document.body.style.cursor = 'wait';
+    } else {
+      document.body.style.cursor = 'default';
       onClose();
-
     }
-  },[isLoading])
+  }, [isLoading]);
   return (
     <Modal open={open} onClose={handleOnClose}>
       <Box sx={modalStyle}>
@@ -145,14 +144,14 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
           onChange={e => setSearchTerm(e.target.value)}
         />
 
-        <Box sx={{ display: 'flex', gap: 3 }}>
+        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
           {/* Lista de Itens Disponíveis com Scroll Infinito */}
           <Card
             elevation={3}
             sx={{
               ...listContainerStyle,
               flex: 1,
-              maxHeight: 400,
+              maxHeight: { xs: '200px', md: '400px' },
               overflowY: 'auto'
             }}
             ref={listRef}
@@ -164,10 +163,11 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
             <Divider orientation="horizontal" />
 
             <List>
-              {items.map(item => (
+              {items.map((item,index) => (
                 <ListItem
                   button
-                  key={item.id}
+                  key={`${item.id}-${index}`}
+                  
                   onClick={() => handleSelectItem(item)}
                   selected={selectedItems.some(selected => selected.itemId === item.id)}
                   component="div"
@@ -180,10 +180,16 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
                   }}
                 >
                   <Stack direction="row" spacing={3} alignItems="center" sx={{ width: '100%' }}>
-                    {/* ItemBox com largura fixa */}
-                    <Box sx={{ width: 60, flexShrink: 0 }}>
-                      <ItemBox item={item} hasDetails={false} />
-                    </Box>
+                    {item ? (
+                      <Box sx={{ width: 60, flexShrink: 0 }}>
+                        <ItemBox item={item} hasDetails={false} />
+                      </Box>
+                    ) : (
+                      <Box sx={{ width: 60, flexShrink: 0 }}>
+                        <Skeleton />
+                      </Box>
+                    )}
+
                     {/* Nome do item */}
                     <Typography variant="body2" sx={{ flexGrow: 1, wordBreak: 'break-word' }}>
                       {item.name}
@@ -200,7 +206,7 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
             sx={{
               ...listContainerStyle,
               flex: 1,
-              maxHeight: 400,
+              maxHeight: { xs: '200px', md: '400px' },
               overflowY: 'auto'
             }}
           >
@@ -210,11 +216,10 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
             <Divider orientation="horizontal" />
 
             <List>
-              {selectedItems.map(selected => {
-                const item = items.find(i => i.id === selected.itemId);
+              {selectedItems.map((selected, index) => {
                 return (
                   <ListItem
-                    key={selected.itemId}
+                    key={`${selected.itemId}-${index}`}
                     sx={{
                       mb: 1,
                       display: 'flex',
@@ -228,10 +233,15 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
                       justifyContent="space-around"
                       sx={{ width: '100%' }}
                     >
-                      {/* ItemBox com largura fixa */}
+                      {selected ? (
                       <Box sx={{ width: 60, flexShrink: 0 }}>
-                        <ItemBox item={item} hasDetails={false} />
+                        <ItemBox item={selected} hasDetails={false} />
                       </Box>
+                    ) : (
+                      <Box sx={{ width: 60, flexShrink: 0 }}>
+                        <Skeleton  />
+                      </Box>
+                    )}
                       {/* Botão de decremento */}
                       <IconButton
                         onClick={() => handleDecrement(selected.itemId)}

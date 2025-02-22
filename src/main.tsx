@@ -11,6 +11,7 @@ import AddLimitedMission from './pages/admin/addLimitedMissions';
 import CreateItem from './pages/admin/createItem';
 import RemoveItemPage from './pages/admin/removeItem';
 import DailyControl from './pages/dailyControl/dailyControl';
+import MissionHistoricPage from './pages/dailyControl/dailyControlHistoric';
 import FarmSessionPage from './pages/dashboard/dashboard';
 import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
                     {
                         path: 'daily-control',
                        Component: DailyControl
+                    },
+                    {
+                        path: 'missions-historic',
+                       Component: MissionHistoricPage
                     },
                     {
                         path: 'farm-tool',

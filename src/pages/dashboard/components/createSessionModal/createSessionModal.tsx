@@ -74,7 +74,7 @@ const CreateSessionModal = ({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 600,
+          width: {xs:"100%", md:"600px"},
           bgcolor: blue[800],
           boxShadow: 24,
           borderRadius: 4,

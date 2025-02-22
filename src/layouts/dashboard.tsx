@@ -211,7 +211,6 @@ if (error) {
         sidebarFooter: SidebarFooter,
 
       }}
-      disableCollapsibleSidebar
     >
       <RegistrationModal
         open={openModal}

@@ -1,4 +1,4 @@
-import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Handyman, Home, Info, RemoveCircle, TableChartRounded } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Handyman, History, Home, Info, RemoveCircle, TableChartRounded } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
@@ -73,6 +73,11 @@ export const NAVIGATION: CustomNav = [
         title: 'Controle Diário',
         segment:"daily-control",
         icon: < TableChartRounded />,
+    },
+    {
+        title: 'Histórico de missões',
+        segment:"missions-historic",
+        icon: < History />,
     },
     {
         title: 'Admin',
@@ -180,6 +185,7 @@ export default function App() {
                     '*::-webkit-scrollbar-thumb:hover': {
                         background: '#555',
                     },
+                  
                 }}
             />
 

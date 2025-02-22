@@ -9,7 +9,14 @@ import { useNavigate } from 'react-router';
 export default function HomePage() {
   const navigate = useNavigate()
   return (
-    <Box sx={{ padding:  {lg:1, xl:4}, minHeight: '100vh', mt:{lg:-4,xl:"0px"} }}>
+    <Box 
+    sx={{
+      width: 'auto',
+      overflowY:"auto"
+    }}
+    >
+
+    <Box sx={{ padding:  {lg:1, xl:4}, minHeight: '100vh', mt:{lg:-4,xl:"0px"}, overflowY:"auto" }}>
       {/* Introdução */}
       <Box sx={{ textAlign: 'center', mb: {lg:2, xl:8}}}>
         <Typography
@@ -207,6 +214,7 @@ export default function HomePage() {
           </Card>
         </Grid>
       </Grid>
+    </Box>
     </Box>
   );
 }

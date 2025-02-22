@@ -34,6 +34,32 @@ export const getUserMissionsLogs = async (userId: string): Promise<ApiResponse> 
     throw error; // Lança o erro para ser tratado externamente
   }
 };
+export const getUserMissionsLogsHistoric = async (
+  userId: string,
+  startDate: string,
+  endDate: string,
+  page: number = 1, // Página atual (padrão: 1)
+  limit: number = 10 // Limite de registros por página (padrão: 10)
+): Promise<ApiResponse> => {
+  try {
+    const url = `/limited-missions-log/${userId}/historic`;
+
+    // Enviando os parâmetros no corpo da requisição com o método POST
+    const response = await api.post<ApiResponse>(url, {
+      startDate,
+      endDate,
+      page,
+      limit,
+    });
+
+    return response.data; // Retorna os dados da requisição
+  } catch (error) {
+    console.error('Erro ao recuperar histórico de logs:', error);
+    throw error; // Lança o erro para ser tratado externamente
+  }
+};
+
+
 
 export const registerCompletedMission = async (
   userId: string,

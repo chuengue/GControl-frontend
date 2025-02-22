@@ -1,5 +1,5 @@
 'use client';
-import { Container } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import * as React from 'react';
 import { useEffect } from 'react';
@@ -29,11 +29,18 @@ function MyChars() {
   }
 
   return (
-    <Container>
+    <Box width="100%" maxHeight="90vh" sx={{
+      overflowY: "auto",
+      paddingBottom: {lg:"40px",xl:"0px"}
+
+    }}>
+
+    <Container >
       <Grid container spacing={2}>
         <CharCard chars={userChars} onAddCharacter={onAddCharacter} details />
       </Grid>
     </Container>
+    </Box>
   );
 }
 
