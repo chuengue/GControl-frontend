@@ -82,6 +82,7 @@ const MissionHistoricPage: React.FC = () => {
   };
 
   const handleFetchData = async () => {
+    if (!session) return;
     if (startDate && endDate) {
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatEndDate(endDate);
@@ -94,7 +95,9 @@ const MissionHistoricPage: React.FC = () => {
           formattedStartDate,
           formattedEndDate,
           page,
-          limit
+          limit,
+          selectedCharacter,
+          selectedMission
         );
         setMissionsData(data.results.results);
         setTotal(data.results.pagination.total);
@@ -112,7 +115,7 @@ const MissionHistoricPage: React.FC = () => {
     if (startDate && endDate) {
       handleFetchData();
     }
-  }, [startDate, endDate, page, limit]); // Atualizar os dados quando as datas, a página ou o limite mudar
+  }, [startDate, endDate, page, limit, selectedCharacter, selectedMission]); // Atualizar os dados quando as datas, a página ou o limite mudar
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -123,14 +126,6 @@ const MissionHistoricPage: React.FC = () => {
     setPage(1); // Resetar para a primeira página ao mudar o limite
   };
 
-  // Função para filtrar os dados com base nos filtros selecionados
-  const filteredData = missionsData.filter(character => {
-    const matchesCharacter = selectedCharacter ? character.name === selectedCharacter : true;
-    const matchesMission = selectedMission
-      ? character.missionsCompleted.some((mission: any) => mission.name === selectedMission)
-      : true;
-    return matchesCharacter && matchesMission;
-  });
 
   return (
     <Container>
@@ -307,7 +302,7 @@ const MissionHistoricPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredData.map(character =>
+                {missionsData.map(character =>
                   character.missionsCompleted.map((mission: any, index) => (
                     <TableRow key={`${character.id}-${mission.missionId}-${index}`}>
                       <TableCell>
@@ -359,20 +354,18 @@ const MissionHistoricPage: React.FC = () => {
             }}
           >
             {isMobile && (
-
-
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
-                alignItems: { xs: 'center', md: 'flex-start' },
-                gap: { xs: 1, md: 2 } // Espaçamento entre os textos
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Mostrando {Math.min(page * limit, total)} de {total} resultados
-              </Typography>
-            </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', md: 'row' },
+                  alignItems: { xs: 'center', md: 'flex-start' },
+                  gap: { xs: 1, md: 2 } // Espaçamento entre os textos
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Mostrando {Math.min(page * limit, total)} de {total} resultados
+                </Typography>
+              </Box>
             )}
 
             {/* Componente Pagination */}
@@ -381,33 +374,42 @@ const MissionHistoricPage: React.FC = () => {
               page={page} // Página atual
               onChange={(event, newPage) => handlePageChange(newPage)} // Função para mudar de página
               color="primary" // Cor do componente
-              size={!isMobile? "small" : "medium"}
+              size={!isMobile ? 'small' : 'medium'}
             />
-          {
-          isMobile && (
-            
-            <Box>
-              <TextField
-                select
-                label="Itens por página"
-                value={limit}
-                onChange={handleLimitChange}
-                SelectProps={{ native: true }}
-                size="small"
-                sx={{ width: { md: '150px', xs: '120px' } }} // Largura ajustada para mobile
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </TextField>
-            </Box>
-          )
-          }
+            {isMobile && (
+              <Box>
+                <TextField
+                  select
+                  label="Itens por página"
+                  value={limit}
+                  onChange={handleLimitChange}
+                  SelectProps={{ native: true }}
+                  size="small"
+                  sx={{ width: { md: '150px', xs: '120px' } }} // Largura ajustada para mobile
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                </TextField>
+              </Box>
+            )}
           </Box>
         </>
       ) : (
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          Nenhum dado encontrado.
+       <Box
+       sx={{
+        height: "50vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
+        gap:1
+       }}
+       >
+        <img src="/assets/images/empty_state.svg" alt="" />
+        <Typography variant="h6" color="textSecondary" sx={{ whiteSpace: "pre-line" }}>
+          Nenhum histórico encontrado
         </Typography>
+       </Box>
       )}
     </Container>
   );

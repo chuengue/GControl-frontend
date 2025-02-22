@@ -38,8 +38,10 @@ export const getUserMissionsLogsHistoric = async (
   userId: string,
   startDate: string,
   endDate: string,
-  page: number = 1, // Página atual (padrão: 1)
-  limit: number = 10 // Limite de registros por página (padrão: 10)
+  page: number = 1, 
+  limit: number = 10,
+  charName?:string,
+  missionName?:string 
 ): Promise<ApiResponse> => {
   try {
     const url = `/limited-missions-log/${userId}/historic`;
@@ -50,6 +52,8 @@ export const getUserMissionsLogsHistoric = async (
       endDate,
       page,
       limit,
+      charName,
+      missionName
     });
 
     return response.data; // Retorna os dados da requisição

@@ -26,7 +26,7 @@ const FarmToolsPage = () => {
 
       if (data?.results?.success === false) {
         setNoDataMessage(
-          'Nenhuma sessão de farm encontrada! 🚀\n\nComece agora: registre suas sessões de farm e acompanhe seus drops em tempo real com nossos gráficos interativos.'
+          'Nenhuma sessão de farm encontrada! 🚀\nComece agora: registre suas sessões de farm e acompanhe seus drops em tempo real com nossos gráficos interativos.'
         );
         setDataList(null);
         return;
@@ -79,9 +79,11 @@ const FarmToolsPage = () => {
             justifyContent: 'center',
             alignItems: 'center',
             flexDirection: 'column',
-            textAlign: 'center'
+            textAlign: 'center',
+            gap:1
           }}
         >
+           <img src="/assets/images/empty_state.svg" alt="" />
           <Typography variant="h6" color="textSecondary" sx={{ whiteSpace: 'pre-line' }}>
             {noDataMessage}
           </Typography>

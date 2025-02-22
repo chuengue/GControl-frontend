@@ -11,12 +11,12 @@ export default function HomePage() {
   return (
     <Box 
     sx={{
-      width: 'auto',
+      height: '90vh',
       overflowY:"auto"
     }}
     >
 
-    <Box sx={{ padding:  {lg:1, xl:4}, minHeight: '100vh', mt:{lg:-4,xl:"0px"}, overflowY:"auto" }}>
+    <Box sx={{ padding:  {lg:1, xl:4}, mt:{lg:-4,xl:"0px"}, overflowY:"auto" }}>
       {/* Introdução */}
       <Box sx={{ textAlign: 'center', mb: {lg:2, xl:8}}}>
         <Typography
