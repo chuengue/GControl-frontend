@@ -1,19 +1,42 @@
-import { Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers-pro/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import {
+  Box,
+  Button,
+  Container,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Pagination,
+  Paper,
+  Select,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'; // Importe o DatePicker
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import React, { useEffect, useState } from 'react';
 
+import { useMediaQuery } from 'react-responsive';
 import theme from '../../../theme';
 import { getUserMissionsLogsHistoric } from '../../service/requests/limitedMissions/limitedMissions';
 import { useSession } from '../../SessionContext';
 
 const MissionHistoricPage: React.FC = () => {
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const [startDate, setStartDate] = useState<Date | null>(null); // Estado para data inicial
+  const [endDate, setEndDate] = useState<Date | null>(null); // Estado para data final
   const [missionsData, setMissionsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { session } = useSession();
+  const isMobile = useMediaQuery({ minWidth: 500 });
 
   // Estados para paginação
   const [page, setPage] = useState(1);
@@ -34,9 +57,14 @@ const MissionHistoricPage: React.FC = () => {
     )
   );
 
-  const handleDateChange = (newRange: [Date | null, Date | null]) => {
-    setDateRange(newRange);
-    setPage(1); // Resetar para a primeira página ao mudar o intervalo de datas
+  const handleStartDateChange = (newDate: Date | null) => {
+    setStartDate(newDate);
+    setPage(1); // Resetar para a primeira página ao mudar a data inicial
+  };
+
+  const handleEndDateChange = (newDate: Date | null) => {
+    setEndDate(newDate);
+    setPage(1); // Resetar para a primeira página ao mudar a data final
   };
 
   const formatDate = (date: Date | null) => {
@@ -54,17 +82,17 @@ const MissionHistoricPage: React.FC = () => {
   };
 
   const handleFetchData = async () => {
-    if (dateRange[0] && dateRange[1]) {
-      const startDate = formatDate(dateRange[0]);
-      const endDate = formatEndDate(dateRange[1]);
+    if (startDate && endDate) {
+      const formattedStartDate = formatDate(startDate);
+      const formattedEndDate = formatEndDate(endDate);
       setLoading(true);
       setError(null);
 
       try {
         const data = await getUserMissionsLogsHistoric(
           session?.user.uid,
-          startDate,
-          endDate,
+          formattedStartDate,
+          formattedEndDate,
           page,
           limit
         );
@@ -81,10 +109,10 @@ const MissionHistoricPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (dateRange[0] && dateRange[1]) {
+    if (startDate && endDate) {
       handleFetchData();
     }
-  }, [dateRange, page, limit]); // Atualizar os dados quando o intervalo de datas, a página ou o limite mudar
+  }, [startDate, endDate, page, limit]); // Atualizar os dados quando as datas, a página ou o limite mudar
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -111,48 +139,66 @@ const MissionHistoricPage: React.FC = () => {
       </Typography>
 
       <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} sm={6}>
+        {/* Container para os DatePicker */}
+        <Grid item xs={12} md={6}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateRangePicker
-                     localeText={{ start: 'Data de Início', end: 'Data de Fim' }} 
-
-              value={dateRange}
-              onChange={handleDateChange}
-              renderInput={(startProps, endProps) => (
-                <>
-                  <TextField
-                    {...startProps}
-                    fullWidth
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        borderRadius: '8px',
-                        padding: '8px 16px'
-                      },
-                      mb: 1
-                    }}
-                  />
-                  <TextField
-                    {...endProps}
-                    fullWidth
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        borderRadius: '8px',
-                        padding: '8px 16px'
-                      },
-                      mb: 1
-                    }}
-                  />
-                </>
-              )}
-            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <DatePicker
+                  label="Data Inicial"
+                  value={startDate}
+                  onChange={handleStartDateChange}
+                  sx={{
+                    width: '100%' // Ocupa a largura total do Grid item
+                  }}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          borderRadius: '8px',
+                          padding: '8px 16px'
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <DatePicker
+                  label="Data Final"
+                  value={endDate}
+                  onChange={handleEndDateChange}
+                  sx={{
+                    width: '100%' // Ocupa a largura total do Grid item
+                  }}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          borderRadius: '8px',
+                          padding: '8px 16px'
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
           </LocalizationProvider>
         </Grid>
-        <Grid item xs={12} sm={6}>
+
+        {/* Container para o botão */}
+        <Grid item xs={12} sm={3}>
           <Button
             variant="contained"
             onClick={handleFetchData}
             loading={loading}
             sx={{
+              width: '100%', // Ocupa a largura total em telas pequenas
               height: '56px',
               borderRadius: '8px',
               boxShadow: 2,
@@ -164,8 +210,7 @@ const MissionHistoricPage: React.FC = () => {
               justifyContent: 'center'
             }}
           >
-         
-              Buscar Histórico
+            Buscar Histórico
           </Button>
         </Grid>
       </Grid>
@@ -303,36 +348,44 @@ const MissionHistoricPage: React.FC = () => {
             </Table>
           </TableContainer>
 
-          {/* Controles de paginação */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-            <Box>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{
+              flexDirection: { xs: 'column', md: 'row' },
+              mt: { xs: 1, md: 2 },
+              gap: { xs: 2, md: 0 } // Adiciona espaçamento entre os elementos em mobile
+            }}
+          >
+            {isMobile && (
+
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: { xs: 'center', md: 'flex-start' },
+                gap: { xs: 1, md: 2 } // Espaçamento entre os textos
+              }}
+            >
               <Typography variant="body2" color="text.secondary">
-                Mostrando {page * limit} de {total} resultados
-              </Typography>
-              <Typography variant="body1" color="text.primary">
-                Página {page} de {Math.ceil(total / limit)}
+                Mostrando {Math.min(page * limit, total)} de {total} resultados
               </Typography>
             </Box>
+            )}
 
-            <Box display="flex" alignItems="center">
-              <Button
-                variant="contained"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                sx={{ mr: 1, borderRadius: '12px', padding: '6px 12px' }}
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= Math.ceil(total / limit)}
-                sx={{ borderRadius: '12px', padding: '6px 12px' }}
-              >
-                Próxima
-              </Button>
-            </Box>
-
+            {/* Componente Pagination */}
+            <Pagination
+              count={Math.ceil(total / limit)} // Número total de páginas
+              page={page} // Página atual
+              onChange={(event, newPage) => handlePageChange(newPage)} // Função para mudar de página
+              color="primary" // Cor do componente
+              size={!isMobile? "small" : "medium"}
+            />
+          {
+          isMobile && (
+            
             <Box>
               <TextField
                 select
@@ -341,12 +394,14 @@ const MissionHistoricPage: React.FC = () => {
                 onChange={handleLimitChange}
                 SelectProps={{ native: true }}
                 size="small"
-                sx={{ width: '150px' }}
+                sx={{ width: { md: '150px', xs: '120px' } }} // Largura ajustada para mobile
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
               </TextField>
             </Box>
+          )
+          }
           </Box>
         </>
       ) : (

@@ -52,7 +52,7 @@ const FarmSessionPage = () => {
   const { userChars, fetchUserCharsData } = useCharStore();
   const isLarge = useMediaQuery({ maxWidth: 1366 }); // lg
   const isExtraLarge = useMediaQuery({ minWidth: 1367 }); // xl
-  const isMobile = useMediaQuery({ minWidth: 500 }); // xl
+  const isMobile = useMediaQuery({ minWidth: 500 });
   const theme = useTheme();
   const userId = session?.user.uid;
   const navigate = useNavigate();
