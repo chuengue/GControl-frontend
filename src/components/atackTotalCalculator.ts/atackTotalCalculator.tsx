@@ -24,8 +24,8 @@ const InputField = ({ label, value, onChange, error }) => (
 );
 
 function TotalattackCalculator() {
-    const { charStats, SetCharStats, setAttackTotal, attackTotal } =
-        useCharStore();
+    const { charStats, setCharStats, setAttackTotal, attackTotal } =
+    useCharStore();
     const [estError, setEstError] = useState<Number>(0);
     const [errorMessage, setErrorMessage] = useState('');
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -34,7 +34,7 @@ function TotalattackCalculator() {
     const handleChange = field => e => {
         const value = e.target.value;
         if (/^\d*(\.\d{0,2})?$/.test(value) || value === '') {
-            SetCharStats({ ...charStats, [field]: value });
+            setCharStats({ ...charStats, [field]: value });
             setErrors(prev => ({ ...prev, [field]: false })); // Remove erro se o campo for preenchido
         }
     };
@@ -91,7 +91,7 @@ function TotalattackCalculator() {
     const checkError = values => {
         const missingFields: Record<string, boolean> = {};
         Object.entries(values).forEach(([key, value]) => {
-            if (isNaN(value) || value === 0) {
+            if (isNaN(Number(value)) || value === 0) {
                 missingFields[key] = true;
             }
         });

@@ -264,7 +264,7 @@ const Inventory: React.FC<{
         sx={{
           bgcolor: blue[600],
           borderRadius: '12px',
-          height: '550px'
+          height: 'auto'
         }}
       >
         <Box

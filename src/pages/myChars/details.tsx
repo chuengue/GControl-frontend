@@ -104,7 +104,7 @@ const UserCharDetailsPage = () => {
                     }}
                 >
                     {/* UserCharDetailsView */}
-                    <Box sx={{ flex: 1, minWidth: '300px' }}>
+                    <Box sx={{ flex: 1, minWidth: '300px'}}>
                         <UserCharDetailsView />
                     </Box>
 

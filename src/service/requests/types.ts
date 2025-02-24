@@ -102,3 +102,16 @@ export interface DropRateResponse {
     success: boolean;
     results: DropRateResults;
 }
+
+
+export interface AtkTotalLog {
+    id: string;
+    userCharId: string;
+    atkTotal: number;
+    created_at: string;
+    updated_at: string;
+}
+export interface AtkTotalLogResponse {
+    success: boolean;
+    results: AtkTotalLog[];
+}
