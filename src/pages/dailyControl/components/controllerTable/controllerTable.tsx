@@ -1,4 +1,4 @@
-import { Box, Checkbox, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { Box, Checkbox, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
 import theme from '../../../../../theme';
@@ -9,7 +9,7 @@ interface Props {
   missions: MissionResult[] | undefined;
   UserCharsLogs: CharacterMissions[] | undefined;
   userChars: UserCharacter[] | undefined;
-  loading: boolean
+  loading: boolean;
   handleRegisterMission: (data: {
     characterId: string;
     missionId: string;
@@ -74,7 +74,6 @@ const MissionControlTable: React.FC<Props> = ({
     attemptIndex: number,
     completed: boolean
   ) => {
-
     handleRegisterMission({
       characterId,
       missionId,
@@ -83,14 +82,13 @@ const MissionControlTable: React.FC<Props> = ({
     });
     handleCheckboxChange(characterId, missionId, attemptIndex);
   };
-  useEffect(()=>{
-    if(loading){
-      document.body.style.cursor = 'progress'
-    }else{
-      document.body.style.cursor = 'default'
-
+  useEffect(() => {
+    if (loading) {
+      document.body.style.cursor = 'progress';
+    } else {
+      document.body.style.cursor = 'default';
     }
-  },[loading])
+  }, [loading]);
   // Função para calcular o progresso de cada personagem
   const calculateProgress = (characterId: string) => {
     if (!missions || !completedMissions[characterId]) return 0;
@@ -156,97 +154,129 @@ const MissionControlTable: React.FC<Props> = ({
 
   return (
     <TableContainer
-      component={Paper}
-      elevation={4}
-      sx={{
-        borderRadius: '12px',
-        bgcolor: theme.palette.grey[900],
-        overflow: 'auto', // Adiciona scroll horizontal
-        maxWidth: '100%',
-        height: 'calc(100vh - 140px)',
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow>
+    component={Paper}
+    elevation={4}
+    sx={{
+      borderRadius: '12px',
+      bgcolor: theme.palette.grey[900],
+      overflow: 'auto',
+      maxWidth: '100%',
+      height: 'calc(100vh - 140px)'
+    }}
+  >
+    <Table size="small">
+      <TableHead
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 2,
+          bgcolor: theme.palette.grey[900]
+        }}
+      >
+        <TableRow>
+          <TableCell
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: 3,
+              bgcolor: theme.palette.grey[900],
+              fontWeight: 'bold'
+            }}
+          >
+            Personagem
+          </TableCell>
+          {missions.map(mission => (
+            <TableCell
+              key={mission.id}
+              align="center"
+              sx={{
+                minWidth: '130px',
+                position: 'sticky',
+                top: 0,
+                bgcolor: theme.palette.grey[900],
+                zIndex: 2
+              }}
+            >
+              {mission.mission_imgUrl ? (
+                <img src={mission.mission_imgUrl} alt={mission.mission_name} width={26} />
+              ) : (
+                <Skeleton variant="rectangular" width={26} height={26} />
+              )}
+              <br />
+              <Tooltip title={mission.mission_name || ''} arrow>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{
+                    maxWidth: '100px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  {mission.mission_name || <Skeleton variant="text" width={60} />}
+                </Typography>
+              </Tooltip>
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+  
+      <TableBody>
+        {userChars.map(character => (
+          <TableRow key={character.id}>
             <TableCell
               sx={{
                 position: 'sticky',
                 left: 0,
                 zIndex: 1,
-                bgcolor: theme.palette.grey[900]
+                bgcolor: theme.palette.grey[900],
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                padding: '8px'
               }}
             >
-              Personagem
-            </TableCell>
-            {missions.map(mission => (
-              <TableCell key={mission.id} align="center" sx={{ minWidth: '160px' }}>
-                {mission.mission_imgUrl ? (
-                  <img src={mission.mission_imgUrl} alt={mission.mission_name} width={30} />
-                ) : (
-                  <Skeleton variant="rectangular" width={30} height={30} />
-                )}
-                <br />
-                {mission.mission_name || <Skeleton variant="text" width={60} />}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {userChars.map(character => (
-            <TableRow key={character.id}>
-              <TableCell
-                sx={{
-                  position: 'sticky',
-                  left: 0,
-                  zIndex: 1,
-                  bgcolor: theme.palette.grey[900],
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2
-                }}
-              >
-                {character.gameChar?.thumbImgUrl ? (
-                  <Box
-                    justifyContent="space-between"
-                    alignContent="center"
-                    display="flex"
-                    flexDirection="column"
-                  >
-                    <img
-                      src={character.gameChar.thumbImgUrl}
-                      alt={character.gameChar.name}
-                      width={50}
-                      style={{ borderRadius: '8px' }}
-                    />
+              {character.gameChar?.thumbImgUrl ? (
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  <img
+                    src={character.gameChar.thumbImgUrl}
+                    alt={character.gameChar.name}
+                    width={40}
+                    style={{ borderRadius: '6px' }}
+                  />
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>
+                      {character.gameChar.name}
+                    </Typography>
                     <LinearProgress
                       variant="determinate"
                       value={calculateProgress(character.id)}
                       sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        mt: 1,
+                        height: 6,
+                        borderRadius: 3,
+                        mt: 0.5,
                         bgcolor: theme.palette.grey[800],
                         '& .MuiLinearProgress-bar': {
-                          borderRadius: 4,
+                          borderRadius: 3,
                           bgcolor: theme.palette.success.main
                         }
                       }}
                     />
-
-                    <Box sx={{ flexGrow: 1, ml: 2 }}>
-                      <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
-                        {Math.round(calculateProgress(character.id))}%
-                      </Typography>
-                    </Box>
+                    <Typography variant="caption" sx={{ fontSize: '0.75rem', mt: 0.5, display: 'block' }}>
+                      {Math.round(calculateProgress(character.id))}%
+                    </Typography>
                   </Box>
-                ) : (
-                  <Skeleton variant="circular" width={30} height={30} />
-                )}
-              </TableCell>
-
-              {missions.map(mission => (
-                <TableCell key={mission.id} align="center" sx={{ width: '200px' }}>
+                </Box>
+              ) : (
+                <Skeleton variant="circular" width={30} height={30} />
+              )}
+            </TableCell>
+  
+            {missions.map(mission => (
+              <TableCell key={mission.id} align="center" sx={{ width: '130px', padding: '6px' }}>
+                <Box display="flex" justifyContent="center" flexWrap="wrap" gap={0.5}>
                   {completedMissions[character.id]?.[mission.id]?.map((completed, index) => (
                     <Checkbox
                       key={index}
@@ -254,15 +284,24 @@ const MissionControlTable: React.FC<Props> = ({
                       disabled={loading}
                       checked={completed}
                       onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
+                      sx={{
+                        padding: '4px',
+                        '&.Mui-checked': {
+                          bgcolor: 'rgba(76, 175, 80, 0.15)',
+                          borderRadius: '4px'
+                        }
+                      }}
                     />
-                  )) || <Skeleton variant="rectangular" width={24} height={24} />}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+                  )) || <Skeleton variant="rectangular" width={22} height={22} />}
+                </Box>
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+  
   );
 };
 
