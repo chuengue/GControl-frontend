@@ -1,32 +1,13 @@
 import { Cancel, Check, Edit, ExpandMore } from '@mui/icons-material';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Card,
-  IconButton,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Card, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
 import { accessoriesOptions, armorTypeOptions } from '../../../pages/admin/consts';
 import { EquipmentType, GrandChaseItem } from '../../../pages/admin/types';
-import {
-  getUserCharAtkHistoric,
-  getUserCharDetails,
-  updateUserGameChar
-} from '../../../service/requests/gameChar';
+import { getUserCharAtkHistoric, getUserCharDetails, updateUserGameChar } from '../../../service/requests/gameChar';
+import { unequipItem } from '../../../service/requests/inventory.ts';
 import { AtkTotalLog } from '../../../service/requests/types';
 import useCharStore from '../../../stores/charStore';
 import { useSnackbarStore } from '../../../stores/snackBarStore';
@@ -38,6 +19,7 @@ const UserCharDetailsView = () => {
   const [userChar, setUserChar] = useState<any>(null);
   const { userItems, setUserItems } = useCharStore();
   const [atkHistory, setAtkHistory] = useState<AtkTotalLog[]>([]);
+  const { fetchUserItems } = useCharStore();
   const { showSnackbar } = useSnackbarStore();
   const [atkTotal, setAtkTotal] = useState<number>(0); // Variável para armazenar o atkTotal editado
   const [isEditing, setIsEditing] = useState(false);
@@ -53,18 +35,17 @@ const UserCharDetailsView = () => {
   };
 
   const UpdateAtkTotal = async (userCharId: string, atkTotal: number, level: number) => {
-    if(chardId)
-    try {
-      await updateUserGameChar(userCharId, {
-        atkTotal,
-        level
-      });
-      showSnackbar('Atualizado com sucesso', 'success');
-      fetchUserCharHistory(chardId)
-    
-    } catch (error) {
-      showSnackbar(error.message, 'error');
-    }
+    if (chardId)
+      try {
+        await updateUserGameChar(userCharId, {
+          atkTotal,
+          level
+        });
+        showSnackbar('Atualizado com sucesso', 'success');
+        fetchUserCharHistory(chardId);
+      } catch (error) {
+        showSnackbar(error.message, 'error');
+      }
   };
   useEffect(() => {
     if (!chardId) return;
@@ -92,19 +73,36 @@ const UserCharDetailsView = () => {
   };
 
   const handleCancelEdit = event => {
-    event.stopPropagation(); 
-    setAtkTotalEdit(userChar?.results.atkTotal); 
+    event.stopPropagation();
+    setAtkTotalEdit(userChar?.results.atkTotal);
     setIsEditing(false);
   };
 
   const handleSaveEdit = event => {
-    event.stopPropagation(); 
+    event.stopPropagation();
     if (!chardId) return;
     if (atkTotalEdit === null) return;
 
     UpdateAtkTotal(chardId, atkTotalEdit, userChar?.results.level);
     setAtkTotal(atkTotalEdit);
     setIsEditing(false);
+  };
+
+  const onUnequipItem = async (itemId: string) => {
+    const userInventoryItem = userItems.find(item => item.id === itemId);
+    try {
+      await unequipItem(chardId, userInventoryItem.userInventoryItemId);
+      fetchUserItems(chardId);
+      showSnackbar('Item equipado', 'success', {
+        vertical: 'top',
+        horizontal: 'center'
+      });
+    } catch (error) {
+      showSnackbar(`Erro ao equipar item:', ${error}`, 'error', {
+        vertical: 'top',
+        horizontal: 'center'
+      });
+    }
   };
 
   const parseItem = (item: any): GrandChaseItem | null => {
@@ -121,6 +119,7 @@ const UserCharDetailsView = () => {
         defense: item.defense || 0,
         hp: item.hp || 0
       },
+      equipped: true,
       armorType: item.armorType,
       setName: item.setName,
       usableBy: item.usableBy,
@@ -216,6 +215,8 @@ const UserCharDetailsView = () => {
                 key={slot.value}
                 IsDefault={!parsedItem}
                 defaultType={slot.label as EquipmentType}
+                hasOnUnequip={!!parsedItem}
+                onUnequip={() => onUnequipItem(parsedItem?.id)}
                 item={parsedItem || {}}
               />
             );
@@ -269,6 +270,8 @@ const UserCharDetailsView = () => {
                   key={slot.value}
                   IsDefault={!parsedItem}
                   defaultType={slot.label as EquipmentType}
+                  hasOnUnequip={!!parsedItem}
+                  onUnequip={() => onUnequipItem(parsedItem?.id)}
                   item={parsedItem || {}}
                 />
               );

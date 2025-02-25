@@ -1,9 +1,33 @@
 import { Add, CheckCircle, Inventory, Remove } from '@mui/icons-material';
-import { Box, Card, CardContent, Container, Divider, IconButton, Menu, MenuItem, Popover, Stack, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Divider,
+  IconButton,
+  Menu,
+  MenuItem,
+  Popover,
+  Stack,
+  Typography,
+  useTheme
+} from '@mui/material';
 import React, { useState } from 'react';
 
-import { AccessoryType, EquipmentType, ItemCategory, ItemStats, Rarity } from '../../../pages/admin/types';
-import { ACCESSORY_TYPES_ENUM, EQUIPMENT_TYPE_ENUM, ITEM_CATEGORY_ENUM, RARITIES_ENUM } from './itemsEnum';
+import {
+  AccessoryType,
+  EquipmentType,
+  ItemCategory,
+  ItemStats,
+  Rarity
+} from '../../../pages/admin/types';
+import {
+  ACCESSORY_TYPES_ENUM,
+  EQUIPMENT_TYPE_ENUM,
+  ITEM_CATEGORY_ENUM,
+  RARITIES_ENUM
+} from './itemsEnum';
 
 export interface ItemBoxPropsItem {
   id: string;
@@ -21,6 +45,7 @@ export interface ItemBoxPropsItem {
   setName?: string;
   iconUrl?: string;
 }
+
 const ItemBox: React.FC<{
   item: ItemBoxPropsItem;
   IsDefault?: boolean;
@@ -57,6 +82,7 @@ const ItemBox: React.FC<{
     x: number;
     y: number;
   }>({ x: 0, y: 0 });
+
   const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -66,9 +92,8 @@ const ItemBox: React.FC<{
   };
 
   const open = Boolean(anchorEl);
+
   const getIconUrl = (rarity: string) => {
-
-
     if (IsDefault) return '/assets/images/inv/bg_common.png';
     switch (rarity) {
       case 'common':
@@ -85,15 +110,16 @@ const ItemBox: React.FC<{
         return '/assets/images/inv/bg_common.png';
     }
   };
+
   const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault(); // Desabilita o menu de contexto padrão
+    event.preventDefault();
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
-    setContextMenuOpen(true); // Abre o menu personalizado
-    handlePopoverClose();
+    setContextMenuOpen(true);
+    handlePopoverClose(); // Fecha o Popover ao abrir o menu de contexto
   };
 
   const handleCloseContextMenu = () => {
-    setContextMenuOpen(false); // Fecha o menu quando clicado fora
+    setContextMenuOpen(false);
   };
 
   const getColor = () => {
@@ -102,6 +128,7 @@ const ItemBox: React.FC<{
     }
     return theme.palette.raritiesColors[item?.rarity || 'common'];
   };
+
   return (
     <Card
       sx={{
@@ -116,7 +143,7 @@ const ItemBox: React.FC<{
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         cursor: 'pointer',
-        position: 'relative' // Adicionado para posicionar o contador
+        position: 'relative'
       }}
       onMouseEnter={handlePopoverOpen}
       onMouseLeave={handlePopoverClose}
@@ -178,11 +205,10 @@ const ItemBox: React.FC<{
           </Box>
         )}
       </CardContent>
+
       {!IsDefault && hasDetails && (
         <Popover
           id="mouse-over-popover"
-          aria-owns={open ? 'mouse-over-popover' : undefined}
-          aria-haspopup="true"
           open={open}
           anchorEl={anchorEl}
           sx={{ pointerEvents: 'none' }}
@@ -210,7 +236,6 @@ const ItemBox: React.FC<{
           }}
         >
           <Box>
-            {/* Título do item */}
             <Card
               sx={{
                 background: 'rgba(255, 255, 255, 0.05)',
@@ -229,7 +254,6 @@ const ItemBox: React.FC<{
               </Typography>
             </Card>
 
-            {/* Detalhes do item */}
             <Box
               sx={{
                 display: 'flex',
@@ -287,7 +311,6 @@ const ItemBox: React.FC<{
               <Divider />
             </Box>
 
-            {/* Conjunto do item */}
             {item.setName && (
               <Typography
                 variant="body2"
@@ -301,14 +324,6 @@ const ItemBox: React.FC<{
               </Typography>
             )}
 
-            {/* Usuário ou tipo de armadura */}
-            {item.usableBy && (
-              <Typography variant="body2" sx={{ fontStyle: 'italic', opacity: 0.8 }}>
-                <strong>Usável por:</strong> {item.usableBy}
-              </Typography>
-            )}
-
-            {/* Descrição do item */}
             {item.description && (
               <Card
                 elevation={0}
@@ -327,7 +342,6 @@ const ItemBox: React.FC<{
         </Popover>
       )}
 
-      {/* Menu de contexto personalizado */}
       <Menu
         open={contextMenuOpen}
         onClose={handleCloseContextMenu}
@@ -374,19 +388,18 @@ const ItemBox: React.FC<{
           </MenuItem>
         )}
 
-        {(hasOnUnequip && item.category === 'equipment') ||
-          (hasOnUnequip &&item.category === 'accessory' && (
-            <MenuItem
-              onClick={() => {
-                item.equipped ? onUnequip?.(item) : onEquip?.(item);
-              }}
-            >
-              <IconButton size="small">
-                <CheckCircle fontSize="small" />
-              </IconButton>{' '}
-              {item.equipped ? 'Desequipar' : 'Equipar '}
-            </MenuItem>
-          ))}
+        {hasOnUnequip && (item.category === 'accessory' || item.category === 'equipment') && (
+          <MenuItem
+            onClick={() => {
+              item.equipped ? onUnequip?.(item) : onEquip?.(item);
+            }}
+          >
+            <IconButton size="small">
+              <CheckCircle fontSize="small" />
+            </IconButton>{' '}
+            {item.equipped ? 'Desequipar' : 'Equipar '}
+          </MenuItem>
+        )}
       </Menu>
     </Card>
   );

@@ -1,6 +1,6 @@
 {
     "name": "Chase Tracker",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "scripts": {
         "dev": "vite",
         "preview": "vite preview"

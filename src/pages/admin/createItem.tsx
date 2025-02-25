@@ -61,6 +61,9 @@ const CreateItem = () => {
         vertical: 'top',
         horizontal: 'center'
       });
+      setItem(prevItem => {
+        return { ...prevItem, armorType: '', category: '', accessoryType: '' };
+      });
     } catch (err) {
       showSnackbar(err.response.data.error, 'error', {
         vertical: 'top',
