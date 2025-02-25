@@ -3,31 +3,28 @@ import React, { useEffect, useState } from 'react';
 
 import theme from '../../../../../theme';
 import { UserCharacter } from '../../../../interfaces/char';
+import { registerCompletedMission, removeRegisterCompletedMission } from '../../../../service/requests/limitedMissions/limitedMissions';
 import { CharacterMissions, MissionResult } from '../../../../service/requests/limitedMissions/types';
+import { useSession } from '../../../../SessionContext';
+import { useSnackbarStore } from '../../../../stores/snackBarStore';
 
 interface Props {
   missions: MissionResult[] | undefined;
   UserCharsLogs: CharacterMissions[] | undefined;
   userChars: UserCharacter[] | undefined;
-  loading: boolean;
-  handleRegisterMission: (data: {
-    characterId: string;
-    missionId: string;
-    attemptIndex: number;
-    completed: boolean;
-  }) => void;
 }
 
 const MissionControlTable: React.FC<Props> = ({
   missions,
   UserCharsLogs,
   userChars,
-  loading,
-  handleRegisterMission
 }) => {
   const [completedMissions, setCompletedMissions] = useState<
     Record<string, Record<string, boolean[]>>
   >({});
+  const {session} = useSession()
+  const [loading, setLoading] = useState<boolean>();
+  const { showSnackbar } = useSnackbarStore();
 
   useEffect(() => {
     if (
@@ -68,20 +65,6 @@ const MissionControlTable: React.FC<Props> = ({
     });
   };
 
-  const handleCheckbox = (
-    characterId: string,
-    missionId: string,
-    attemptIndex: number,
-    completed: boolean
-  ) => {
-    handleRegisterMission({
-      characterId,
-      missionId,
-      attemptIndex,
-      completed
-    });
-    handleCheckboxChange(characterId, missionId, attemptIndex);
-  };
   useEffect(() => {
     if (loading) {
       document.body.style.cursor = 'progress';
@@ -101,8 +84,26 @@ const MissionControlTable: React.FC<Props> = ({
 
     return (completedCount / totalMissions) * 100;
   };
+ const handleCheckbox= async (characterId: string, missionId: string, attemptIndex: number ,completed: boolean) => {
+    if (!session) return;
+    setLoading(true)
+    try {
+      if (completed) {
+        await removeRegisterCompletedMission(characterId, missionId);
+      } else {
+        await registerCompletedMission(session.user.uid, characterId, missionId);
+      }
+      handleCheckboxChange(characterId, missionId, attemptIndex);
 
-  if (!missions || !userChars || missions.length === 0 || userChars.length === 0) {
+    } catch (error) {
+      showSnackbar('Erro ao atualizar a missão:'+ error , 'error');
+      console.error('Erro ao atualizar a missão:', error);
+    } finally{
+      setLoading(false)
+    }
+  };
+  if (!missions || !userChars || missions.length === 0 || userChars.length === 0) 
+    {
     return (
       <TableContainer component={Paper} sx={{}}>
         <Table>

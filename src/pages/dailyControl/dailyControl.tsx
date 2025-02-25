@@ -3,7 +3,7 @@ import { green } from '@mui/material/colors';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { getAllLimitedMissions, getUserMissionsLogs, registerCompletedMission, removeRegisterCompletedMission } from '../../service/requests/limitedMissions/limitedMissions';
+import { getAllLimitedMissions, getUserMissionsLogs } from '../../service/requests/limitedMissions/limitedMissions';
 import { CharacterMissions, MissionResult } from '../../service/requests/limitedMissions/types';
 import { useSession } from '../../SessionContext';
 import useCharStore from '../../stores/charStore';
@@ -46,22 +46,6 @@ const DailyControl = () => {
     fetchUserCharsData(session?.user.uid);
   }, []);
 
-  const handleCheckbox = async (characterId: string, missionId: string, completed: boolean) => {
-    if (!session) return;
-    setLoading(true)
-    try {
-      if (completed) {
-        await removeRegisterCompletedMission(characterId, missionId);
-
-      } else {
-        await registerCompletedMission(session.user.uid, characterId, missionId);
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar a missão:', error);
-    } finally{
-      setLoading(false)
-    }
-  };
 
   return (
     <Box>
@@ -70,8 +54,6 @@ const DailyControl = () => {
           missions={limitedMissions}
           UserCharsLogs={logs}
           userChars={userChars}
-          handleRegisterMission={e => handleCheckbox(e.characterId, e.missionId, e.completed)}
-          loading={loading}
         />
       ) : (
         <Typography variant="h6" color="textSecondary" align="center" mt="40px">
