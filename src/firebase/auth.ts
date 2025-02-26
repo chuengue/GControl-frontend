@@ -1,14 +1,7 @@
-import {
-    browserSessionPersistence,
-    GithubAuthProvider,
-    GoogleAuthProvider,
-    setPersistence,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    signOut
-} from 'firebase/auth';
-
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
+
+import { browserLocalPersistence, GithubAuthProvider, GoogleAuthProvider, setPersistence, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
+
 import { firebaseAuth } from './firebaseConfig';
 
 const db = getFirestore();
@@ -39,7 +32,7 @@ export const fetchUserData = async (uid: string) => {
 // Autenticação com Google
 export const signInWithGoogle = async () => {
     try {
-        return setPersistence(firebaseAuth, browserSessionPersistence).then(
+        return setPersistence(firebaseAuth, browserLocalPersistence).then(
             async () => {
                 const result = await signInWithPopup(
                     firebaseAuth,
@@ -70,7 +63,7 @@ export const signInWithGoogle = async () => {
 // Autenticação com GitHub
 export const signInWithGithub = async () => {
     try {
-        return setPersistence(firebaseAuth, browserSessionPersistence).then(
+        return setPersistence(firebaseAuth, browserLocalPersistence).then(
             async () => {
                 const result = await signInWithPopup(
                     firebaseAuth,
@@ -99,7 +92,7 @@ export const signInWithGithub = async () => {
 // Autenticação com email e senha
 export async function signInWithCredentials(email: string, password: string) {
     try {
-        return setPersistence(firebaseAuth, browserSessionPersistence).then(
+        return setPersistence(firebaseAuth, browserLocalPersistence).then(
             async () => {
                 const userCredential = await signInWithEmailAndPassword(
                     firebaseAuth,

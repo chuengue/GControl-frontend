@@ -36,8 +36,8 @@ export const getUserMissionsLogs = async (userId: string): Promise<ApiResponse> 
 };
 export const getUserMissionsLogsHistoric = async (
   userId: string,
-  startDate: string,
-  endDate: string,
+  startDate?: string,
+  endDate?: string,
   page: number = 1, 
   limit: number = 10,
   charName?:string,
