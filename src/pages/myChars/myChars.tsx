@@ -27,7 +27,6 @@ function MyChars() {
   function onAddCharacter() {
     navigate('/chars/add-user-char');
   }
-  console.log(userChars)
   return (
     <Box width="100%" maxHeight="90vh" sx={{
       overflowY: "auto",

@@ -69,7 +69,6 @@ const DropItemsModal = ({ open, onClose, onSave, isLoading }) => {
 
   // Seleciona/Deseleciona um item
   const handleSelectItem = item => {
-    console.log(selectedItems)
     const isSelected = selectedItems.some(selected => selected.itemId === item.id);
     if (isSelected) {
       setSelectedItems(selectedItems.filter(selected => selected.itemId !== item.id));
