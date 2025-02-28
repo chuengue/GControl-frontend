@@ -8,11 +8,12 @@ import { useNavigate } from 'react-router';
 
 import { UserCharCardProps } from '../../interfaces/char';
 import { deleteUserGameChar } from '../../service/requests/gameChar';
+import { toggleVisibility } from '../../service/requests/ranking/ranking';
 import { useSession } from '../../SessionContext';
 import ConfirmationModal from '../../shared/components/confirmModal/confirmModal';
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
-
+import { GreenSwitch } from './styles';
 function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) {
   const [confirmModalIsOpen, setConfirmModalIsOpen] = React.useState(false);
   const [userCharIdSelected, setUserCharIdSelected] = React.useState<string>();
@@ -20,14 +21,14 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
 
   const navigate = useNavigate();
   const { session } = useSession();
-  const {fetchUserCharsData} = useCharStore()
+  const { fetchUserCharsData } = useCharStore();
   const userId = session?.user.uid || '';
   const { showSnackbar } = useSnackbarStore();
 
   React.useEffect(() => {
     setCharList(chars);
   }, [chars]);
-  
+
   const handleDetailsClick = (UserChardId: string) => {
     navigate(`/chars/details/${userId}/${UserChardId}`);
   };
@@ -41,20 +42,31 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
   };
 
   const handleDeleteUserChar = async () => {
-    if(!session) return;
-    if(userCharIdSelected)
+    if (!session) return;
+    if (userCharIdSelected)
+      try {
+        const data = await deleteUserGameChar(session?.user.uid, userCharIdSelected);
+        showSnackbar(data.results.message, 'success');
+        fetchUserCharsData(session?.user.uid);
+        // Atualiza a lista de personagens, removendo o excluído
+        setCharList(prevChars => prevChars.filter(char => char.id !== userCharIdSelected));
+
+        handleCloseModalConfirm();
+      } catch (error) {
+        showSnackbar(error.message, 'error');
+      }
+  };
+  const toggleCharVisibility = async (userCharId: string, currentState: boolean) => {
     try {
-      const data = await deleteUserGameChar(session?.user.uid, userCharIdSelected);
-      showSnackbar(data.results.message, 'success');
-      fetchUserCharsData(session?.user.uid)
-      // Atualiza a lista de personagens, removendo o excluído
-      setCharList((prevChars) => prevChars.filter((char) => char.id !== userCharIdSelected));
-  
-      handleCloseModalConfirm();
+      await toggleVisibility(userCharId);
+      fetchUserCharsData(userId);
+      showSnackbar('Visibilidade alterada com sucesso!', 'success');
     } catch (error) {
-      showSnackbar(error.message, 'error');
+      console.error('Erro ao alternar visibilidade:', error);
+      showSnackbar('Erro ao alterar visibilidade.', 'error');
     }
-  }
+  };
+
   return (
     <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }} width="100vw">
       {charList.map((char, index) => (
@@ -131,6 +143,18 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
                         Ataque Total: {new Intl.NumberFormat().format(Number(char.atkTotal))}
                       </Typography>
                     </Stack>
+                    <Tooltip
+                      title={
+                        char.isVisibleInRanking
+                          ? 'Ocultar do ranking geral'
+                          : 'Exibir no ranking geral'
+                      }
+                    >
+                      <GreenSwitch
+                        onChange={() => toggleCharVisibility(char.id, char.isVisibleInRanking)}
+                        checked={char.isVisibleInRanking ?? false}
+                      />
+                    </Tooltip>
                   </Card>
                   <Stack flexDirection="row" width="100%" gap={1}>
                     <Button

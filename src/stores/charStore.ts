@@ -45,6 +45,7 @@ const useCharStore = create<CharStore>(set => ({
         recMP: 0
     },
     loading: false,
+    isVisibleInRanking:false,
 
     fetchUserCharsData: async (uid: string) => {
         if (!uid) return;

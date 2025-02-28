@@ -13,6 +13,7 @@ export interface UserCharacter {
     level: number;
     atkTotal: string;
     gameChar: Character;
+    isVisibleInRanking:boolean;
 }
 
 export interface UserCharCardProps {

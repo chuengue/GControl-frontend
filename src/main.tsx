@@ -17,6 +17,7 @@ import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
 import UserCharDetailsPage from './pages/myChars/details';
 import MyChars from './pages/myChars/myChars';
+import RankingPage from './pages/ranking/rankingPage';
 import register from './pages/register';
 import SignInPage from './pages/signin';
 import PrivateRoute from './PrivateRoute';
@@ -94,6 +95,10 @@ const router = createBrowserRouter([
                     {
                         path: 'farm-tool',
                        Component: FarmToolsPage
+                    },
+                    {
+                        path: 'ranking',
+                       Component: RankingPage
                     },
                     {
                         path: 'about',
