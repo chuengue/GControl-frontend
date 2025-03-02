@@ -75,8 +75,23 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
           padding: '8px 12px',
           cursor: 'grab',
           borderBottom: `1px solid ${alpha(theme.palette.grey[700], 0.2)}`,
+          bgcolor: alpha(theme.palette.grey[900], 0.95),
+          backdropFilter: 'blur(10px)',
           '&:hover': {
-            bgcolor: alpha(theme.palette.grey[800], 0.5),
+            bgcolor: alpha(theme.palette.grey[800], 0.95),
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            right: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '1px',
+            height: '70%',
+            background: `linear-gradient(180deg, 
+              transparent,
+              ${alpha(theme.palette.grey[500], 0.2)},
+              transparent)`,
           },
         }}
         {...attributes}
@@ -177,6 +192,7 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
             width: '110px',
             padding: '4px 2px',
             borderBottom: `1px solid ${alpha(theme.palette.grey[700], 0.2)}`,
+            bgcolor: alpha(theme.palette.grey[900], 0.3),
           }}
         >
           <Box 
@@ -892,7 +908,7 @@ const MissionControlTable: React.FC<Props> = ({
                   position: 'sticky',
                   left: 0,
                   zIndex: 3,
-                  bgcolor: alpha(theme.palette.grey[900], 0.7),
+                  bgcolor: alpha(theme.palette.grey[900], 0.95),
                   backdropFilter: 'blur(10px)',
                   padding: '12px',
                   color: theme.palette.grey[300],
@@ -929,7 +945,7 @@ const MissionControlTable: React.FC<Props> = ({
                     minWidth: '90px',
                     position: 'sticky',
                     top: 0,
-                    bgcolor: alpha(theme.palette.grey[900], 0.7),
+                    bgcolor: alpha(theme.palette.grey[900], 0.95),
                     backdropFilter: 'blur(10px)',
                     zIndex: 2,
                     padding: '8px 4px',
