@@ -9,6 +9,7 @@ import AboutPage from './pages/about/about';
 import AddUserChar from './pages/addUserChar/addUserChar';
 import AddLimitedMission from './pages/admin/addLimitedMissions';
 import CreateItem from './pages/admin/createItem';
+import CreateMission from './pages/admin/createMission';
 import RemoveItemPage from './pages/admin/removeItem';
 import DailyControl from './pages/dailyControl/dailyControl';
 import MissionHistoricPage from './pages/dailyControl/dailyControlHistoric';
@@ -58,6 +59,14 @@ const router = createBrowserRouter([
                                 Component: () => (
                                     <PrivateRoute adminOnly>
                                         <AddLimitedMission />
+                                    </PrivateRoute>
+                                )
+                            },
+                            {
+                                path: 'create-mission',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <CreateMission />
                                     </PrivateRoute>
                                 )
                             }

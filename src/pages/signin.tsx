@@ -7,7 +7,7 @@ import {
   TableChart,
   TrendingUp
 } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Grid, Link, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, CircularProgress, Grid, Link, Stack, Typography } from '@mui/material';
 import LinearProgress from '@mui/material/LinearProgress';
 import { blue, green, indigo, purple, red } from '@mui/material/colors';
 import { SignInPage } from '@toolpad/core/SignInPage';
@@ -19,6 +19,7 @@ import { signInWithCredentials, signInWithGithub, signInWithGoogle } from '../fi
 export default function SignIn() {
   const { session, setSession, loading } = useSession();
   const navigate = useNavigate();
+  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
 
   if (loading) {
     return <LinearProgress />;
@@ -28,11 +29,71 @@ export default function SignIn() {
     return <Navigate to="/" />;
   }
 
+  function LogoSection() {
+    return (
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          p: { xs: 2, sm: 4 },
+          zIndex: 2,
+          
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: { xs: 1, sm: 2 },
+            
+          }}
+        >
+          <img
+            src="/assets/images/logo.png"
+            alt="Chase Tracker Logo"
+            style={{
+              height: '40px',
+              width: 'auto',
+              filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.3))'
+            }}
+          />
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 700,
+              color: 'white',
+              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+              letterSpacing: '0.05em',
+              fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+              
+            }}
+          >
+            Chase Tracker
+          </Typography>
+        </Box>
+       
+      </Box>
+    );
+  }
+
   function SecurityMessage() {
     return (
       <Box sx={{ textAlign: 'center', mt: 4, mb: 4 }}>
-        <Lock sx={{ fontSize: '2rem', color: green[500], mb: 1 }} />
-        <Typography variant="body2" color="text.secondary">
+        <Typography 
+          variant="body2" 
+          color="text.secondary"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1
+          }}
+        >
+          <Lock sx={{ fontSize: '1.2rem', color: green[500] }} />
           Sua segurança é nossa prioridade. Todos os dados são criptografados.
         </Typography>
       </Box>
@@ -42,77 +103,133 @@ export default function SignIn() {
   function FeaturesGrid() {
     return (
       <Stack sx={{ width: '100%', alignItems: 'center' }}>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, sm: 4 }, width: '100%' }}>
           <Card
             sx={{
               width: '100%',
-              borderRadius: '12px',
+              borderRadius: '24px',
               textAlign: 'center',
-              boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-              background: `linear-gradient(145deg, ${indigo[100]}, ${indigo[800]})`
+              boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.15)',
+              background: `linear-gradient(145deg, ${indigo[100]}, ${indigo[800]})`,
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0px 12px 40px rgba(0, 0, 0, 0.2)'
+              }
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <TableChart sx={{ fontSize: '3rem', color: '#1a237e', mb: 2 }} />
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: indigo[800] }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+              <TableChart 
+                sx={{ 
+                  fontSize: { xs: '2rem', sm: '3rem', md: '4rem' }, 
+                  color: '#1a237e', 
+                  mb: { xs: 2, md: 3 },
+                  filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))'
+                }} 
+              />
+              <Typography 
+                variant="h5" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  color: indigo[800], 
+                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                  mb: { md: 2 }
+                }}
+              >
                 Controle de Missões
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Gerencie o progresso das missões diárias e semanais dos seus personagens. Marque
-                missões concluídas diretamente na tabela e mantenha o registro atualizado com
-                facilidade.
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.1rem' },
+                  maxWidth: '600px',
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Gerencie o progresso das missões diárias e semanais dos seus personagens com facilidade e eficiência.
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Cards restantes (50% largura cada) */}
-        <Grid container spacing={3} sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Grid 
+          container 
+          spacing={{ xs: 2, sm: 3, md: 4 }} 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'center',
+            '& .MuiGrid-item': {
+              display: 'flex'
+            }
+          }}
+        >
           {[
             {
-              icon: <PersonIcon sx={{ fontSize: '3rem', color: '#1976d2', mb: 2 }} />,
+              icon: <PersonIcon sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '3.5rem' }, color: '#1976d2', mb: { xs: 2, md: 3 }, filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))' }} />,
               title: 'Cadastro de Personagem',
               text: 'Cadastre seus personagens e mantenha um registro detalhado de cada um.',
               color: blue
             },
             {
-              icon: <EquipIcon sx={{ fontSize: '3rem', color: '#388e3c', mb: 2 }} />,
+              icon: <EquipIcon sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '3.5rem' }, color: '#388e3c', mb: { xs: 2, md: 3 }, filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))' }} />,
               title: 'Controle de Farm',
               text: 'Registre suas sessões de farm, acompanhe os drops e calcule o tempo médio por item.',
               color: green
             },
             {
-              icon: <CalcIcon sx={{ fontSize: '3rem', color: '#d32f2f', mb: 2 }} />,
+              icon: <CalcIcon sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '3.5rem' }, color: '#d32f2f', mb: { xs: 2, md: 3 }, filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))' }} />,
               title: 'Calculadora de Ataque Total',
               text: 'Calcule o ataque total dos seus personagens e maximize seu poder de combate.',
               color: red
             },
             {
-              icon: <TrendingUp sx={{ fontSize: '3rem', color: '#6a1b9a', mb: 2 }} />,
+              icon: <TrendingUp sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '3.5rem' }, color: '#6a1b9a', mb: { xs: 2, md: 3 }, filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))' }} />,
               title: 'Visualização de Gráficos',
               text: 'Acompanhe o desempenho dos seus personagens com gráficos de poder.',
               color: purple
             }
           ].map((feature, index) => (
-            <Grid item xs={6} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Grid item xs={12} sm={6} key={index}>
               <Card
                 sx={{
-                  borderRadius: '12px',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '24px',
                   textAlign: 'center',
-                  boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-                  background: `linear-gradient(145deg, ${feature.color[100]}, ${feature.color[800]})`
+                  boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.15)',
+                  background: `linear-gradient(145deg, ${feature.color[100]}, ${feature.color[800]})`,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0px 12px 40px rgba(0, 0, 0, 0.2)'
+                  }
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   {feature.icon}
                   <Typography
                     variant="h5"
                     gutterBottom
-                    sx={{ fontWeight: 'bold', color: feature.color[800] }}
+                    sx={{ 
+                      fontWeight: 'bold',
+                      color: feature.color[800],
+                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                      mb: { md: 2 }
+                    }}
                   >
                     {feature.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: { xs: '0.875rem', sm: '1rem', md: '1.1rem' },
+                      lineHeight: 1.6
+                    }}
+                  >
                     {feature.text}
                   </Typography>
                 </CardContent>
@@ -139,6 +256,7 @@ export default function SignIn() {
         px: 2
       }}
     >
+      <LogoSection />
       {/* Backdrop para escurecer o fundo */}
       <Box
         sx={{
@@ -147,7 +265,7 @@ export default function SignIn() {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
           backdropFilter: 'blur(8px)',
           zIndex: 0
         }}
@@ -156,13 +274,15 @@ export default function SignIn() {
       {/* Container Principal */}
       <Grid
         container
-        spacing={4}
+        spacing={{ xs: 2, sm: 3, md: 4 }}
         sx={{
           position: 'relative',
           zIndex: 1,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          mt: { xs: 12, sm: 8 },
+          px: { xs: 2, sm: 3 }
         }}
       >
         {/* Coluna dos Cards (Centralizados) */}
@@ -170,32 +290,69 @@ export default function SignIn() {
           item
           xs={12}
           md={6}
-          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          sx={{ 
+            display: { xs: 'none', md: 'flex' },
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
         >
           <FeaturesGrid />
         </Grid>
 
         {/* Coluna do Login */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={8} md={4}>
           <Box sx={{ maxWidth: '600px', width: '100%', mx: 'auto' }}>
             <SignInPage
               sx={{
                 minHeight: 'unset',
                 '& .MuiBox-root': {
-                  padding: 2,
-                  backgroundColor: blue[800] ,
-                  borderRadius:"18px"
+                  padding: { xs: 2, sm: 3 },
+                  backgroundColor: blue[800],
+                  borderRadius: "18px"
+                },
+                '& img': {  // Hide the default logo
+                  display: 'none'
+                },
+                '& > div': {  // Adjust spacing after removing logo
+                  marginTop: 0
+                },
+                '& .MuiTextField-root': {
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }
                 }
               }}
               slots={{
-                title: () => <h2 style={{ marginBottom: 8 }}>Login</h2>,
+                title: () => (
+                  <Typography 
+                    variant="h4" 
+                    sx={{ 
+                      marginBottom: 2,
+                      paddingTop: 2,
+                      color: 'white',
+                      fontWeight: 600,
+                      textAlign: 'center'
+                    }}
+                  >
+                    Login
+                  </Typography>
+                ),
                 subtitle: () => (
-                  <Typography sx={{ marginBottom: 1 }}>
-                  Seja bem-vindo ao Chase Tracker
+                  <Typography 
+                    sx={{ 
+                      marginBottom: 3,
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    Seja bem-vindo ao Chase Tracker
                   </Typography>
                 ),
                 signUpLink: () => (
-                  <Stack flexDirection="row">
+                  <Stack flexDirection="column" alignItems="center">
                     <Typography variant="caption" sx={{ marginRight: 1 }}>
                       Ainda não tem uma conta?
                     </Typography>
@@ -212,8 +369,36 @@ export default function SignIn() {
                   </Stack>
                 ),
                 submitButton: () => (
-                  <Button type="submit" color="info" variant="contained" fullWidth sx={{ my: 2 }}>
-                    Entrar
+                  <Button 
+                    type="submit" 
+                    color="info" 
+                    variant="contained" 
+                    fullWidth 
+                    disabled={isLoggingIn}
+                    sx={{ 
+                      my: 2,
+                      position: 'relative',
+                      '&.Mui-disabled': {
+                        backgroundColor: blue[600],
+                        color: 'rgba(255, 255, 255, 0.8)'
+                      }
+                    }}
+                  >
+                    {isLoggingIn ? (
+                      <>
+                        <CircularProgress
+                          size={24}
+                          sx={{
+                            position: 'absolute',
+                            left: '50%',
+                            marginLeft: '-12px'
+                          }}
+                        />
+                        <span style={{ opacity: 0 }}>Entrar</span>
+                      </>
+                    ) : (
+                      'Entrar'
+                    )}
                   </Button>
                 )
               }}
@@ -223,6 +408,7 @@ export default function SignIn() {
               ]}
               signIn={async (provider, formData, callbackUrl) => {
                 try {
+                  setIsLoggingIn(true);
                   let result;
                   if (provider.id === 'google') result = await signInWithGoogle();
                   if (provider.id === 'github') result = await signInWithGithub();
@@ -253,6 +439,8 @@ export default function SignIn() {
                   return {
                     error: error instanceof Error ? error.message : 'Ocorreu um erro inesperado'
                   };
+                } finally {
+                  setIsLoggingIn(false);
                 }
               }}
             />

@@ -16,3 +16,9 @@ export interface MissionResponse {
     totalPages: number;
     page: number;
 }
+export interface CreateMissionData {
+    name: string;
+    level: number;
+    type: string;
+    imgUrl: string;
+}

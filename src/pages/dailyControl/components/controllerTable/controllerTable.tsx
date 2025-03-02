@@ -1,30 +1,57 @@
-import { Box, Checkbox, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography, IconButton, alpha, CircularProgress, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
-import React, { useEffect, useState, useRef } from 'react';
-import { DragHandle } from '@mui/icons-material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
-  DndContext,
   closestCenter,
+  DndContext,
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors,
+  useSensors
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { DragHandle } from '@mui/icons-material';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  alpha,
+  Box,
+  Checkbox,
+  CircularProgress,
+  IconButton,
+  LinearProgress,
+  Paper,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
 
 import theme from '../../../../../theme';
 import { UserCharacter } from '../../../../interfaces/char';
-import { registerCompletedMission, removeRegisterCompletedMission } from '../../../../service/requests/limitedMissions/limitedMissions';
-import { CharacterMissions, MissionResult } from '../../../../service/requests/limitedMissions/types';
+import {
+  registerCompletedMission,
+  removeRegisterCompletedMission
+} from '../../../../service/requests/limitedMissions/limitedMissions';
+import {
+  CharacterMissions,
+  MissionResult
+} from '../../../../service/requests/limitedMissions/types';
 import { useSession } from '../../../../SessionContext';
 import { useSnackbarStore } from '../../../../stores/snackBarStore';
 
@@ -34,34 +61,56 @@ interface Props {
   userChars: UserCharacter[] | undefined;
 }
 
+interface SortableTableRowProps {
+  character: UserCharacter;
+  missions: MissionResult[];
+  completedMissions: Record<string, Record<string, boolean[]>>;
+  handleCheckbox: (
+    characterId: string,
+    missionId: string,
+    attemptIndex: number,
+    completed: boolean
+  ) => Promise<void>;
+  loading: boolean | undefined;
+  loadingStates: Record<string, boolean>;
+  calculateProgress: (characterId: string) => number;
+  torreFloors: Record<string, number>;
+  handleFloorChange: (characterId: string, floor: number) => void;
+}
+
 // Sortable Row Component
-const SortableTableRow = ({ character, missions, completedMissions, handleCheckbox, loading, loadingStates, calculateProgress }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: character.id });
+const SortableTableRow = ({
+  character,
+  missions,
+  completedMissions,
+  handleCheckbox,
+  loading,
+  loadingStates,
+  calculateProgress,
+  torreFloors,
+  handleFloorChange
+}: SortableTableRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: character.id
+  });
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
     zIndex: isDragging ? 1 : 0,
     position: 'relative' as 'relative',
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   };
 
   return (
-    <TableRow 
-      ref={setNodeRef} 
+    <TableRow
+      ref={setNodeRef}
       style={style}
       sx={{
         '&:hover': {
-          bgcolor: alpha(theme.palette.grey[800], 0.3),
+          bgcolor: alpha(theme.palette.grey[800], 0.3)
         },
-        transition: 'background-color 0.2s ease',
+        transition: 'background-color 0.2s ease'
       }}
     >
       <TableCell
@@ -78,21 +127,23 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
           bgcolor: alpha(theme.palette.grey[900], 0.95),
           backdropFilter: 'blur(10px)',
           '&:hover': {
-            bgcolor: alpha(theme.palette.grey[800], 0.95),
+            bgcolor: alpha(theme.palette.grey[800], 0.95)
           },
+          borderRight: `1px solid ${alpha(theme.palette.grey[700], 0.2)}`,
           '&::after': {
             content: '""',
             position: 'absolute',
-            right: 0,
-            top: '50%',
-            transform: 'translateY(-50%)',
+            right: -1,
+            top: 0,
+            height: '100%',
             width: '1px',
-            height: '70%',
             background: `linear-gradient(180deg, 
               transparent,
-              ${alpha(theme.palette.grey[500], 0.2)},
-              transparent)`,
-          },
+              ${alpha(theme.palette.primary.main, 0.1)} 30%,
+              ${alpha(theme.palette.primary.main, 0.1)} 70%,
+              transparent
+            )`
+          }
         }}
         {...attributes}
         {...listeners}
@@ -113,27 +164,27 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
                   borderRadius: '6px',
                   boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.2)}`,
                   opacity: 0,
-                  transition: 'opacity 0.2s ease',
+                  transition: 'opacity 0.2s ease'
                 },
                 '&:hover::after': {
-                  opacity: 1,
-                },
+                  opacity: 1
+                }
               }}
             >
               <img
                 src={character.gameChar.thumbImgUrl}
                 alt={character.gameChar.name}
                 width={38}
-                style={{ 
+                style={{
                   borderRadius: '6px',
-                  border: `2px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+                  border: `2px solid ${alpha(theme.palette.grey[700], 0.3)}`
                 }}
               />
             </Box>
             <Box>
-              <Typography 
-                variant="subtitle2" 
-                sx={{ 
+              <Typography
+                variant="subtitle2"
+                sx={{
                   fontWeight: 600,
                   fontSize: '0.85rem',
                   color: theme.palette.grey[100],
@@ -142,8 +193,8 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
               >
                 {character.gameChar.name}
               </Typography>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
@@ -160,14 +211,14 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
                       bgcolor: alpha(theme.palette.grey[800], 0.5),
                       '& .MuiLinearProgress-bar': {
                         borderRadius: 2,
-                        background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.light})`,
+                        background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.light})`
                       }
                     }}
                   />
                 </Box>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
+                <Typography
+                  variant="caption"
+                  sx={{
                     fontSize: '0.65rem',
                     color: theme.palette.grey[400],
                     minWidth: '24px',
@@ -185,86 +236,202 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
       </TableCell>
 
       {missions.map(mission => (
-        <TableCell 
-          key={mission.id} 
-          align="center" 
-          sx={{ 
+        <TableCell
+          key={mission.id}
+          align="center"
+          sx={{
             width: '110px',
             padding: '4px 2px',
             borderBottom: `1px solid ${alpha(theme.palette.grey[700], 0.2)}`,
-            bgcolor: alpha(theme.palette.grey[900], 0.3),
+            bgcolor: alpha(theme.palette.grey[900], 0.3)
           }}
         >
-          <Box 
-            display="flex" 
-            justifyContent="center" 
-            flexWrap="wrap" 
+          <Box
+            display="flex"
+            justifyContent="center"
+            flexWrap="wrap"
             gap={0.3}
             sx={{
               padding: '2px',
               borderRadius: '6px',
               transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: alpha(theme.palette.grey[800], 0.3),
+                bgcolor: alpha(theme.palette.grey[800], 0.3)
               }
             }}
           >
-            {completedMissions[character.id]?.[mission.id]?.map((completed, index) => {
-              const loadingKey = `${character.id}-${mission.id}-${index}`;
-              const isLoading = loadingStates[loadingKey];
-              
-              return (
-                <Box
-                  key={index}
-                  sx={{
-                    position: 'relative',
-                    width: 22,
-                    height: 22,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {isLoading ? (
-                    <CircularProgress
-                      size={16}
-                      thickness={6}
+            {mission.mission_name === 'Torre das Ilusões' ? (
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}
+              >
+                {completedMissions[character.id]?.[mission.id]?.map((completed, index) => {
+                  const loadingKey = `${character.id}-${mission.id}-${index}`;
+                  const isLoading = loadingStates[loadingKey];
+
+                  return (
+                    <Box
+                      key={index}
                       sx={{
-                        color: completed ? theme.palette.success.main : theme.palette.grey[400],
+                        position: 'relative',
+                        width: 22,
+                        height: 22,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}
-                    />
-                  ) : (
-                    <Checkbox
-                      color="success"
-                      disabled={loading || isLoading}
-                      checked={completed}
-                      onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
-                      sx={{
-                        padding: '1px',
-                        opacity: isLoading ? 0.5 : 1,
-                        transition: 'all 0.2s ease',
-                        '& .MuiSvgIcon-root': {
-                          fontSize: '1.1rem',
-                        },
-                        '&.Mui-checked': {
-                          color: theme.palette.success.main,
-                          bgcolor: alpha(theme.palette.success.main, 0.15),
-                          borderRadius: '4px',
-                        },
+                    >
+                      {isLoading ? (
+                        <CircularProgress
+                          size={16}
+                          thickness={6}
+                          sx={{
+                            color: completed ? theme.palette.success.main : theme.palette.grey[400]
+                          }}
+                        />
+                      ) : (
+                        <Checkbox
+                          color="success"
+                          disabled={loading || isLoading}
+                          checked={completed}
+                          onChange={() =>
+                            handleCheckbox(character.id, mission.id, index, completed)
+                          }
+                          sx={{
+                            padding: '1px',
+                            opacity: isLoading ? 0.5 : 1,
+                            transition: 'all 0.2s ease',
+                            '& .MuiSvgIcon-root': {
+                              fontSize: '1.1rem'
+                            },
+                            '&.Mui-checked': {
+                              color: theme.palette.success.main,
+                              bgcolor: alpha(theme.palette.success.main, 0.15),
+                              borderRadius: '4px'
+                            },
+                            '&:hover': {
+                              bgcolor: alpha(theme.palette.success.main, 0.1),
+                              borderRadius: '4px'
+                            },
+                            '&.Mui-disabled': {
+                              cursor: isLoading ? 'wait' : 'not-allowed',
+                              opacity: 0.5
+                            }
+                          }}
+                        />
+                      )}
+                    </Box>
+                  );
+                })}
+                <Tooltip title="Andar atual" arrow placement="top">
+                  <TextField
+                    type="number"
+                    size="small"
+                    value={torreFloors[character.id] || ''}
+                    onChange={e =>
+                      handleFloorChange(
+                        character.id,
+                        Math.max(1, Math.min(50, Number(e.target.value)))
+                      )
+                    }
+                    inputProps={{
+                      min: 1,
+                      max: 30,
+                      style: {
+                        padding: '2px 4px',
+                        textAlign: 'center',
+                        fontSize: '0.7rem',
+                        color: theme.palette.grey[300]
+                      }
+                    }}
+                    sx={{
+                      width: '40px',
+                      '& .MuiOutlinedInput-root': {
+                        height: '22px',
+                        bgcolor: alpha(theme.palette.grey[800], 0.3),
                         '&:hover': {
-                          bgcolor: alpha(theme.palette.success.main, 0.1),
-                          borderRadius: '4px',
+                          bgcolor: alpha(theme.palette.grey[800], 0.5)
                         },
-                        '&.Mui-disabled': {
-                          cursor: isLoading ? 'wait' : 'not-allowed',
-                          opacity: 0.5,
+                        '& fieldset': {
+                          borderColor: alpha(theme.palette.grey[600], 0.3),
+                          borderWidth: '1px'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: alpha(theme.palette.grey[500], 0.5)
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.primary.main,
+                          borderWidth: '1px'
                         }
-                      }}
-                    />
-                  )}
-                </Box>
-              );
-            }) || <Skeleton variant="rectangular" width={20} height={20} sx={{ borderRadius: '4px' }} />}
+                      }
+                    }}
+                  />
+                </Tooltip>
+              </Box>
+            ) : (
+              completedMissions[character.id]?.[mission.id]?.map((completed, index) => {
+                const loadingKey = `${character.id}-${mission.id}-${index}`;
+                const isLoading = loadingStates[loadingKey];
+
+                return (
+                  <Box
+                    key={index}
+                    sx={{
+                      position: 'relative',
+                      width: 22,
+                      height: 22,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {isLoading ? (
+                      <CircularProgress
+                        size={16}
+                        thickness={6}
+                        sx={{
+                          color: completed ? theme.palette.success.main : theme.palette.grey[400]
+                        }}
+                      />
+                    ) : (
+                      <Checkbox
+                        color="success"
+                        disabled={loading || isLoading}
+                        checked={completed}
+                        onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
+                        sx={{
+                          padding: '1px',
+                          opacity: isLoading ? 0.5 : 1,
+                          transition: 'all 0.2s ease',
+                          '& .MuiSvgIcon-root': {
+                            fontSize: '1.1rem'
+                          },
+                          '&.Mui-checked': {
+                            color: theme.palette.success.main,
+                            bgcolor: alpha(theme.palette.success.main, 0.15),
+                            borderRadius: '4px'
+                          },
+                          '&:hover': {
+                            bgcolor: alpha(theme.palette.success.main, 0.1),
+                            borderRadius: '4px'
+                          },
+                          '&.Mui-disabled': {
+                            cursor: isLoading ? 'wait' : 'not-allowed',
+                            opacity: 0.5
+                          }
+                        }}
+                      />
+                    )}
+                  </Box>
+                );
+              }) || (
+                <Skeleton
+                  variant="rectangular"
+                  width={20}
+                  height={20}
+                  sx={{ borderRadius: '4px' }}
+                />
+              )
+            )}
           </Box>
         </TableCell>
       ))}
@@ -272,15 +439,11 @@ const SortableTableRow = ({ character, missions, completedMissions, handleCheckb
   );
 };
 
-const MissionControlTable: React.FC<Props> = ({
-  missions,
-  UserCharsLogs,
-  userChars,
-}) => {
+const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userChars }) => {
   const [completedMissions, setCompletedMissions] = useState<
     Record<string, Record<string, boolean[]>>
   >({});
-  const {session} = useSession()
+  const { session } = useSession();
   const [loading, setLoading] = useState<boolean>();
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
   const { showSnackbar } = useSnackbarStore();
@@ -288,16 +451,37 @@ const MissionControlTable: React.FC<Props> = ({
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButtons, setShowScrollButtons] = useState({
     left: false,
-    right: false,
+    right: false
   });
+
+  // Add state for Torre das Ilusões floors
+  const [torreFloors, setTorreFloors] = useState<Record<string, number>>({});
+
+  // Load Torre das Ilusões floors from localStorage
+  useEffect(() => {
+    const savedFloors = localStorage.getItem('torreFloors');
+    if (savedFloors) {
+      setTorreFloors(JSON.parse(savedFloors));
+    }
+  }, []);
+
+  // Function to update floor for a character
+  const handleFloorChange = (characterId: string, floor: number) => {
+    const newFloors = {
+      ...torreFloors,
+      [characterId]: floor
+    };
+    setTorreFloors(newFloors);
+    localStorage.setItem('torreFloors', JSON.stringify(newFloors));
+  };
 
   // Mission order priority map
   const missionOrderPriority = {
-    "Terra do Julgamento": 1,
+    'Terra do Julgamento': 1,
     'Fornalha Infernal': 2,
     'Altar da Ruína': 3,
     'Covil de Berkas': 4,
-    'Torre da Extinção':5,
+    'Torre da Extinção': 5,
     'Torre das Ilusões': 6,
     'Cerco de Teroka': 7,
     'Templo do Tempo': 8,
@@ -306,12 +490,37 @@ const MissionControlTable: React.FC<Props> = ({
     'Claustro do Infinito': 11,
     'Vazio (Invasão)': 12,
     'Vazio (Contaminação)': 13,
-    'Vazio (Pesadelo)': 14,
+    'Vazio (Pesadelo)': 14
+  };
+
+  // Function to check if Terra do Julgamento should be displayed
+  const shouldShowTerraDoJulgamento = () => {
+    // Get current time in Brasília timezone
+    const now = new Date();
+    const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const day = brasiliaTime.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday
+    const hours = brasiliaTime.getHours();
+
+    // Show from Friday 3 AM to Monday 3 AM
+    if (day === 5 && hours >= 3) return true; // Friday after 3 AM
+    if (day === 6) return true; // Saturday all day
+    if (day === 0) return true; // Sunday all day
+    if (day === 1 && hours < 3) return true; // Monday before 3 AM
+
+    return false;
   };
 
   // Sort missions function
-  const sortMissions = (missionsArray) => {
-    return [...missionsArray].sort((a, b) => {
+  const sortMissions = missionsArray => {
+    // Filter out Terra do Julgamento if it shouldn't be shown
+    const filteredMissions = missionsArray.filter(mission => {
+      if (mission.mission_name === 'Terra do Julgamento') {
+        return shouldShowTerraDoJulgamento();
+      }
+      return true;
+    });
+
+    return [...filteredMissions].sort((a, b) => {
       // First priority: Epic type
       if (a.type === 'epic' && b.type !== 'epic') return -1;
       if (a.type !== 'epic' && b.type === 'epic') return 1;
@@ -319,7 +528,7 @@ const MissionControlTable: React.FC<Props> = ({
       // Second priority: Specific order for named missions
       const priorityA = missionOrderPriority[a.mission_name] || 999;
       const priorityB = missionOrderPriority[b.mission_name] || 999;
-      
+
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
       }
@@ -335,16 +544,14 @@ const MissionControlTable: React.FC<Props> = ({
   // Load order from localStorage
   useEffect(() => {
     if (!userChars) return;
-    
+
     const savedOrder = localStorage.getItem('characterOrder');
     if (savedOrder) {
       const orderIds = JSON.parse(savedOrder);
       const orderedChars = orderIds
         .map(id => userChars.find(char => char.id === id))
         .filter(Boolean);
-      const remainingChars = userChars.filter(
-        char => !orderIds.includes(char.id)
-      );
+      const remainingChars = userChars.filter(char => !orderIds.includes(char.id));
       setCharacters([...orderedChars, ...remainingChars]);
     } else {
       setCharacters(userChars);
@@ -354,25 +561,22 @@ const MissionControlTable: React.FC<Props> = ({
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   );
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = event => {
     const { active, over } = event;
-    
+
     if (active.id !== over.id) {
-      setCharacters((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        
+      setCharacters(items => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+
         const newOrder = arrayMove(items, oldIndex, newIndex);
         // Save order to localStorage
-        localStorage.setItem(
-          'characterOrder',
-          JSON.stringify(newOrder.map(char => char.id))
-        );
-        
+        localStorage.setItem('characterOrder', JSON.stringify(newOrder.map(char => char.id)));
+
         return newOrder;
       });
     }
@@ -436,23 +640,28 @@ const MissionControlTable: React.FC<Props> = ({
 
     return (completedCount / totalMissions) * 100;
   };
- const handleCheckbox = async (characterId: string, missionId: string, attemptIndex: number, completed: boolean) => {
+  const handleCheckbox = async (
+    characterId: string,
+    missionId: string,
+    attemptIndex: number,
+    completed: boolean
+  ) => {
     if (!session) return;
-    
+
     // Create a unique key for this character-mission combination
     const loadingKey = `${characterId}-${missionId}-${attemptIndex}`;
-    
+
     // If this checkbox or any other is currently loading, prevent the action
     if (loadingStates[loadingKey]) {
       return;
     }
-    
+
     // Set loading state for this specific checkbox
     setLoadingStates(prev => ({
       ...prev,
       [loadingKey]: true
     }));
-    
+
     try {
       if (completed) {
         await removeRegisterCompletedMission(characterId, missionId);
@@ -478,7 +687,7 @@ const MissionControlTable: React.FC<Props> = ({
       const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
       setShowScrollButtons({
         left: scrollLeft > 0,
-        right: scrollLeft < scrollWidth - clientWidth,
+        right: scrollLeft < scrollWidth - clientWidth
       });
     }
   };
@@ -504,7 +713,9 @@ const MissionControlTable: React.FC<Props> = ({
   const handleScroll = (direction: 'left' | 'right') => {
     if (tableContainerRef.current) {
       const scrollAmount = 200; // Adjust this value to control scroll distance
-      const newScrollLeft = tableContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      const newScrollLeft =
+        tableContainerRef.current.scrollLeft +
+        (direction === 'left' ? -scrollAmount : scrollAmount);
       tableContainerRef.current.scrollTo({
         left: newScrollLeft,
         behavior: 'smooth'
@@ -514,10 +725,10 @@ const MissionControlTable: React.FC<Props> = ({
 
   const calculateOverallProgress = () => {
     if (!characters || !missions) return { total: 0, completed: 0, percentage: 0 };
-    
+
     const totalMissions = characters.length * missions.length;
     let completedMissionsCount = 0;
-    
+
     characters.forEach(character => {
       missions.forEach(mission => {
         if (completedMissions[character.id]?.[mission.id]?.some(status => status)) {
@@ -525,7 +736,7 @@ const MissionControlTable: React.FC<Props> = ({
         }
       });
     });
-    
+
     return {
       total: totalMissions,
       completed: completedMissionsCount,
@@ -533,8 +744,7 @@ const MissionControlTable: React.FC<Props> = ({
     };
   };
 
-  if (!missions || !userChars || missions.length === 0 || userChars.length === 0) 
-    {
+  if (!missions || !userChars || missions.length === 0 || userChars.length === 0) {
     return (
       <TableContainer component={Paper} sx={{}}>
         <Table>
@@ -590,13 +800,15 @@ const MissionControlTable: React.FC<Props> = ({
         defaultExpanded={false}
         sx={{
           bgcolor: 'transparent',
+          borderRadius: '16px',
+
           '&:before': {
-            display: 'none',
+            display: 'none'
           },
           '& .MuiAccordion-root': {
-            bgcolor: 'transparent',
+            bgcolor: 'transparent'
           },
-          mb: 3,
+          mb: 3
         }}
       >
         <AccordionSummary
@@ -608,9 +820,9 @@ const MissionControlTable: React.FC<Props> = ({
             borderRadius: '16px',
             '&.Mui-expanded': {
               borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
+              borderBottomRightRadius: 0
             },
-            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`
           }}
         >
           <Box
@@ -620,7 +832,7 @@ const MissionControlTable: React.FC<Props> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 2,
-              p: 1,
+              p: 1
             }}
           >
             <Box sx={{ flex: 1 }}>
@@ -630,7 +842,7 @@ const MissionControlTable: React.FC<Props> = ({
                   fontSize: '1rem',
                   fontWeight: 600,
                   color: theme.palette.grey[100],
-                  mb: 0.5,
+                  mb: 0.5
                 }}
               >
                 Progresso Geral das Missões Diárias
@@ -649,8 +861,8 @@ const MissionControlTable: React.FC<Props> = ({
                         background: `linear-gradient(90deg, 
                           ${theme.palette.primary.main}, 
                           ${theme.palette.primary.light}
-                        )`,
-                      },
+                        )`
+                      }
                     }}
                   />
                 </Box>
@@ -660,7 +872,7 @@ const MissionControlTable: React.FC<Props> = ({
                     fontWeight: 600,
                     color: theme.palette.primary.light,
                     minWidth: '45px',
-                    textAlign: 'right',
+                    textAlign: 'right'
                   }}
                 >
                   {calculateOverallProgress().percentage}%
@@ -674,7 +886,7 @@ const MissionControlTable: React.FC<Props> = ({
                 px: 3,
                 py: 1,
                 borderRadius: '12px',
-                bgcolor: alpha(theme.palette.grey[800], 0.3),
+                bgcolor: alpha(theme.palette.grey[800], 0.3)
               }}
             >
               <Box sx={{ textAlign: 'center' }}>
@@ -682,7 +894,7 @@ const MissionControlTable: React.FC<Props> = ({
                   sx={{
                     fontSize: '0.75rem',
                     color: theme.palette.grey[400],
-                    mb: 0.5,
+                    mb: 0.5
                   }}
                 >
                   Missões Concluídas
@@ -691,7 +903,7 @@ const MissionControlTable: React.FC<Props> = ({
                   sx={{
                     fontSize: '1.25rem',
                     fontWeight: 600,
-                    color: theme.palette.primary.light,
+                    color: theme.palette.primary.light
                   }}
                 >
                   {calculateOverallProgress().completed}
@@ -700,7 +912,7 @@ const MissionControlTable: React.FC<Props> = ({
               <Box
                 sx={{
                   width: '1px',
-                  bgcolor: alpha(theme.palette.grey[700], 0.5),
+                  bgcolor: alpha(theme.palette.grey[700], 0.5)
                 }}
               />
               <Box sx={{ textAlign: 'center' }}>
@@ -708,7 +920,7 @@ const MissionControlTable: React.FC<Props> = ({
                   sx={{
                     fontSize: '0.75rem',
                     color: theme.palette.grey[400],
-                    mb: 0.5,
+                    mb: 0.5
                   }}
                 >
                   Total de Missões
@@ -717,7 +929,7 @@ const MissionControlTable: React.FC<Props> = ({
                   sx={{
                     fontSize: '1.25rem',
                     fontWeight: 600,
-                    color: theme.palette.grey[100],
+                    color: theme.palette.grey[100]
                   }}
                 >
                   {calculateOverallProgress().total}
@@ -734,17 +946,20 @@ const MissionControlTable: React.FC<Props> = ({
             borderTop: 'none',
             borderBottomLeftRadius: '16px',
             borderBottomRightRadius: '16px',
-            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`
           }}
         >
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {sortedMissions.map(mission => {
               const totalAttempts = characters?.length || 0;
               const completedAttempts = characters?.reduce((acc, char) => {
-                return acc + (completedMissions[char.id]?.[mission.id]?.filter(status => status)?.length || 0);
+                return (
+                  acc +
+                  (completedMissions[char.id]?.[mission.id]?.filter(status => status)?.length || 0)
+                );
               }, 0);
               const maxPossibleAttempts = totalAttempts * (mission.max_attempts || 1);
-              
+
               return (
                 <Box
                   key={mission.id}
@@ -755,7 +970,7 @@ const MissionControlTable: React.FC<Props> = ({
                     bgcolor: alpha(theme.palette.grey[800], 0.3),
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2,
+                    gap: 2
                   }}
                 >
                   {mission.mission_imgUrl ? (
@@ -768,7 +983,7 @@ const MissionControlTable: React.FC<Props> = ({
                         background: `linear-gradient(135deg, 
                           ${alpha(theme.palette.grey[800], 0.5)}, 
                           ${alpha(theme.palette.grey[900], 0.5)})`,
-                        border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+                        border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`
                       }}
                     >
                       <img
@@ -777,7 +992,7 @@ const MissionControlTable: React.FC<Props> = ({
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover',
+                          objectFit: 'cover'
                         }}
                       />
                     </Box>
@@ -790,7 +1005,7 @@ const MissionControlTable: React.FC<Props> = ({
                         fontSize: '0.875rem',
                         fontWeight: 600,
                         color: theme.palette.grey[100],
-                        mb: 0.5,
+                        mb: 0.5
                       }}
                     >
                       {mission.mission_name}
@@ -799,7 +1014,7 @@ const MissionControlTable: React.FC<Props> = ({
                       <Typography
                         sx={{
                           fontSize: '0.75rem',
-                          color: theme.palette.grey[400],
+                          color: theme.palette.grey[400]
                         }}
                       >
                         {completedAttempts}/{maxPossibleAttempts}
@@ -817,8 +1032,8 @@ const MissionControlTable: React.FC<Props> = ({
                             background: `linear-gradient(90deg, 
                               ${theme.palette.success.main}, 
                               ${theme.palette.success.light}
-                            )`,
-                          },
+                            )`
+                          }
                         }}
                       />
                     </Box>
@@ -846,15 +1061,15 @@ const MissionControlTable: React.FC<Props> = ({
             borderRadius: '50%',
             '&:hover': {
               backgroundColor: alpha(theme.palette.grey[800], 0.95),
-              transform: 'translateY(-50%) scale(1.1)',
+              transform: 'translateY(-50%) scale(1.1)'
             },
             transition: 'all 0.2s ease-in-out',
             boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
             border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
             color: theme.palette.grey[300],
             '&:active': {
-              transform: 'translateY(-50%) scale(0.95)',
-            },
+              transform: 'translateY(-50%) scale(0.95)'
+            }
           }}
         >
           <ChevronLeftIcon />
@@ -877,15 +1092,15 @@ const MissionControlTable: React.FC<Props> = ({
             borderRadius: '50%',
             '&:hover': {
               backgroundColor: alpha(theme.palette.grey[800], 0.95),
-              transform: 'translateY(-50%) scale(1.1)',
+              transform: 'translateY(-50%) scale(1.1)'
             },
             transition: 'all 0.2s ease-in-out',
             boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
             border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
             color: theme.palette.grey[300],
             '&:active': {
-              transform: 'translateY(-50%) scale(0.95)',
-            },
+              transform: 'translateY(-50%) scale(0.95)'
+            }
           }}
         >
           <ChevronRightIcon />
@@ -905,21 +1120,21 @@ const MissionControlTable: React.FC<Props> = ({
           backdropFilter: 'blur(10px)',
           '&::-webkit-scrollbar': {
             height: '6px',
-            width: '6px',
+            width: '6px'
           },
           '&::-webkit-scrollbar-track': {
             backgroundColor: alpha(theme.palette.grey[900], 0.5),
-            borderRadius: '3px',
+            borderRadius: '3px'
           },
           '&::-webkit-scrollbar-thumb': {
             backgroundColor: alpha(theme.palette.grey[700], 0.5),
             borderRadius: '3px',
             '&:hover': {
-              backgroundColor: alpha(theme.palette.grey[600], 0.6),
-            },
+              backgroundColor: alpha(theme.palette.grey[600], 0.6)
+            }
           },
           boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
-          border: `1px solid ${alpha(theme.palette.grey[800], 0.3)}`,
+          border: `1px solid ${alpha(theme.palette.grey[800], 0.3)}`
         }}
       >
         <Table size="small" sx={{ minWidth: 650, background: 'transparent' }}>
@@ -939,8 +1154,8 @@ const MissionControlTable: React.FC<Props> = ({
                 height: '2px',
                 background: `linear-gradient(90deg, 
                   ${alpha(theme.palette.primary.main, 0.3)}, 
-                  ${alpha(theme.palette.primary.light, 0.3)})`,
-              },
+                  ${alpha(theme.palette.primary.light, 0.3)})`
+              }
             }}
           >
             <TableRow>
@@ -965,16 +1180,19 @@ const MissionControlTable: React.FC<Props> = ({
                     background: `linear-gradient(180deg, 
                       transparent,
                       ${alpha(theme.palette.grey[500], 0.2)},
-                      transparent)`,
-                  },
+                      transparent)`
+                  }
                 }}
               >
-                <Typography variant="subtitle2" sx={{ 
-                  fontWeight: 600,
-                  letterSpacing: '0.5px',
-                  textTransform: 'uppercase',
-                  fontSize: '0.7rem',
-                }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 600,
+                    letterSpacing: '0.5px',
+                    textTransform: 'uppercase',
+                    fontSize: '0.7rem'
+                  }}
+                >
                   Personagem
                 </Typography>
               </TableCell>
@@ -990,7 +1208,7 @@ const MissionControlTable: React.FC<Props> = ({
                     backdropFilter: 'blur(10px)',
                     zIndex: 2,
                     padding: '8px 4px',
-                    borderBottom: 'none',
+                    borderBottom: 'none'
                   }}
                 >
                   <Box
@@ -998,7 +1216,7 @@ const MissionControlTable: React.FC<Props> = ({
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: 0.5,
+                      gap: 0.5
                     }}
                   >
                     {mission.mission_imgUrl ? (
@@ -1017,8 +1235,8 @@ const MissionControlTable: React.FC<Props> = ({
                           '&:hover': {
                             transform: 'scale(1.1)',
                             boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`,
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                          },
+                            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                          }
                         }}
                       >
                         <img
@@ -1027,12 +1245,17 @@ const MissionControlTable: React.FC<Props> = ({
                           style={{
                             width: '100%',
                             height: '100%',
-                            objectFit: 'cover',
+                            objectFit: 'cover'
                           }}
                         />
                       </Box>
                     ) : (
-                      <Skeleton variant="rectangular" width={28} height={28} sx={{ borderRadius: '6px' }} />
+                      <Skeleton
+                        variant="rectangular"
+                        width={28}
+                        height={28}
+                        sx={{ borderRadius: '6px' }}
+                      />
                     )}
                     <Tooltip title={mission.mission_name || ''} arrow placement="top">
                       <Typography
@@ -1044,7 +1267,7 @@ const MissionControlTable: React.FC<Props> = ({
                           fontSize: '0.65rem',
                           fontWeight: 500,
                           textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
+                          letterSpacing: '0.5px'
                         }}
                       >
                         {mission.mission_name || <Skeleton variant="text" width={50} />}
@@ -1055,17 +1278,14 @@ const MissionControlTable: React.FC<Props> = ({
               ))}
             </TableRow>
           </TableHead>
-          
+
           <TableBody>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext
-                items={characters}
-                strategy={verticalListSortingStrategy}
-              >
+              <SortableContext items={characters} strategy={verticalListSortingStrategy}>
                 {characters.map(character => (
                   <SortableTableRow
                     key={character.id}
@@ -1076,6 +1296,8 @@ const MissionControlTable: React.FC<Props> = ({
                     loading={loading}
                     loadingStates={loadingStates}
                     calculateProgress={calculateProgress}
+                    torreFloors={torreFloors}
+                    handleFloorChange={handleFloorChange}
                   />
                 ))}
               </SortableContext>

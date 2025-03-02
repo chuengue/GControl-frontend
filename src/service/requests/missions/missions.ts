@@ -1,6 +1,6 @@
 import api from '../../api';
 import { DropRateReport, DropRateResponse } from '../types';
-import { FarmSessionsResponse, MissionResponse } from './type';
+import { CreateMissionData, FarmSessionsResponse, MissionResponse } from './type';
 
 // Obtém todas as missões
 export const getAllMissions = async (): Promise<MissionResponse> => {
@@ -110,6 +110,7 @@ export const deleteDropItem = async (itemDropId:string) => {
        throw error; // Lança o erro para ser tratado externamente
     }
  };
+ 
 export const getGeneralReportDrops = async (userId:string, groupBy: "mission" | "userChar") => {
     try {
        const url = `/session/${userId}/general-drop-rate-report/${groupBy}`;
@@ -121,3 +122,16 @@ export const getGeneralReportDrops = async (userId:string, groupBy: "mission" | 
        throw error; // Lança o erro para ser tratado externamente
     }
  };
+
+
+
+export const createMission = async (data: CreateMissionData): Promise<void> => {
+    try {
+        const url = '/missions';
+        await api.post(url, data);
+    } catch (error) {
+        console.error('Erro ao criar missão:', error);
+        throw error;
+    }
+};
+

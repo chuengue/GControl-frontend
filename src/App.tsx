@@ -2,7 +2,7 @@ import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Handyman, Hist
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
-import { GlobalStyles } from '@mui/material';
+import { Box, GlobalStyles, Typography } from '@mui/material';
 
 import type {
     Authentication,
@@ -90,6 +90,11 @@ export const NAVIGATION: CustomNav = [
         icon: <AdminPanelSettings />,
         children: [
             {
+                segment: 'create-mission',
+                title: 'Cadastrar Missão',
+                icon: <AddCircle />
+            },
+            {
                 segment: 'create-item',
                 title: 'Adicionar Novo Item',
                 icon: <AddCircle />
@@ -110,13 +115,47 @@ export const NAVIGATION: CustomNav = [
         title: 'Sobre',
         segment:"about",
         icon: < Info />,
-       
         
     },
 ];
 
 const BRANDING = {
-    title: 'Chase Tracker'
+    title: (
+        <Typography
+            sx={{
+                fontFamily: 'Anton, sans-serif',
+                letterSpacing: '1px',
+                background: 'linear-gradient(90deg, #fff, #888)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                fontSize: { xs: '1.2rem', sm: '1.5rem' },
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+            }}
+        >
+            Chase Tracker
+        </Typography>
+    ),
+    logo: (
+        <Box
+            component="img"
+            src="assets/images/logo.png"
+            alt="Chase Tracker logo"
+            sx={{
+                width: { xs: 32, sm: 40 },
+                height: { xs: 32, sm: 40 },
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': {
+                    transform: 'scale(1.05)'
+                }
+            }}
+        />
+    )
 };
 
 const AUTHENTICATION: Authentication = {

@@ -5,7 +5,9 @@ import {
     Container,
     LinearProgress,
     TextField,
-    Typography
+    Typography,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import React, { ChangeEvent, FormEvent, useState } from 'react';
@@ -18,6 +20,8 @@ const defaultFormFields = {
 
 function ForgotPassword() {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [formFields, setFormFields] = useState(defaultFormFields);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -58,82 +62,171 @@ function ForgotPassword() {
     }
 
     return (
-        <Container
-            maxWidth="sm"
+        <Box
             sx={{
+                position: 'relative',
+                minHeight: '100vh',
+                backgroundImage: `url(/assets/images/World_map_gc.webp)`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                minHeight: '100vh'
+                px: { xs: 2, sm: 4 }
             }}
         >
             <Box
-                component="form"
-                onSubmit={handleSubmit}
                 sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    padding: 4,
-                    borderRadius: 1,
-                    backgroundColor: 'background.paper',
-                    width: '80%',
-                    border: '1px solid grey',
-                    boxShadow:
-                        '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)'
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    backdropFilter: 'blur(8px)',
+                    zIndex: 0
                 }}
-            >
-                <Typography
-                    variant="h4"
-                    component="h1"
-                    textAlign="center"
-                    fontFamily={'Faktos'}
+            />
+
+            <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+                <Box
+                    component="form"
+                    onSubmit={handleSubmit}
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2.5,
+                        padding: { xs: 3, sm: 4 },
+                        borderRadius: '24px',
+                        backgroundColor: 'rgba(25, 118, 210, 0.95)',
+                        backdropFilter: 'blur(12px)',
+                        width: '100%',
+                        maxWidth: '500px',
+                        margin: '0 auto',
+                        boxShadow: theme.shadows[8]
+                    }}
                 >
-                    Esqueci Minha Senha
-                </Typography>
-
-                {error && <Alert severity="error">{error}</Alert>}
-              
-
-                {!emailSent ? (
-                    <>
-                        <TextField
-                            label="Email"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onChange={handleChange}
-                            fullWidth
-                            required
-                        />
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            size="large"
-                            disabled={loading}
-                            fullWidth
-                        >
-                            Enviar Link de Redefinição
-                        </Button>
-                    </>
-                ) : (
-                    <Typography variant="body1" align="center" color="green">
-                     {successMessage}
+                    <Typography
+                        variant="h4"
+                        component="h1"
+                        textAlign="center"
+                        sx={{
+                            color: '#fff',
+                            fontWeight: 700,
+                            fontSize: { xs: '1.75rem', sm: '2rem' },
+                            mb: 1
+                        }}
+                    >
+                        Esqueci Minha Senha
                     </Typography>
-                )}
 
-                <Button
-                    variant="text"
-                    color="secondary"
-                    size="small"
-                    onClick={() => navigate('/')}
-                    sx={{ marginTop: 2 }}
-                >
-                    Voltar para Login
-                </Button>
-            </Box>
-        </Container>
+                    <Typography
+                        variant="body1"
+                        textAlign="center"
+                        sx={{
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            mb: 2,
+                            fontSize: { xs: '1rem', sm: '1.1rem' }
+                        }}
+                    >
+                        Digite seu email para receber o link de redefinição de senha
+                    </Typography>
+
+                    {error && (
+                        <Alert 
+                            severity="error"
+                            sx={{
+                                borderRadius: '12px',
+                                '& .MuiAlert-message': {
+                                    color: '#5f2120'
+                                }
+                            }}
+                        >
+                            {error}
+                        </Alert>
+                    )}
+
+                    {!emailSent ? (
+                        <>
+                            <TextField
+                                label="Email"
+                                name="email"
+                                type="email"
+                                value={email}
+                                onChange={handleChange}
+                                fullWidth
+                                required
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                        borderRadius: '12px',
+                                        color: '#fff',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: 'rgba(255, 255, 255, 0.7)'
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                                    }
+                                }}
+                            />
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                disabled={loading}
+                                sx={{
+                                    mt: 2,
+                                    py: 1.5,
+                                    borderRadius: '12px',
+                                    backgroundColor: 'white',
+                                    color: theme.palette.primary.main,
+                                    fontWeight: 600,
+                                    fontSize: '1rem',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                                    }
+                                }}
+                            >
+                                Enviar Link de Redefinição
+                            </Button>
+                        </>
+                    ) : (
+                        <Alert 
+                            severity="success"
+                            sx={{
+                                borderRadius: '12px',
+                                '& .MuiAlert-message': {
+                                    color: '#1e4620'
+                                }
+                            }}
+                        >
+                            {successMessage}
+                        </Alert>
+                    )}
+
+                    <Button
+                        variant="text"
+                        onClick={() => navigate('/sign-in')}
+                        sx={{
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            textTransform: 'none',
+                            fontSize: '0.9rem',
+                            mt: 2,
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }}
+                    >
+                        Voltar para Login
+                    </Button>
+                </Box>
+            </Container>
+        </Box>
     );
 }
 
