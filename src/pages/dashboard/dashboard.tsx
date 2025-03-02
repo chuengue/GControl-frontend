@@ -1,7 +1,7 @@
 import { DeleteForever, ExpandLess, ExpandMore, InfoOutlined, Pause, PlayArrow, Stop } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, Button, Card, CircularProgress, Divider, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
-import { blue, green } from '@mui/material/colors';
+import { Alert, Box, Button, Card, CircularProgress, Divider, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import { blue, green, grey } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router';
@@ -46,7 +46,7 @@ const FarmSessionPage = () => {
   const [refetchLoading, setRefetchLoading] = useState(false);
   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
   const [selectedUserSession, setSelectedUserSession] = useState<Session>();
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const { session } = useSession();
   const { showSnackbar } = useSnackbarStore();
   const { userChars, fetchUserCharsData } = useCharStore();
@@ -58,9 +58,11 @@ const FarmSessionPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserCharsData(userId);
-    fetchMissions();
-    fetchUserSessions();
+    if (userId) {
+      fetchUserCharsData(userId);
+      fetchMissions();
+      fetchUserSessions();
+    }
   }, [userId]);
 
   const startTimer = (session: Session) => {
@@ -184,15 +186,17 @@ const FarmSessionPage = () => {
   const registerDrops = async (drops: DropItem[]) => {
     setLoadingRegisterDrops(true);
     try {
-      await registerItemDropsInSession(
-        userId,
-        selectedUserSession?.userCharId ?? '',
-        selectedUserSession?.missionId ?? '',
-        selectedUserSession?.sessionId ?? '',
-        { drops }
-      );
-      fetchDropRateSessionReport(selectedUserSession?.sessionId);
-      showSnackbar('Drops registrados com sucesso!', 'success');
+      if (userId && selectedUserSession) {
+        await registerItemDropsInSession(
+          userId,
+          selectedUserSession.userCharId,
+          selectedUserSession.missionId,
+          selectedUserSession.sessionId,
+          { drops }
+        );
+        fetchDropRateSessionReport(selectedUserSession.sessionId);
+        showSnackbar('Drops registrados com sucesso!', 'success');
+      }
     } catch (error) {
       showSnackbar('Erro ao registrar drops', 'error');
     } finally {
@@ -202,8 +206,10 @@ const FarmSessionPage = () => {
   const fetchUserSessions = async () => {
     setRefetchLoading(true);
     try {
-      const userSessions = await getAllUserSessions(userId);
-      setSessions(userSessions.results || []);
+      if (userId) {
+        const userSessions = await getAllUserSessions(userId);
+        setSessions(userSessions.results);
+      }
     } catch (error) {
       showSnackbar(error.message || 'Erro ao buscar sessões, Tente novamente.', 'error');
     } finally {
@@ -250,15 +256,28 @@ const FarmSessionPage = () => {
     setLoadingCreateSession(true);
     const searchUserCharId = userChars.find(ch => ch.gameChar.id === selectedCharacter?.id);
     try {
-      if (isEditing) {
+      if (isEditing && formData) {
         await updateFarmSession(
-          searchUserCharId?.id,
+          searchUserCharId?.id || '',
           formData.sessionId,
-          selectedMission?.id,
-          formData
+          selectedMission?.id || '',
+          {
+            attempts: formData.attempts,
+            timeSpent: formData.timeSpent,
+            name: formData.name || ''
+          }
         );
-      } else {
-        await createFarmSession(userId, searchUserCharId?.id, selectedMission?.id, formData);
+      } else if (formData) {
+        await createFarmSession(
+          userId || '', 
+          searchUserCharId?.id || '', 
+          selectedMission?.id || '', 
+          {
+            attempts: formData.attempts,
+            timeSpent: formData.timeSpent,
+            name: formData.name || ''
+          }
+        );
       }
       fetchUserSessions();
     } catch (error) {
@@ -267,8 +286,11 @@ const FarmSessionPage = () => {
       setLoadingCreateSession(false);
     }
   };
-  const handleDeleteFarmSession = async (sessionId: string) => {
+  const handleDeleteFarmSession = async (sessionId: string | undefined) => {
     try {
+      if (!sessionId) {
+        throw new Error('ID da sessão é obrigatório');
+      }
       await deleteFarmSession(sessionId);
       fetchUserSessions();
       showSnackbar('Sessão excluída com sucesso', 'success', {
@@ -294,7 +316,7 @@ const FarmSessionPage = () => {
     setSelectedUserSession(session);
     setConfirmModalIsOpen(true);
   };
-  const handleExpand = async sessionId => {
+  const handleExpand = async (sessionId: string) => {
     if (expandedId === sessionId) {
       setExpandedId(null);
       return;
@@ -308,8 +330,11 @@ const FarmSessionPage = () => {
     }
   };
 
-  const fetchDropRateSessionReport = async sessionId => {
+  const fetchDropRateSessionReport = async (sessionId: string) => {
     try {
+      if (!sessionId) {
+        throw new Error('ID da sessão é obrigatório');
+      }
       const data = await getDropRateSessionReport(sessionId);
       setSessionDropRate(data.results);
       return data;
@@ -320,42 +345,23 @@ const FarmSessionPage = () => {
   };
 
   return (
-    <Box
-      sx={{
-        overflowY: 'auto',
-        height: 'calc(100vh - 100px)'
-      }}
-    >
-      <Card
-        elevation={3}
-        sx={{
-          p: 3,
-          borderRadius: '14px',
-          boxShadow: 3,
-          marginBottom: '20px',
-          bgcolor: theme.palette.info.main
+    <Box>
+      <Alert 
+        severity="info" 
+        sx={{ 
+          borderRadius: '12px',
+          mb: 2,
+          '& .MuiAlert-icon': {
+            color: theme.palette.info.main
+          }
         }}
       >
-        <Stack
-          sx={{
-            display: 'flex',
-            flexDirection: 'row'
-          }}
-        >
-          <InfoOutlined
-            sx={{
-              marginRight: '8px'
-            }}
-          />
-
-          <Typography>
-            Gerencie suas sessões de farm de maneira eficiente! Aqui você pode criar novas sessões,
-            registrar o tempo gasto e tentativas, além de acompanhar missões e personagens
-            utilizados. Edite e atualize suas sessões conforme necessário para manter um controle
-            preciso do seu progresso.
-          </Typography>
-        </Stack>
-      </Card>
+        Gerencie suas sessões de farm de maneira eficiente! Aqui você pode criar novas sessões,
+        registrar o tempo gasto e tentativas, além de acompanhar missões e personagens
+        utilizados. Edite e atualize suas sessões conforme necessário para manter um controle
+        preciso do seu progresso.
+      </Alert>
+     
       <Box
         sx={{
           width: '100%',
@@ -368,22 +374,23 @@ const FarmSessionPage = () => {
             width: { lg: '100%', xl: '80%' }
           }}
         >
-          {userChars && userChars.length > 0 && (
+          
+          {userChars && userChars.length > 0 && sessions?.sessions && sessions.sessions.length > 0 && (
             <Stack
               sx={{
-                bgcolor: 'rgba(0, 0, 0, 0.37);',
+                bgcolor: 'rgba(0, 0, 0, 0.37)',
                 mb: '10px',
                 borderRadius: '16px',
                 display: 'flex',
-                alignItems: 'center', // Centraliza o conteúdo na vertical
-                justifyContent: 'flex-start', // Alinha o conteúdo ao topo
-                padding: 1
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                padding: 2
               }}
             >
               {refetchLoading ? (
-                <Stack alignItems="center">
-                  <CircularProgress />
-                  <Typography variant="caption">Buscando sessões...</Typography>
+                <Stack alignItems="center" spacing={2}>
+                  <CircularProgress size={40} />
+                  <Typography variant="body2">Buscando sessões...</Typography>
                 </Stack>
               ) : (
                 <Button
@@ -391,53 +398,203 @@ const FarmSessionPage = () => {
                   size="large"
                   onClick={() => handleOpenModal()}
                   sx={{
-                    width: {xs:"80%", lg:"30%"},
+                    width: { xs: "90%", sm: "60%", md: "40%", lg: "30%" },
                     bgcolor: blue[700],
                     borderRadius: '12px',
                     color: 'white',
-
+                    py: 1.5,
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
                     '&:hover': {
-                      bgcolor: theme.palette.primary.dark
+                      bgcolor: theme.palette.primary.dark,
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.2s'
                     }
                   }}
                 >
-                  Criar Sessão
+                  Criar Nova Sessão
                 </Button>
               )}
             </Stack>
           )}
-          <Box
-            sx={{
-              overflowY: { xs: 'unset', md: 'auto' },
-              paddingX: { xs: 'unset', md: '20px' },
-              height: { xs: 'unset', lg: '60vh', xl: '72vh' }
-            }}
-          >
+          
+          <Box>
             <Grid container spacing={3}>
-              {userChars.length <= 0 && userChars && (
+              {userChars && userChars.length <= 0 && (
                 <Box
                   sx={{
-                    height: '100%',
+                    height: '70vh',
                     width: '100%',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
                     flexDirection: 'column',
                     textAlign: 'center',
-                    mt: '400px'
+                    gap: 3,
+                    p: 4,
+                    borderRadius: '16px',
                   }}
                 >
-                  <Typography variant="h6" color="textSecondary" sx={{ whiteSpace: 'pre-line' }}>
-                    Para começar a criar sessões, é necessário cadastrar primeiro um personagem.{' '}
-                    <a
-                      style={{ color: green[300], cursor: 'pointer', textDecoration: 'underline' }}
-                      onClick={() => navigate('/chars/add-user-char')}
+                  <img 
+                    src="/assets/images/empty_state.svg"
+                    alt="No characters" 
+                    style={{ 
+                      width: '250px', 
+                      height: 'auto',
+                      opacity: 0.8,
+                      marginBottom: '16px'
+                    }} 
+                  />
+                  <Box sx={{ maxWidth: '600px' }}>
+                    <Typography 
+                      variant="h4" 
+                      color="primary"
+                      sx={{ 
+                        mb: 2,
+                        fontWeight: 'bold'
+                      }}
                     >
-                      Vamos lá?
-                    </a>
-                  </Typography>
+                      Bem-vindo ao Controle de Farm!
+                    </Typography>
+                    <Typography 
+                      variant="h6" 
+                      color="textSecondary" 
+                      sx={{ 
+                        mb: 3,
+                        lineHeight: 1.6
+                      }}
+                    >
+                      Para começar a criar sessões e acompanhar seu progresso, você precisa primeiro cadastrar um personagem.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => navigate('/chars/add-user-char')}
+                      sx={{
+                        mt: 2,
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                        py: 1.5,
+                        px: 4,
+                        color: 'white',
+                        bgcolor: blue[700],
+                        '&:hover': {
+                          bgcolor: blue[600],
+                          transform: 'translateY(-2px)',
+                          transition: 'all 0.2s'
+                        }
+                      }}
+                    >
+                      Cadastrar Meu Primeiro Personagem
+                    </Button>
+                  </Box>
                 </Box>
               )}
+
+              {(!sessions?.sessions || sessions.sessions.length === 0) && userChars.length > 0 && (
+                <Box
+                  sx={{
+                    minHeight: '80vh',
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    p: { xs: 2, sm: 4 }
+                  }}
+                >
+                  <Box
+                    sx={{
+                      bgcolor: 'rgba(0, 0, 0, 0.2)',
+                      backdropFilter: 'blur(10px)',
+                      borderRadius: '24px',
+                      p: { xs: 3, sm: 5 },
+                      maxWidth: '500px',
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 3,
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        bgcolor: 'rgba(25, 118, 210, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mb: 2
+                      }}
+                    >
+                      <img 
+                        src="/assets/images/empty_state.svg"
+                        alt="No sessions" 
+                        style={{ 
+                          width: '50px',
+                          height: 'auto',
+                          opacity: 0.8
+                        }} 
+                      />
+                    </Box>
+                    
+                    <Typography 
+                      variant="h5" 
+                      color="primary" 
+                      align="center"
+                      sx={{
+                        fontWeight: 600,
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      Comece Sua Jornada
+                    </Typography>
+                    
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      align="center"
+                      sx={{ 
+                        maxWidth: '400px',
+                        lineHeight: 1.6
+                      }}
+                    >
+                      Crie sua primeira sessão de farm para começar a acompanhar seu progresso e registrar suas conquistas!
+                    </Typography>
+
+                    <Button
+                      variant="contained"
+                      size="large"
+                      onClick={() => handleOpenModal()}
+                      sx={{
+                        mt: 2,
+                        bgcolor: blue[600],
+                        borderRadius: '12px',
+                        color: 'white',
+                        py: 1.5,
+                        px: 4,
+                        textTransform: 'none',
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        '&:hover': {
+                          bgcolor: blue[500],
+                          transform: 'translateY(-2px)',
+                          transition: 'all 0.2s'
+                        },
+                        '&:active': {
+                          transform: 'translateY(0)'
+                        }
+                      }}
+                    >
+                      Criar Primeira Sessão
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+
               {sessions?.sessions?.map(sessionItem => (
                 <Grid
                   item

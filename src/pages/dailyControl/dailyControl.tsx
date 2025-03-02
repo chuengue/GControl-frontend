@@ -61,9 +61,36 @@ const DailyControl = () => {
           userChars={userChars}
         />
       ) : (
-        <Typography variant="h6" color="textSecondary" align="center" mt="40px">
-        Parece que você ainda não tem personagens! Crie um para começar a se aventurar e acompanhar suas missões. <a style={{color:green[300], cursor:"pointer", textDecoration:"underline"}} onClick={() => navigate("/chars/add-user-char")}>Vamos lá?</a>
-      </Typography>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="50vh"
+          textAlign="center"
+          p={3}
+        >
+          <Typography variant="h5" color="textSecondary" gutterBottom>
+            Nenhum personagem encontrado
+          </Typography>
+          <Typography variant="body1" color="textSecondary" mb={2}>
+            Parece que você ainda não tem personagens! Crie um para começar a se aventurar e acompanhar suas missões.
+          </Typography>
+          <Typography
+            component="span"
+            sx={{
+              color: green[400],
+              cursor: "pointer",
+              textDecoration: "underline",
+              '&:hover': {
+                color: green[600],
+              }
+            }}
+            onClick={() => navigate("/chars/add-user-char")}
+          >
+            Criar meu primeiro personagem
+          </Typography>
+        </Box>
       )}
     </Box>
   );

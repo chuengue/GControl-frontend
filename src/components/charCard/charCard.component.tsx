@@ -195,26 +195,7 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
         </Grid>
       ))}
 
-      {/* Card para adicionar personagem */}
-      <Grid size={4}>
-        <Card
-          sx={{
-            p: 2,
-            bgcolor: blue[700],
-            borderRadius: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: chars.length ? '100%' : '500px' // Garantindo que o card de adição ocupe toda a altura disponível
-          }}
-        >
-          <Tooltip title="Adiciona Personagem">
-            <IconButton onClick={onAddCharacter} size="large">
-              <AddCircleRoundedIcon fontSize="large" />
-            </IconButton>
-          </Tooltip>
-        </Card>
-      </Grid>
+    
       <ConfirmationModal
         open={confirmModalIsOpen}
         title="Excluir Sessão"

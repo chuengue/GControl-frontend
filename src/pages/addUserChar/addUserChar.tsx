@@ -1,10 +1,11 @@
-import { InfoOutlined } from '@mui/icons-material';
-import { Box, Button, Card, Container, Grid, Stack, TextField, Typography } from '@mui/material';
+import { InfoOutlined, PersonAdd } from '@mui/icons-material';
+import { Box, Button, Card, CircularProgress, Fade, Grid, Stack, TextField, Tooltip, Typography, alpha, useMediaQuery } from '@mui/material';
 import { blue, grey } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
 import theme from '../../../theme';
 import TotalAtkCalculator from '../../components/atackTotalCalculator.ts/atackTotalCalculator';
+import { GreenSwitch } from '../../components/charCard/styles';
 import SelectableImage from '../../components/selectableImage/selectableImage';
 import { Character } from '../../interfaces/char';
 import { RegisterUserCharacter } from '../../service/requests/gameChar';
@@ -13,6 +14,7 @@ import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 
 function AddUserChar() {
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const {
     fetchAllCharsData,
     allChars,
@@ -28,6 +30,7 @@ function AddUserChar() {
   const { showSnackbar } = useSnackbarStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [level, setLevel] = useState<string>('');
+  const [isVisibleInRanking, setIsVisibleInRanking] = useState<boolean>(true);
 
   const getOwnedCharIds = (charId: string) => {
     return userChars.some(userChar => userChar.gameChar.id === charId);
@@ -70,10 +73,8 @@ function AddUserChar() {
 
   const handleAtkTotalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-
-    // Permite apenas números e permite limpar completamente o campo
     if (/^\d*$/.test(value)) {
-      setAttackTotal(value);
+      setAttackTotal(Number(value));
     }
   };
 
@@ -96,7 +97,8 @@ function AddUserChar() {
         charId: selectedChar.id,
         atkTotal: Number(attackTotal),
         level: parseInt(level, 10),
-        stats: charStats
+        stats: charStats,
+        isVisibleInRanking
       };
 
       try {
@@ -127,204 +129,294 @@ function AddUserChar() {
   };
 
   return (
-    <Container
-      maxWidth="xl"
-      sx={{ mt: 4, marginBottom: 4, overflowY: 'auto', height: { xs:"calc(100vh - 124px)",lg: '82vh', xl: '90vh' } }}
+    <Box
+      sx={{
+        height: '100%',
+        overflow: 'auto',
+        padding: { xs: 1.5, sm: 2, md: 3 },
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'rgba(0, 0, 0, 0.1)',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'rgba(255, 255, 255, 0.2)',
+          borderRadius: '4px',
+          '&:hover': {
+            background: 'rgba(255, 255, 255, 0.3)',
+          },
+        },
+      }}
     >
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={12}>
-          <Card
-            sx={{
-              p: { xs: 1, md: 2 },
-              bgcolor: blue[900],
-              borderRadius: '14px',
-              boxShadow: 3,
-              height: '100%'
-            }}
-          >
+      <Grid container spacing={2.5} sx={{ height: '100%', alignItems: 'flex-start' }}>
+        {/* Header Section */}
+        <Grid item xs={12}>
+          <Fade in timeout={800}>
             <Typography
-              variant="h5"
-              sx={{ color: 'white', mb: 2 }}
-              textAlign="center"
-              fontFamily="faktos, Roboto"
+              variant={isMobile ? 'h5' : 'h4'}
+              sx={{
+                color: 'white',
+                mb: { xs: 1, sm: 2 },
+                textAlign: 'center',
+                fontFamily: "faktos, Roboto",
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                letterSpacing: '0.5px'
+              }}
             >
-              Selecione um Personagem
+              Adicionar Novo Personagem
             </Typography>
-            <Stack
-              direction="row"
-              flexWrap="wrap"
-              sx={{
-                gap: { xs: 0, md: 1 }
-              }}
-              justifyContent="center"
-            >
-              {allChars.map(char => (
-                <SelectableImage
-                  key={char.id}
-                  char={char}
-                  disabled={getOwnedCharIds(char.id)}
-                  isSelected={selectedChar?.id === char.id}
-                  onSelect={handleSelectChar}
-                />
-              ))}
-            </Stack>
-          </Card>
+          </Fade>
         </Grid>
-        <Grid item xs={12} md={12}>
-          <Card
-            elevation={3}
-            sx={{
-              p: 3,
-              borderRadius: '14px',
-              boxShadow: 3,
-              height: '100%',
-              width: '100%',
-              bgcolor: theme.palette.info.main
-            }}
-          >
-            <Stack
-              sx={{
-                display: 'flex',
-                flexDirection: 'row'
-              }}
-            >
-              <InfoOutlined
-                sx={{
-                  marginRight: '8px'
-                }}
-              />
 
-              <Typography>
-                Os dados inseridos na Calculadora de Ataque Total serão associados ao seu
-                personagem. Embora o preenchimento seja opcional, fornecer essas informações
-                aprimora sua experiência na plataforma, permitindo cálculos mais precisos e
-                personalizados.
-              </Typography>
-            </Stack>
-          </Card>
-        </Grid>
-        {/* Coluna dos Detalhes do Personagem */}
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              p: 3,
-              borderRadius: '14px',
-              boxShadow: 3,
-              height: '100%',
-              bgcolor: grey[900]
-            }}
-          >
-            <Typography variant="h5" textAlign="center" fontFamily="faktos, Roboto">
-              Detalhes do Personagem
-            </Typography>
-            <Box
+        {/* Character Selection Grid */}
+        <Grid item xs={12}>
+          <Fade in timeout={1000}>
+            <Card
               sx={{
+                p: { xs: 2, sm: 3 },
+                bgcolor: alpha(blue[900], 0.9),
+                borderRadius: '20px',
+                boxShadow: `0 8px 32px ${alpha('#000', 0.2)}`,
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${alpha(blue[400], 0.1)}`,
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: `0 8px 32px ${alpha('#000', 0.3)}`
+                },
                 display: 'flex',
-                width: '100%',
-                height: '100%',
-                marginTop: '80px',
-                justifyContent: 'center'
+                flexDirection: 'column',
+                alignItems: 'center'
               }}
             >
-              {selectedChar ? (
-                <Stack spacing={3} width="100%">
-                  <Card
-                    sx={{
-                      p: 2,
-                      bgcolor: blue[900],
-                      borderRadius: '14px',
-                      marginBottom: 2
-                    }}
-                  >
+              <Box
+                sx={{
+                  width: '100%',
+                  maxWidth: '1200px',
+                  margin: '0 auto',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))'
+                }}
+              >
+                {allChars.map(char => (
+                  <SelectableImage
+                    key={char.id}
+                    char={char}
+                    disabled={getOwnedCharIds(char.id)}
+                    isSelected={selectedChar?.id === char.id}
+                    onSelect={handleSelectChar}
+                  />
+                ))}
+              </Box>
+            </Card>
+          </Fade>
+        </Grid>
+
+        {/* Main Content Area */}
+        <Grid container item spacing={2.5} sx={{ flex: 1, width: '100%', margin: '0 !important' }}>
+          {/* Character Details Panel */}
+          <Grid item xs={12} md={4}>
+            <Fade in timeout={1200}>
+              <Card
+                sx={{
+                  p: { xs: 2, sm: 3 },
+                  height: '100%',
+                  borderRadius: '20px',
+                  bgcolor: alpha(grey[900], 0.95),
+                  backdropFilter: 'blur(8px)',
+                  border: `1px solid ${alpha(grey[800], 0.2)}`,
+                  boxShadow: `0 8px 32px ${alpha('#000', 0.2)}`,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    boxShadow: `0 8px 32px ${alpha('#000', 0.3)}`
+                  }
+                }}
+              >
+                {selectedChar ? (
+                  <Stack spacing={2.5}>
                     <Typography
-                      variant="h4"
+                      variant={isMobile ? 'h5' : 'h4'}
                       fontFamily="faktos"
                       textAlign="center"
-                      sx={{ color: 'white' }}
+                      sx={{
+                        color: theme.palette.primary.light,
+                        textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        mb: 1
+                      }}
                     >
                       {selectedChar.name}
                     </Typography>
-                  </Card>
-                  <TextField
-                    sx={{
-                      borderRadius: '5px'
-                    }}
-                    label="ATK Total"
-                    variant="outlined"
-                    type="text"
-                    inputMode="numeric"
-                    fullWidth
-                    value={attackTotal}
-                    onChange={handleAtkTotalChange}
-                  />
-                  <TextField
-                    label="Level"
-                    variant="outlined"
-                    fullWidth
-                    value={level}
-                    onChange={handleLevelChange}
-                  />
 
-                  <Button
-                    variant="contained"
-                    size="large"
-                    fullWidth
-                    loading={loading}
-                    sx={{
-                      borderRadius: '8px',
-                      bgcolor: blue[700],
-                      '&:hover': {
-                        bgcolor: blue[800]
-                      }
+                    <TextField
+                      label="ATK Total"
+                      variant="outlined"
+                      type="text"
+                      inputMode="numeric"
+                      fullWidth
+                      value={attackTotal}
+                      onChange={handleAtkTotalChange}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: alpha(theme.palette.background.paper, 0.1),
+                          borderRadius: '12px',
+                          transition: 'all 0.2s',
+                          '&:hover, &.Mui-focused': {
+                            bgcolor: alpha(theme.palette.background.paper, 0.15),
+                            '& fieldset': {
+                              borderColor: theme.palette.primary.main,
+                            }
+                          }
+                        }
+                      }}
+                    />
+
+                    <TextField
+                      label="Level"
+                      variant="outlined"
+                      fullWidth
+                      value={level}
+                      onChange={handleLevelChange}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: alpha(theme.palette.background.paper, 0.1),
+                          borderRadius: '12px',
+                          transition: 'all 0.2s',
+                          '&:hover, &.Mui-focused': {
+                            bgcolor: alpha(theme.palette.background.paper, 0.15),
+                            '& fieldset': {
+                              borderColor: theme.palette.primary.main,
+                            }
+                          }
+                        }
+                      }}
+                    />
+
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Exibir no Ranking
+                      </Typography>
+                      <Tooltip title={isVisibleInRanking ? 'Ocultar do ranking geral' : 'Exibir no ranking geral'}>
+                        <GreenSwitch
+                          checked={isVisibleInRanking}
+                          onChange={(e) => setIsVisibleInRanking(e.target.checked)}
+                        />
+                      </Tooltip>
+                    </Stack>
+
+                    <Button
+                      variant="contained"
+                      size={isMobile ? "medium" : "large"}
+                      fullWidth
+                      disabled={loading}
+                      onClick={handleRegister}
+                      sx={{
+                        mt: 1,
+                        height: { xs: 44, sm: 48 },
+                        borderRadius: '12px',
+                        bgcolor: blue[600],
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          bgcolor: blue[700],
+                          transform: 'translateY(-2px)'
+                        },
+                        '&:active': {
+                          transform: 'translateY(0)'
+                        },
+                        textTransform: 'none',
+                        fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                        fontWeight: 600,
+                        boxShadow: theme.shadows[4]
+                      }}
+                    >
+                      {loading ? (
+                        <CircularProgress size={24} color="inherit" />
+                      ) : (
+                        'Registrar Personagem'
+                      )}
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Stack
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="center"
+                    sx={{ 
+                      height: '100%',
+                      minHeight: { xs: 200, sm: 250 },
+                      p: 2,
+                      bgcolor: alpha(theme.palette.background.paper, 0.05),
+                      borderRadius: '16px',
+                      border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
                     }}
-                    onClick={handleRegister}
                   >
-                    Registrar
-                  </Button>
-                </Stack>
-              ) : (
+                    <PersonAdd sx={{ fontSize: 48, color: alpha(theme.palette.primary.main, 0.6) }} />
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      textAlign="center"
+                    >
+                      Selecione um personagem para começar
+                    </Typography>
+                  </Stack>
+                )}
+              </Card>
+            </Fade>
+          </Grid>
+
+          {/* Calculator Panel - Conditional Render */}
+          {selectedChar && (
+            <Grid item xs={12} md={8}>
+              <Fade in timeout={1400}>
                 <Card
-                  elevation={3}
                   sx={{
-                    p: 3,
-                    borderRadius: '14px',
-                    boxShadow: 3,
-                    height: '50%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
+                    p: { xs: 2, sm: 3 },
+                    borderRadius: '20px',
+                    bgcolor: alpha(grey[900], 0.95),
+                    backdropFilter: 'blur(8px)',
+                    border: `1px solid ${alpha(grey[800], 0.2)}`,
+                    boxShadow: `0 8px 32px ${alpha('#000', 0.2)}`,
+                    transition: 'all 0.3s ease-in-out',
+                    '&:hover': {
+                      boxShadow: `0 8px 32px ${alpha('#000', 0.3)}`
+                    }
                   }}
                 >
-                  <Typography
-                    variant="body1"
-                    color="textSecondary"
-                    textAlign="center"
+                  {/* Info Message */}
+                  <Box
                     sx={{
-                      width: '100%'
+                      p: 2,
+                      mb: 2,
+                      borderRadius: '12px',
+                      bgcolor: alpha(theme.palette.info.main, 0.15),
+                      border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
                     }}
                   >
-                    Nenhum personagem selecionado.
-                  </Typography>
-                </Card>
-              )}
-            </Box>
-          </Card>
-        </Grid>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <InfoOutlined 
+                        color="info" 
+                        sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} 
+                      />
+                      <Typography 
+                        variant={isMobile ? 'body2' : 'body1'}
+                        color="info.light"
+                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                      >
+                        Preencha os dados para cálculos mais precisos
+                      </Typography>
+                    </Stack>
+                  </Box>
 
-        {/* Coluna do Calculador de ATK */}
-        <Grid item xs={12} lg={8}>
-          <Card
-            sx={{
-              p: 3,
-              borderRadius: '14px',
-              boxShadow: 3
-            }}
-          >
-            <TotalAtkCalculator />
-          </Card>
+                  <TotalAtkCalculator />
+                </Card>
+              </Fade>
+            </Grid>
+          )}
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
 }
 

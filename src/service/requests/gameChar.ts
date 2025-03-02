@@ -55,6 +55,7 @@ export const RegisterUserCharacter = async (
   data: {
     atkTotal: number;
     level: number;
+    isVisibleInRanking: boolean;
     stats?: {
       attack?: number | null;
       defense?: number | null;
@@ -88,6 +89,7 @@ export const RegisterUserCharacter = async (
     const response = await api.post(`/users/${userId}/characters/${charId}`, {
       atkTotal: data.atkTotal,
       level: data.level,
+      isVisibleInRanking: data.isVisibleInRanking,
       stats: data.stats || null // Envia stats como null se não fornecido
     });
     return response.data; // Retorna os dados da requisição

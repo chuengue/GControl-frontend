@@ -1,5 +1,5 @@
 import { DeleteForever } from '@mui/icons-material';
-import { Box, Card, Collapse, Grid, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Card, Collapse, Grid, IconButton, Stack, Tooltip, Typography, useTheme, alpha } from '@mui/material';
 import { blue, green, grey, red } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 
@@ -22,6 +22,7 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
 }) => {
   const [sessionDropRateList, setSessionDropRateList] = useState(sessionDropRate.dropRates);
   const { showSnackbar } = useSnackbarStore();
+  const theme = useTheme();
 
   useEffect(()=>{
     setSessionDropRateList(sessionDropRate.dropRates);
@@ -44,14 +45,28 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
     <Collapse in={expandedId === sessionItemId}>
       <Box
         sx={{
-          padding: 2,
-          bgcolor: blue[900],
-          borderRadius: '0 0 12px 12px',
-          marginTop: '-18px',
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)' // Sombra para o container
+          padding: 3,
+          background: `linear-gradient(135deg, ${alpha(blue[800], 0.7)} 0%, ${alpha(blue[900], 0.6)} 100%)`,
+          backdropFilter: 'blur(10px)',
+          borderRadius: '0 0 16px 16px',
+          marginTop: '-16px',
+          boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.2)}`,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+          zIndex: -1,
+          borderTop: 'none',
+          position: 'relative',
+          '&:before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: '16px',
+            right: '16px',
+            height: '1px',
+            background: `linear-gradient(to right, ${alpha(grey[400], 0)}, ${alpha(grey[400], 0.1)}, ${alpha(grey[400], 0)})`
+          }
         }}
       >
-        <Typography variant="h6" fontWeight="200" sx={{ my: 1, color: 'white', ml: 1 }}>
+        <Typography variant="h6" fontWeight="200" sx={{ mb: 3, color: 'white', ml: 1 }}>
           Taxas de Drop
         </Typography>
 
@@ -63,18 +78,19 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
                   sx={{
                     width: '100%',
                     p: 2,
-                    borderRadius: '8px',
-                    bgcolor: blue[800],
-                    background: `linear-gradient(145deg, ${blue[800]}, ${blue[700]})`, // Gradiente sutil
-                    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)', // Sombra para o card
-                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    borderRadius: '16px',
+                    background: `linear-gradient(145deg, ${alpha(blue[700], 0.4)}, ${alpha(blue[800], 0.3)})`,
+                    backdropFilter: 'blur(10px)',
+                    border: `1px solid ${alpha(blue[400], 0.1)}`,
+                    boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.2)}`,
+                    transition: 'all 0.2s ease-in-out',
                     '&:hover': {
-                      transform: 'translateY(-4px)', // Efeito de hover
-                      boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.3)'
+                      transform: 'translateY(-4px)',
+                      boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`
                     }
                   }}
                 >
-                  <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
+                  <Stack spacing={1.5} sx={{ alignItems: 'center', textAlign: 'center' }}>
                     <Tooltip title={item.itemName} arrow placement="top">
                       <Stack
                         direction="row"
@@ -82,7 +98,7 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
                         spacing={1}
                         sx={{ width: '100%', overflow: 'hidden' }}
                       >
-                        <Typography variant="body2" fontWeight="bold" color={grey[200]}>
+                        <Typography variant="body2" fontWeight="bold" color={grey[100]}>
                           {item.totalDropped}x
                         </Typography>
                         <Typography
@@ -100,48 +116,54 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
                       </Stack>
                     </Tooltip>
 
-                    {/* Divisor Visual */}
                     <Box
                       sx={{
-                        width: '60%',
+                        width: '80%',
                         height: '1px',
-                        bgcolor: grey[300],
-                        borderRadius: '4px',
-                        my: 1,
-                        opacity: 0.5 // Divisor mais sutil
+                        background: `linear-gradient(to right, ${alpha(grey[400], 0)}, ${alpha(grey[400], 0.1)}, ${alpha(grey[400], 0)})`,
+                        my: 0.5
                       }}
                     />
 
-                    {/* Drop Rate */}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
                       <Stack direction="row" alignItems="center" spacing={1}>
-                        <Typography variant="body1" fontWeight="bold" color={grey[200]}>
+                        <Typography variant="body2" color={grey[300]}>
                           Drop Rate:
                         </Typography>
-                        <Typography variant="body1" fontWeight="bold" color={green[400]}>
+                        <Typography variant="body1" fontWeight="bold" color={green[300]}>
                           {item.dropRate}%
                         </Typography>
                       </Stack>
 
-                      {/* Botão de exclusão sutil */}
                       <IconButton
                         size="small"
                         onClick={() => handleDeleteDroppedItem(item.id)}
                         sx={{
-                          color: grey[500], 
-                        
-                          '&:hover': { color: red[400] } // Destaca ao passar o mouse
+                          color: alpha(grey[400], 0.7),
+                          '&:hover': {
+                            color: alpha(red[400], 0.9),
+                            transform: 'scale(1.1)'
+                          },
+                          transition: 'all 0.2s ease-in-out'
                         }}
                       >
                         <DeleteForever fontSize="small" />
                       </IconButton>
                     </Stack>
 
-                    {/* Tempo Médio por Drop */}
-                    <Typography variant="body2" fontWeight="bold" color={grey[200]}>
-                      Tempo Médio por Drop:
+                    <Box
+                      sx={{
+                        width: '80%',
+                        height: '1px',
+                        background: `linear-gradient(to right, ${alpha(grey[400], 0)}, ${alpha(grey[400], 0.1)}, ${alpha(grey[400], 0)})`,
+                        my: 0.5
+                      }}
+                    />
+
+                    <Typography variant="body2" color={grey[300]}>
+                      Tempo Médio por Drop
                     </Typography>
-                    <Typography variant="body1" fontWeight="bold" color={green[400]}>
+                    <Typography variant="body1" fontWeight="bold" color={green[300]}>
                       {item.avgTimePerDrop && isFinite(Number(item.avgTimePerDrop))
                         ? formatTime(Math.round(Number(item.avgTimePerDrop)), 'text')
                         : '00:00:00'}
@@ -152,7 +174,7 @@ const DropRateStats: React.FC<DropRateStatsProps> = ({
             ))
           ) : (
             <Grid item xs={12}>
-              <Typography variant="body2" color={grey[300]}>
+              <Typography variant="body2" color={grey[300]} sx={{ textAlign: 'center' }}>
                 Não há dados disponíveis para esta sessão. Atualize a página para verificar as
                 estatísticas.
               </Typography>

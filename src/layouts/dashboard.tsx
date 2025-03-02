@@ -184,20 +184,21 @@ export default function Layout() {
 
   if (loading || isChecking) {
     return <LinearProgress sx={{ width: '100%' }} />;
-}
+  }
 
-if (error) {
+  if (error) {
     return (
-        <Container sx={{ textAlign: 'center', mt: 4 }}>
-            <Typography variant="h6" color="error">
-                Não foi possível conectar ao servidor.
-            </Typography>
-            <Typography variant="body1">
-                Verifique sua conexão ou tente novamente mais tarde.
-            </Typography>
-        </Container>
+      <Container sx={{ textAlign: 'center', mt: 4 }}>
+        <Typography variant="h6" color="error">
+          Não foi possível conectar ao servidor.
+        </Typography>
+        <Typography variant="body1">
+          Verifique sua conexão ou tente novamente mais tarde.
+        </Typography>
+      </Container>
     );
-}
+  }
+
   if (!session) {
     const redirectTo = `/sign-in?callbackUrl=${encodeURIComponent(location.pathname)}`;
     return <Navigate to={redirectTo} replace />;
@@ -209,7 +210,6 @@ if (error) {
         toolbarAccount: CustomAccount,
         toolbarActions: () => <></>,
         sidebarFooter: SidebarFooter,
-
       }}
     >
       <RegistrationModal
@@ -220,47 +220,74 @@ if (error) {
         onSave={handleSaveNickname}
         isSaving={isSaving}
       />
-      <PageContainer
-        breadcrumbs={[]}
-        title=""
+      <Box
         sx={{
-          maxWidth: '100% !important',
-          backgroundImage: `url(/assets/images/World_map_gc.webp)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          overflow: 'hidden'
+          position: 'relative',
+          height: '100vh',
+          overflow: 'hidden',
         }}
       >
+        {/* Background Image and Overlay */}
         <Box
           sx={{
-            position: 'absolute',
+            position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 1
-          }}
-        />
-        <Box
-          sx={{
-            position: 'relative',
-            maxWidth: '100% !important',
             backgroundImage: `url(/assets/images/World_map_gc.webp)`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            height: '100vh'
+            zIndex: 0,
+          }}
+        />
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1,
+          }}
+        />
+        
+        {/* Content Container */}
+        <Box
+          sx={{
+            position: 'relative',
+            height: '100%',
+            overflowY: 'auto',
+            zIndex: 2,
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(0, 0, 0, 0.1)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '4px',
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.3)',
+              },
+            },
           }}
         >
-          <Box sx={{ position: 'relative', zIndex: 2, width: '100%' }}>
+          <PageContainer
+            breadcrumbs={[]}
+            title=""
+            sx={{
+              maxWidth: '100% !important',
+            }}
+          >
             <Outlet />
-          </Box>
+          </PageContainer>
         </Box>
-      </PageContainer>
+      </Box>
     </DashboardLayout>
   );
 }

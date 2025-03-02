@@ -1,11 +1,14 @@
 {
     "name": "Chase Tracker",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "scripts": {
         "dev": "vite",
         "preview": "vite preview"
     },
     "dependencies": {
+        "@dnd-kit/core": "^6.3.1",
+        "@dnd-kit/sortable": "^10.0.0",
+        "@dnd-kit/utilities": "^3.2.2",
         "@emotion/react": "^11",
         "@emotion/styled": "^11",
         "@fontsource/anton": "^5.1.1",
@@ -20,10 +23,12 @@
         "dictionary-pt": "^4.0.0",
         "dictionary-pt-br": "^3.0.0",
         "firebase": "^11.2.0",
+        "framer-motion": "^12.4.7",
         "lodash": "^4.17.21",
         "lodash-es": "^4.17.21",
         "nspell": "^2.1.5",
         "react": "^19",
+        "react-beautiful-dnd": "^13.1.1",
         "react-date-range": "^2.0.1",
         "react-dom": "^19",
         "react-responsive": "^10.0.0",
@@ -33,6 +38,7 @@
     },
     "devDependencies": {
         "@types/react": "^18",
+        "@types/react-beautiful-dnd": "^13.1.8",
         "@types/react-dom": "^18",
         "@vitejs/plugin-react": "^4.3.2",
         "eslint": "^8",
