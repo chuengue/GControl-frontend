@@ -291,6 +291,47 @@ const MissionControlTable: React.FC<Props> = ({
     right: false,
   });
 
+  // Mission order priority map
+  const missionOrderPriority = {
+    "Terra do Julgamento": 1,
+    'Fornalha Infernal': 2,
+    'Altar da Ruína': 3,
+    'Covil de Berkas': 4,
+    'Torre da Extinção':5,
+    'Torre das Ilusões': 6,
+    'Cerco de Teroka': 7,
+    'Templo do Tempo': 8,
+    'A Grande Explosão de Calnat': 9,
+    'Caminho Abissal': 10,
+    'Claustro do Infinito': 11,
+    'Vazio (Invasão)': 12,
+    'Vazio (Contaminação)': 13,
+    'Vazio (Pesadelo)': 14,
+  };
+
+  // Sort missions function
+  const sortMissions = (missionsArray) => {
+    return [...missionsArray].sort((a, b) => {
+      // First priority: Epic type
+      if (a.type === 'epic' && b.type !== 'epic') return -1;
+      if (a.type !== 'epic' && b.type === 'epic') return 1;
+
+      // Second priority: Specific order for named missions
+      const priorityA = missionOrderPriority[a.mission_name] || 999;
+      const priorityB = missionOrderPriority[b.mission_name] || 999;
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // If neither mission is in the priority list, sort alphabetically
+      return a.mission_name.localeCompare(b.mission_name);
+    });
+  };
+
+  // Sort missions before rendering
+  const sortedMissions = missions ? sortMissions(missions) : [];
+
   // Load order from localStorage
   useEffect(() => {
     if (!userChars) return;
@@ -697,7 +738,7 @@ const MissionControlTable: React.FC<Props> = ({
           }}
         >
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            {missions?.map(mission => {
+            {sortedMissions.map(mission => {
               const totalAttempts = characters?.length || 0;
               const completedAttempts = characters?.reduce((acc, char) => {
                 return acc + (completedMissions[char.id]?.[mission.id]?.filter(status => status)?.length || 0);
@@ -860,7 +901,7 @@ const MissionControlTable: React.FC<Props> = ({
           bgcolor: alpha(theme.palette.grey[900], 0.7),
           overflow: 'auto',
           maxWidth: '100%',
-          height: 'calc(100vh - 140px)',
+          height: 'calc(100vh - 280px)',
           backdropFilter: 'blur(10px)',
           '&::-webkit-scrollbar': {
             height: '6px',
@@ -937,7 +978,7 @@ const MissionControlTable: React.FC<Props> = ({
                   Personagem
                 </Typography>
               </TableCell>
-              {missions.map(mission => (
+              {sortedMissions.map(mission => (
                 <TableCell
                   key={mission.id}
                   align="center"
@@ -1029,7 +1070,7 @@ const MissionControlTable: React.FC<Props> = ({
                   <SortableTableRow
                     key={character.id}
                     character={character}
-                    missions={missions || []}
+                    missions={sortedMissions}
                     completedMissions={completedMissions}
                     handleCheckbox={handleCheckbox}
                     loading={loading}
