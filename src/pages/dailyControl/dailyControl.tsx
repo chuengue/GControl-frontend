@@ -1,8 +1,8 @@
-import { Box, Typography } from '@mui/material';
-import { green } from '@mui/material/colors';
+import { Box, Typography, Paper, Button } from '@mui/material';
 import { getFirestore } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 import { getAllLimitedMissions, getUserMissionsLogs } from '../../service/requests/limitedMissions/limitedMissions';
 import { CharacterMissions, MissionResult } from '../../service/requests/limitedMissions/types';
@@ -66,30 +66,55 @@ const DailyControl = () => {
           flexDirection="column"
           alignItems="center"
           justifyContent="center"
-          minHeight="50vh"
+          minHeight="70vh"
           textAlign="center"
           p={3}
         >
-          <Typography variant="h5" color="textSecondary" gutterBottom>
-            Nenhum personagem encontrado
-          </Typography>
-          <Typography variant="body1" color="textSecondary" mb={2}>
-            Parece que você ainda não tem personagens! Crie um para começar a se aventurar e acompanhar suas missões.
-          </Typography>
-          <Typography
-            component="span"
+          <Paper
+            elevation={0}
             sx={{
-              color: green[400],
-              cursor: "pointer",
-              textDecoration: "underline",
-              '&:hover': {
-                color: green[600],
-              }
+              p: 4,
+              borderRadius: 4,
+              backgroundColor: 'rgba(0, 0, 0, 0.02)',
+              maxWidth: '600px',
+              width: '100%',
+              border: '1px solid rgba(0, 0, 0, 0.08)'
             }}
-            onClick={() => navigate("/chars/add-user-char")}
           >
-            Criar meu primeiro personagem
-          </Typography>
+            <PersonAddIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2, opacity: 0.9 }} />
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                fontWeight: 600,
+                mb: 2,
+                color: 'text.primary'
+              }}
+            >
+              Comece Sua Jornada
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: '480px', mx: 'auto' }}>
+              Ainda não há personagens em sua conta. Crie seu primeiro personagem para começar suas aventuras e acompanhar suas missões diárias.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<PersonAddIcon />}
+              onClick={() => navigate("/chars/add-user-char")}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontSize: '1.1rem',
+                boxShadow: 'none',
+                '&:hover': {
+                  boxShadow: 'none'
+                }
+              }}
+            >
+              Criar meu primeiro personagem
+            </Button>
+          </Paper>
         </Box>
       )}
     </Box>

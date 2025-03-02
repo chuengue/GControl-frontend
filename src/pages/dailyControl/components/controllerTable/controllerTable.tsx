@@ -1,14 +1,25 @@
-import { Box, Checkbox, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography, Alert, Stack, Chip, CircularProgress } from '@mui/material';
+import { Box, Checkbox, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography, IconButton, alpha, CircularProgress, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import React, { useEffect, useState, useRef } from 'react';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import { DragHandle } from '@mui/icons-material';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 
 import theme from '../../../../../theme';
 import { UserCharacter } from '../../../../interfaces/char';
@@ -23,32 +34,8 @@ interface Props {
   userChars: UserCharacter[] | undefined;
 }
 
-// Add new interfaces for loading and error states
-interface LoadingState {
-  [characterId: string]: {
-    [missionId: string]: boolean;
-  };
-}
-
-interface ErrorState {
-  [characterId: string]: {
-    [missionId: string]: string | null;
-  };
-}
-
-interface SortableTableRowProps {
-  character: UserCharacter;
-  missions: MissionResult[];
-  completedMissions: Record<string, Record<string, boolean[]>>;
-  handleCheckbox: (characterId: string, missionId: string, attemptIndex: number, completed: boolean) => void;
-  loadingStates: LoadingState;
-  errorStates: ErrorState;
-  calculateProgress: (characterId: string) => number;
-  id: string;
-}
-
-// Create a SortableTableRow component
-const SortableTableRow: React.FC<SortableTableRowProps> = ({ character, missions, completedMissions, handleCheckbox, loadingStates, errorStates, calculateProgress, id }) => {
+// Sortable Row Component
+const SortableTableRow = ({ character, missions, completedMissions, handleCheckbox, loading, loadingStates, calculateProgress }) => {
   const {
     attributes,
     listeners,
@@ -59,11 +46,11 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({ character, missions
   } = useSortable({ id: character.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
+    zIndex: isDragging ? 1 : 0,
+    position: 'relative' as 'relative',
     opacity: isDragging ? 0.5 : 1,
-    position: 'relative' as const,
-    zIndex: isDragging ? 999 : 'auto',
   };
 
   return (
@@ -71,10 +58,10 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({ character, missions
       ref={setNodeRef} 
       style={style}
       sx={{
-        backgroundColor: isDragging ? theme.palette.grey[800] : 'transparent',
         '&:hover': {
-          bgcolor: `${theme.palette.grey[800]}80`,
+          bgcolor: alpha(theme.palette.grey[800], 0.3),
         },
+        transition: 'background-color 0.2s ease',
       }}
     >
       <TableCell
@@ -82,134 +69,189 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({ character, missions
           position: 'sticky',
           left: 0,
           zIndex: 1,
-          bgcolor: theme.palette.grey[900],
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
           padding: '8px 12px',
-          borderBottom: `1px solid ${theme.palette.grey[800]}`,
+          cursor: 'grab',
+          borderBottom: `1px solid ${alpha(theme.palette.grey[700], 0.2)}`,
+          '&:hover': {
+            bgcolor: alpha(theme.palette.grey[800], 0.5),
+          },
         }}
+        {...attributes}
+        {...listeners}
       >
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Box {...attributes} {...listeners} sx={{ cursor: 'grab', display: 'flex', alignItems: 'center' }}>
-            <DragIndicatorIcon sx={{ color: theme.palette.grey[600] }} />
-          </Box>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '8px',
-              overflow: 'hidden',
-              flexShrink: 0,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            }}
-          >
-            {character.gameChar?.thumbImgUrl ? (
+        <DragHandle sx={{ color: theme.palette.grey[500], fontSize: 18 }} />
+        {character.gameChar?.thumbImgUrl ? (
+          <Box display="flex" alignItems="center" gap={1}>
+            <Box
+              sx={{
+                position: 'relative',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: '6px',
+                  boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.2)}`,
+                  opacity: 0,
+                  transition: 'opacity 0.2s ease',
+                },
+                '&:hover::after': {
+                  opacity: 1,
+                },
+              }}
+            >
               <img
                 src={character.gameChar.thumbImgUrl}
                 alt={character.gameChar.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <Skeleton variant="rectangular" width={40} height={40} />
-            )}
-          </Box>
-          <Box sx={{ flex: 1, minWidth: 100 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {character.gameChar?.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <LinearProgress
-                variant="determinate"
-                value={calculateProgress(character.id)}
-                sx={{
-                  height: 6,
-                  borderRadius: 3,
-                  flex: 1,
-                  bgcolor: theme.palette.grey[800],
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 3,
-                    background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.light})`,
-                  },
+                width={38}
+                style={{ 
+                  borderRadius: '6px',
+                  border: `2px solid ${alpha(theme.palette.grey[700], 0.3)}`,
                 }}
               />
-              <Typography
-                variant="caption"
-                sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  color: theme.palette.success.main,
+            </Box>
+            <Box>
+              <Typography 
+                variant="subtitle2" 
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: theme.palette.grey[100],
+                  mb: 0.3
                 }}
               >
-                {Math.round(calculateProgress(character.id))}%
+                {character.gameChar.name}
               </Typography>
+              <Box 
+                sx={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  width: '100px'
+                }}
+              >
+                <Box sx={{ flex: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={calculateProgress(character.id)}
+                    sx={{
+                      height: 4,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.grey[800], 0.5),
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 2,
+                        background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.light})`,
+                      }
+                    }}
+                  />
+                </Box>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    fontSize: '0.65rem',
+                    color: theme.palette.grey[400],
+                    minWidth: '24px',
+                    textAlign: 'right'
+                  }}
+                >
+                  {Math.round(calculateProgress(character.id))}%
+                </Typography>
+              </Box>
             </Box>
           </Box>
-        </Box>
+        ) : (
+          <Skeleton variant="circular" width={38} height={38} />
+        )}
       </TableCell>
 
-      {missions.map((mission: MissionResult) => {
-        const missionAttempts = completedMissions[character.id]?.[mission.id] || [];
-        const isLoading = loadingStates[character.id]?.[mission.id] || false;
-        const error = errorStates[character.id]?.[mission.id];
-
-        return (
-          <TableCell
-            key={mission.id}
-            align="center"
+      {missions.map(mission => (
+        <TableCell 
+          key={mission.id} 
+          align="center" 
+          sx={{ 
+            width: '110px',
+            padding: '4px 2px',
+            borderBottom: `1px solid ${alpha(theme.palette.grey[700], 0.2)}`,
+          }}
+        >
+          <Box 
+            display="flex" 
+            justifyContent="center" 
+            flexWrap="wrap" 
+            gap={0.3}
             sx={{
-              padding: '4px',
-              borderBottom: `1px solid ${theme.palette.grey[800]}`,
-              position: 'relative',
+              padding: '2px',
+              borderRadius: '6px',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: alpha(theme.palette.grey[800], 0.3),
+              }
             }}
           >
-            <Tooltip title={error || ''} open={!!error}>
-              <Box
-                display="flex"
-                justifyContent="center"
-                flexWrap="wrap"
-                gap={0.5}
-                sx={{
-                  opacity: isLoading ? 0.7 : 1,
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                {missionAttempts.map((completed: boolean, index: number) => (
-                  <Checkbox
-                    key={index}
-                    size="small"
-                    color="success"
-                    disabled={isLoading}
-                    checked={completed}
-                    onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
-                    sx={{
-                      padding: '2px',
-                      transition: 'all 0.2s ease-in-out',
-                      '&.Mui-checked': {
-                        bgcolor: 'rgba(76, 175, 80, 0.15)',
-                        borderRadius: '4px',
-                        transform: 'scale(1.05)',
-                      },
-                      '&:hover': {
-                        bgcolor: 'rgba(76, 175, 80, 0.08)',
-                        borderRadius: '4px',
-                      },
-                    }}
-                  />
-                ))}
-                {isLoading && (
-                  <CircularProgress
-                    size={20}
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  />
-                )}
-              </Box>
-            </Tooltip>
-          </TableCell>
-        );
-      })}
+            {completedMissions[character.id]?.[mission.id]?.map((completed, index) => {
+              const loadingKey = `${character.id}-${mission.id}-${index}`;
+              const isLoading = loadingStates[loadingKey];
+              
+              return (
+                <Box
+                  key={index}
+                  sx={{
+                    position: 'relative',
+                    width: 22,
+                    height: 22,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {isLoading ? (
+                    <CircularProgress
+                      size={16}
+                      thickness={6}
+                      sx={{
+                        color: completed ? theme.palette.success.main : theme.palette.grey[400],
+                      }}
+                    />
+                  ) : (
+                    <Checkbox
+                      color="success"
+                      disabled={loading || isLoading}
+                      checked={completed}
+                      onChange={() => handleCheckbox(character.id, mission.id, index, completed)}
+                      sx={{
+                        padding: '1px',
+                        opacity: isLoading ? 0.5 : 1,
+                        transition: 'all 0.2s ease',
+                        '& .MuiSvgIcon-root': {
+                          fontSize: '1.1rem',
+                        },
+                        '&.Mui-checked': {
+                          color: theme.palette.success.main,
+                          bgcolor: alpha(theme.palette.success.main, 0.15),
+                          borderRadius: '4px',
+                        },
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.success.main, 0.1),
+                          borderRadius: '4px',
+                        },
+                        '&.Mui-disabled': {
+                          cursor: isLoading ? 'wait' : 'not-allowed',
+                          opacity: 0.5,
+                        }
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            }) || <Skeleton variant="rectangular" width={20} height={20} sx={{ borderRadius: '4px' }} />}
+          </Box>
+        </TableCell>
+      ))}
     </TableRow>
   );
 };
@@ -223,26 +265,61 @@ const MissionControlTable: React.FC<Props> = ({
     Record<string, Record<string, boolean[]>>
   >({});
   const {session} = useSession()
-  const [loadingStates, setLoadingStates] = useState<LoadingState>({});
-  const [errorStates, setErrorStates] = useState<ErrorState>({});
+  const [loading, setLoading] = useState<boolean>();
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
   const { showSnackbar } = useSnackbarStore();
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(false);
+  const [characters, setCharacters] = useState(userChars || []);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [characters, setCharacters] = useState<UserCharacter[]>(userChars || []);
+  const [showScrollButtons, setShowScrollButtons] = useState({
+    left: false,
+    right: false,
+  });
+
+  // Load order from localStorage
+  useEffect(() => {
+    if (!userChars) return;
+    
+    const savedOrder = localStorage.getItem('characterOrder');
+    if (savedOrder) {
+      const orderIds = JSON.parse(savedOrder);
+      const orderedChars = orderIds
+        .map(id => userChars.find(char => char.id === id))
+        .filter(Boolean);
+      const remainingChars = userChars.filter(
+        char => !orderIds.includes(char.id)
+      );
+      setCharacters([...orderedChars, ...remainingChars]);
+    } else {
+      setCharacters(userChars);
+    }
+  }, [userChars]);
+
   const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    
+    if (active.id !== over.id) {
+      setCharacters((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+        // Save order to localStorage
+        localStorage.setItem(
+          'characterOrder',
+          JSON.stringify(newOrder.map(char => char.id))
+        );
+        
+        return newOrder;
+      });
+    }
+  };
 
   useEffect(() => {
     if (
@@ -272,27 +349,6 @@ const MissionControlTable: React.FC<Props> = ({
     setCompletedMissions(initialCompletedMissions);
   }, [missions, UserCharsLogs, userChars]);
 
-  useEffect(() => {
-    // Load saved order from localStorage or use default order
-    const savedOrder = localStorage.getItem('characterOrder');
-    if (savedOrder && userChars) {
-      try {
-        const orderMap = new Map(JSON.parse(savedOrder));
-        const orderedChars = [...userChars].sort((a, b) => {
-          const orderA = Number(orderMap.get(a.id)) ?? Number.MAX_SAFE_INTEGER;
-          const orderB = Number(orderMap.get(b.id)) ?? Number.MAX_SAFE_INTEGER;
-          return orderA - orderB;
-        });
-        setCharacters(orderedChars);
-      } catch (error) {
-        console.error('Error parsing character order:', error);
-        setCharacters(userChars);
-      }
-    } else {
-      setCharacters(userChars || []);
-    }
-  }, [userChars]);
-
   const handleCheckboxChange = (characterId: string, missionId: string, attemptIndex: number) => {
     setCompletedMissions(prevState => {
       const newState = { ...prevState };
@@ -304,61 +360,13 @@ const MissionControlTable: React.FC<Props> = ({
     });
   };
 
-  // Update loading state helper
-  const setMissionLoadingState = (characterId: string, missionId: string, isLoading: boolean) => {
-    setLoadingStates(prev => ({
-      ...prev,
-      [characterId]: {
-        ...(prev[characterId] || {}),
-        [missionId]: isLoading,
-      },
-    }));
-  };
-
-  // Update error state helper
-  const setMissionErrorState = (characterId: string, missionId: string, error: string | null) => {
-    setErrorStates(prev => ({
-      ...prev,
-      [characterId]: {
-        ...(prev[characterId] || {}),
-        [missionId]: error,
-      },
-    }));
-  };
-
-  const handleCheckbox = async (characterId: string, missionId: string, attemptIndex: number, completed: boolean) => {
-    if (!session) {
-      showSnackbar('Você precisa estar logado para atualizar missões', 'error');
-      return;
+  useEffect(() => {
+    if (loading) {
+      document.body.style.cursor = 'progress';
+    } else {
+      document.body.style.cursor = 'default';
     }
-
-    // Check if this specific mission is already loading
-    if (loadingStates[characterId]?.[missionId]) {
-      return;
-    }
-
-    setMissionLoadingState(characterId, missionId, true);
-    setMissionErrorState(characterId, missionId, null);
-
-    try {
-      if (completed) {
-        await removeRegisterCompletedMission(characterId, missionId);
-      } else {
-        await registerCompletedMission(session.user.uid, characterId, missionId);
-      }
-      
-      handleCheckboxChange(characterId, missionId, attemptIndex);
-      setMissionErrorState(characterId, missionId, null);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      showSnackbar(`Erro ao atualizar a missão: ${errorMessage}`, 'error');
-      setMissionErrorState(characterId, missionId, errorMessage);
-      console.error('Erro ao atualizar a missão:', error);
-    } finally {
-      setMissionLoadingState(characterId, missionId, false);
-    }
-  };
-
+  }, [loading]);
   // Função para calcular o progresso de cada personagem
   const calculateProgress = (characterId: string) => {
     if (!missions || !completedMissions[characterId]) return 0;
@@ -371,63 +379,74 @@ const MissionControlTable: React.FC<Props> = ({
 
     return (completedCount / totalMissions) * 100;
   };
-
-  // Group and sort missions by type (Epic first)
-  const groupedMissions = missions?.reduce((acc, mission) => {
-    const type = mission.mission_type || 'Other';
-    if (!acc[type]) {
-      acc[type] = [];
-    }
-    acc[type].push(mission);
-    return acc;
-  }, {} as Record<string, MissionResult[]>);
-
-  // Sort mission types to have Epic first
-  const sortedMissionTypes = Object.entries(groupedMissions || {}).sort(([typeA], [typeB]) => {
-    if (typeA.toLowerCase().includes('epic')) return -1;
-    if (typeB.toLowerCase().includes('epic')) return 1;
-    return 0;
-  });
-
-  // Calculate mission completion summary
-  const getMissionSummary = (missionId: string) => {
-    if (!userChars || !completedMissions) return { completed: 0, total: 0 };
+ const handleCheckbox = async (characterId: string, missionId: string, attemptIndex: number, completed: boolean) => {
+    if (!session) return;
     
-    const total = userChars.length;
-    const completed = userChars.reduce((count, char) => {
-      const charMissions = completedMissions[char.id]?.[missionId] || [];
-      return count + (charMissions.some(status => status) ? 1 : 0);
-    }, 0);
-
-    return { completed, total };
+    // Create a unique key for this character-mission combination
+    const loadingKey = `${characterId}-${missionId}-${attemptIndex}`;
+    
+    // If this checkbox or any other is currently loading, prevent the action
+    if (loadingStates[loadingKey]) {
+      return;
+    }
+    
+    // Set loading state for this specific checkbox
+    setLoadingStates(prev => ({
+      ...prev,
+      [loadingKey]: true
+    }));
+    
+    try {
+      if (completed) {
+        await removeRegisterCompletedMission(characterId, missionId);
+      } else {
+        await registerCompletedMission(session.user.uid, characterId, missionId);
+      }
+      handleCheckboxChange(characterId, missionId, attemptIndex);
+    } catch (error) {
+      showSnackbar('Erro ao atualizar a missão: ' + error, 'error');
+      console.error('Erro ao atualizar a missão:', error);
+    } finally {
+      // Clear loading state for this specific checkbox
+      setLoadingStates(prev => ({
+        ...prev,
+        [loadingKey]: false
+      }));
+    }
   };
 
-  const handleScroll = () => {
+  // Check if scroll buttons should be shown
+  const checkScrollButtons = () => {
     if (tableContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
-      const scrollLeftNum = Number(scrollLeft);
-      const scrollWidthNum = Number(scrollWidth);
-      const clientWidthNum = Number(clientWidth);
-      const scrollThreshold = 10;
-      
-      setShowLeftArrow(scrollLeftNum > 0);
-      setShowRightArrow(Math.floor(scrollLeftNum) < Math.floor(scrollWidthNum - clientWidthNum - scrollThreshold));
+      setShowScrollButtons({
+        left: scrollLeft > 0,
+        right: scrollLeft < scrollWidth - clientWidth,
+      });
     }
   };
 
+  // Handle scroll events
   useEffect(() => {
-    const tableContainer = tableContainerRef.current;
-    if (tableContainer) {
-      tableContainer.addEventListener('scroll', handleScroll);
+    const container = tableContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollButtons);
       // Initial check
-      handleScroll();
-      return () => tableContainer.removeEventListener('scroll', handleScroll);
+      checkScrollButtons();
+      // Check on window resize
+      window.addEventListener('resize', checkScrollButtons);
+
+      return () => {
+        container.removeEventListener('scroll', checkScrollButtons);
+        window.removeEventListener('resize', checkScrollButtons);
+      };
     }
   }, []);
 
-  const scrollTable = (direction: 'left' | 'right') => {
+  // Scroll handlers
+  const handleScroll = (direction: 'left' | 'right') => {
     if (tableContainerRef.current) {
-      const scrollAmount = 200;
+      const scrollAmount = 200; // Adjust this value to control scroll distance
       const newScrollLeft = tableContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
       tableContainerRef.current.scrollTo({
         left: newScrollLeft,
@@ -436,397 +455,577 @@ const MissionControlTable: React.FC<Props> = ({
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  const calculateOverallProgress = () => {
+    if (!characters || !missions) return { total: 0, completed: 0, percentage: 0 };
     
-    if (active.id !== over?.id && over?.id) {
-      setCharacters((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        
-        const newOrder = [...items];
-        const [removed] = newOrder.splice(oldIndex, 1);
-        newOrder.splice(newIndex, 0, removed);
-        
-        // Save the new order to localStorage
-        const orderMap = new Map(newOrder.map((char, index) => [char.id, index]));
-        localStorage.setItem('characterOrder', JSON.stringify(Array.from(orderMap.entries())));
-        
-        return newOrder;
+    const totalMissions = characters.length * missions.length;
+    let completedMissionsCount = 0;
+    
+    characters.forEach(character => {
+      missions.forEach(mission => {
+        if (completedMissions[character.id]?.[mission.id]?.some(status => status)) {
+          completedMissionsCount++;
+        }
       });
-    }
+    });
+    
+    return {
+      total: totalMissions,
+      completed: completedMissionsCount,
+      percentage: Math.round((completedMissionsCount / totalMissions) * 100)
+    };
   };
 
-  if (!missions || !userChars || missions.length === 0 || userChars.length === 0) {
+  if (!missions || !userChars || missions.length === 0 || userChars.length === 0) 
+    {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '500px',
-          p: 4,
-          bgcolor: theme.palette.grey[900],
-          borderRadius: '16px',
-          textAlign: 'center',
-          gap: 3,
-        }}
-      >
-        <Box
-          sx={{
-            width: '140px',
-            height: '140px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: theme.palette.grey[800],
-            borderRadius: '50%',
-            mb: 2,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}22, ${theme.palette.primary.main}00)`,
-              animation: 'pulse 2s infinite',
-            },
-            '@keyframes pulse': {
-              '0%': {
-                transform: 'scale(1)',
-                opacity: 0.8,
-              },
-              '50%': {
-                transform: 'scale(1.1)',
-                opacity: 0.4,
-              },
-              '100%': {
-                transform: 'scale(1)',
-                opacity: 0.8,
-              },
-            },
-          }}
-        >
-          <GroupAddIcon 
-            sx={{ 
-              fontSize: 70,
-              color: theme.palette.primary.main,
-            }} 
-          />
-        </Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.grey[100], mb: 1 }}>
-          Comece sua Jornada
-        </Typography>
-        <Typography variant="body1" sx={{ color: theme.palette.grey[400], maxWidth: '600px', fontSize: '1.1rem', lineHeight: 1.6 }}>
-          Adicione seus personagens para começar a acompanhar suas missões diárias. Organize, acompanhe o progresso e nunca mais perca uma missão importante!
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
-          <Box sx={{ textAlign: 'center', maxWidth: '180px' }}>
-            <PersonAddIcon sx={{ fontSize: 40, color: theme.palette.primary.main, mb: 1 }} />
-            <Typography variant="body2" sx={{ color: theme.palette.grey[300], fontWeight: 500 }}>
-              Adicione seus personagens favoritos
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'center', maxWidth: '180px' }}>
-            <DragIndicatorIcon sx={{ fontSize: 40, color: theme.palette.primary.main, mb: 1 }} />
-            <Typography variant="body2" sx={{ color: theme.palette.grey[300], fontWeight: 500 }}>
-              Organize na ordem que preferir
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'center', maxWidth: '180px' }}>
-            <EmojiEventsIcon sx={{ fontSize: 40, color: theme.palette.primary.main, mb: 1 }} />
-            <Typography variant="body2" sx={{ color: theme.palette.grey[300], fontWeight: 500 }}>
-              Acompanhe seu progresso
-            </Typography>
-          </Box>
-        </Box>
-        <Box
-          component="button"
-          onClick={() => window.location.href = '/characters'}
-          sx={{
-            mt: 4,
-            px: 6,
-            py: 2,
-            bgcolor: theme.palette.primary.main,
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            transition: 'all 0.3s',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            '&:hover': {
-              bgcolor: theme.palette.primary.dark,
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-          }}
-        >
-          <PersonAddIcon sx={{ fontSize: 24 }} />
-          Começar Agora
-        </Box>
-      </Box>
+      <TableContainer component={Paper} sx={{}}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <Skeleton variant="text" width={100} height={30} />
+              </TableCell>
+              {[...Array(3)].map((_, index) => (
+                <TableCell key={index} align="center">
+                  <Skeleton
+                    variant="rectangular"
+                    width={30}
+                    height={30}
+                    sx={{ borderRadius: '8px' }}
+                  />
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {[...Array(3)].map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton
+                    variant="rectangular"
+                    width={30}
+                    height={30}
+                    sx={{ borderRadius: '8px' }}
+                  />
+                </TableCell>
+                {[...Array(3)].map((_, index2) => (
+                  <TableCell key={index2} align="center">
+                    <Skeleton
+                      variant="rectangular"
+                      width={24}
+                      height={24}
+                      sx={{ borderRadius: '4px' }}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
   }
 
   return (
-    <Box>
-      <Stack spacing={2} mb={2}>
-        <Alert 
-          severity="info" 
-          sx={{ 
-            borderRadius: '12px',
-            '& .MuiAlert-icon': {
-              color: theme.palette.info.main
-            }
-          }}
-        >
-          As missões são redefinidas diariamente junto com o reset do jogo às 03:00 (Horario de Brasília)
-        </Alert>
-
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            gap: 2, 
-            flexWrap: 'wrap',
-            p: 2,
-            bgcolor: theme.palette.grey[900],
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          {Object.values(groupedMissions || {}).flat().map(mission => {
-            const { completed, total } = getMissionSummary(mission.id);
-            return (
-              <Chip
-                key={mission.id}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2">{mission.mission_name}</Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        color: completed === total 
-                          ? theme.palette.success.main 
-                          : theme.palette.text.secondary 
-                      }}
-                    >
-                      {completed}/{total}
-                    </Typography>
-                  </Box>
-                }
-                sx={{
-                  bgcolor: theme.palette.grey[800],
-                  '& .MuiChip-label': { px: 1 },
-                }}
-              />
-            );
-          })}
-        </Box>
-      </Stack>
-
-      <Box sx={{ position: 'relative' }}>
-        {showLeftArrow && (
-          <Box
-            onClick={() => scrollTable('left')}
-            sx={{
-              position: 'absolute',
-              left: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 4,
-              display: 'flex',
-              alignItems: 'center',
-              height: 'auto',
-              cursor: 'pointer',
-            }}
-          >
-            <KeyboardArrowLeftIcon 
-              sx={{ 
-                fontSize: 40, 
-                color: theme.palette.grey[300],
-                backgroundColor: theme.palette.grey[800],
-                borderRadius: '50%',
-                p: 1,
-                '&:hover': {
-                  backgroundColor: theme.palette.grey[700],
-                }
-              }} 
-            />
-          </Box>
-        )}
-        
-        {showRightArrow && (
-          <Box
-            onClick={() => scrollTable('right')}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 4,
-              display: 'flex',
-              alignItems: 'center',
-              height: 'auto',
-              cursor: 'pointer',
-            }}
-          >
-            <KeyboardArrowRightIcon 
-              sx={{ 
-                fontSize: 40, 
-                color: theme.palette.grey[300],
-                backgroundColor: theme.palette.grey[800],
-                borderRadius: '50%',
-                p: 1,
-                '&:hover': {
-                  backgroundColor: theme.palette.grey[700],
-                }
-              }} 
-            />
-          </Box>
-        )}
-
-        <TableContainer
-          ref={tableContainerRef}
-          component={Paper}
+    <Box sx={{ position: 'relative', width: '100%' }}>
+      <Accordion
+        defaultExpanded={false}
+        sx={{
+          bgcolor: 'transparent',
+          '&:before': {
+            display: 'none',
+          },
+          '& .MuiAccordion-root': {
+            bgcolor: 'transparent',
+          },
+          mb: 3,
+        }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon sx={{ color: theme.palette.grey[400] }} />}
           sx={{
+            bgcolor: alpha(theme.palette.grey[900], 0.7),
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${alpha(theme.palette.grey[800], 0.3)}`,
             borderRadius: '16px',
-            bgcolor: theme.palette.grey[900],
-            overflow: 'auto',
-            maxWidth: '100%',
-            height: 'calc(100vh - 280px)',
-            '&::-webkit-scrollbar': {
-              width: '8px',
-              height: '8px',
+            '&.Mui-expanded': {
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
             },
-            '&::-webkit-scrollbar-track': {
-              background: theme.palette.grey[900],
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: theme.palette.grey[700],
-              borderRadius: '4px',
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: theme.palette.grey[600],
-            },
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
           }}
         >
-          <Table size="small">
-            <TableHead
-              sx={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 2,
-                bgcolor: theme.palette.grey[900],
-              }}
-            >
-              <TableRow>
-                <TableCell
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              p: 1,
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  color: theme.palette.grey[100],
+                  mb: 0.5,
+                }}
+              >
+                Progresso Geral das Missões Diárias
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={calculateOverallProgress().percentage}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      bgcolor: alpha(theme.palette.grey[800], 0.5),
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 4,
+                        background: `linear-gradient(90deg, 
+                          ${theme.palette.primary.main}, 
+                          ${theme.palette.primary.light}
+                        )`,
+                      },
+                    }}
+                  />
+                </Box>
+                <Typography
                   sx={{
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 3,
-                    bgcolor: theme.palette.grey[900],
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    padding: '12px',
-                    borderBottom: `1px solid ${theme.palette.grey[800]}`,
-                    width: '200px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: theme.palette.primary.light,
+                    minWidth: '45px',
+                    textAlign: 'right',
                   }}
                 >
-                  Personagem
-                </TableCell>
-                {sortedMissionTypes.flatMap(([_, missions]) =>
-                  missions.map(mission => (
-                    <TableCell
-                      key={mission.id}
-                      align="center"
+                  {calculateOverallProgress().percentage}%
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+                px: 3,
+                py: 1,
+                borderRadius: '12px',
+                bgcolor: alpha(theme.palette.grey[800], 0.3),
+              }}
+            >
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: theme.palette.grey[400],
+                    mb: 0.5,
+                  }}
+                >
+                  Missões Concluídas
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    color: theme.palette.primary.light,
+                  }}
+                >
+                  {calculateOverallProgress().completed}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  width: '1px',
+                  bgcolor: alpha(theme.palette.grey[700], 0.5),
+                }}
+              />
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: theme.palette.grey[400],
+                    mb: 0.5,
+                  }}
+                >
+                  Total de Missões
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    color: theme.palette.grey[100],
+                  }}
+                >
+                  {calculateOverallProgress().total}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails
+          sx={{
+            bgcolor: alpha(theme.palette.grey[900], 0.7),
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${alpha(theme.palette.grey[800], 0.3)}`,
+            borderTop: 'none',
+            borderBottomLeftRadius: '16px',
+            borderBottomRightRadius: '16px',
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          }}
+        >
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            {missions?.map(mission => {
+              const totalAttempts = characters?.length || 0;
+              const completedAttempts = characters?.reduce((acc, char) => {
+                return acc + (completedMissions[char.id]?.[mission.id]?.filter(status => status)?.length || 0);
+              }, 0);
+              const maxPossibleAttempts = totalAttempts * (mission.max_attempts || 1);
+              
+              return (
+                <Box
+                  key={mission.id}
+                  sx={{
+                    flex: '1 1 200px',
+                    p: 2,
+                    borderRadius: '12px',
+                    bgcolor: alpha(theme.palette.grey[800], 0.3),
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                  }}
+                >
+                  {mission.mission_imgUrl ? (
+                    <Box
                       sx={{
-                        padding: '8px',
-                        minWidth: '120px',
-                        bgcolor: theme.palette.grey[900],
-                        borderBottom: `1px solid ${theme.palette.grey[800]}`,
+                        width: 40,
+                        height: 40,
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        background: `linear-gradient(135deg, 
+                          ${alpha(theme.palette.grey[800], 0.5)}, 
+                          ${alpha(theme.palette.grey[900], 0.5)})`,
+                        border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
                       }}
                     >
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                        <Box
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                          }}
-                        >
-                          {mission.mission_imgUrl ? (
-                            <img
-                              src={mission.mission_imgUrl}
-                              alt={mission.mission_name}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <Skeleton variant="rectangular" width={32} height={32} />
-                          )}
-                        </Box>
-                        <Tooltip title={`Tentativas: ${mission.max_attempts}`} arrow>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              fontSize: '0.75rem',
-                              fontWeight: 500,
-                              maxWidth: '100px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {mission.mission_name}
-                          </Typography>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  ))
-                )}
-              </TableRow>
-            </TableHead>
+                      <img
+                        src={mission.mission_imgUrl}
+                        alt={mission.mission_name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    <AssignmentTurnedInIcon sx={{ fontSize: 40, color: theme.palette.grey[600] }} />
+                  )}
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: theme.palette.grey[100],
+                        mb: 0.5,
+                      }}
+                    >
+                      {mission.mission_name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '0.75rem',
+                          color: theme.palette.grey[400],
+                        }}
+                      >
+                        {completedAttempts}/{maxPossibleAttempts}
+                      </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={(completedAttempts / maxPossibleAttempts) * 100}
+                        sx={{
+                          flex: 1,
+                          height: 4,
+                          borderRadius: 2,
+                          bgcolor: alpha(theme.palette.grey[800], 0.5),
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 2,
+                            background: `linear-gradient(90deg, 
+                              ${theme.palette.success.main}, 
+                              ${theme.palette.success.light}
+                            )`,
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
-            <DndContext 
+      {/* Left scroll button */}
+      {showScrollButtons.left && (
+        <IconButton
+          onClick={() => handleScroll('left')}
+          sx={{
+            position: 'absolute',
+            left: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 4,
+            backgroundColor: alpha(theme.palette.grey[900], 0.9),
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.grey[800], 0.95),
+              transform: 'translateY(-50%) scale(1.1)',
+            },
+            transition: 'all 0.2s ease-in-out',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+            color: theme.palette.grey[300],
+            '&:active': {
+              transform: 'translateY(-50%) scale(0.95)',
+            },
+          }}
+        >
+          <ChevronLeftIcon />
+        </IconButton>
+      )}
+
+      {/* Right scroll button */}
+      {showScrollButtons.right && (
+        <IconButton
+          onClick={() => handleScroll('right')}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 4,
+            backgroundColor: alpha(theme.palette.grey[900], 0.9),
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.grey[800], 0.95),
+              transform: 'translateY(-50%) scale(1.1)',
+            },
+            transition: 'all 0.2s ease-in-out',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+            color: theme.palette.grey[300],
+            '&:active': {
+              transform: 'translateY(-50%) scale(0.95)',
+            },
+          }}
+        >
+          <ChevronRightIcon />
+        </IconButton>
+      )}
+
+      <TableContainer
+        ref={tableContainerRef}
+        component={Paper}
+        elevation={4}
+        sx={{
+          borderRadius: '16px',
+          bgcolor: alpha(theme.palette.grey[900], 0.7),
+          overflow: 'auto',
+          maxWidth: '100%',
+          height: 'calc(100vh - 140px)',
+          backdropFilter: 'blur(10px)',
+          '&::-webkit-scrollbar': {
+            height: '6px',
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: alpha(theme.palette.grey[900], 0.5),
+            borderRadius: '3px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: alpha(theme.palette.grey[700], 0.5),
+            borderRadius: '3px',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.grey[600], 0.6),
+            },
+          },
+          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          border: `1px solid ${alpha(theme.palette.grey[800], 0.3)}`,
+        }}
+      >
+        <Table size="small" sx={{ minWidth: 650, background: 'transparent' }}>
+          <TableHead
+            sx={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 2,
+              bgcolor: alpha(theme.palette.grey[900], 0.7),
+              backdropFilter: 'blur(10px)',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: '2px',
+                background: `linear-gradient(90deg, 
+                  ${alpha(theme.palette.primary.main, 0.3)}, 
+                  ${alpha(theme.palette.primary.light, 0.3)})`,
+              },
+            }}
+          >
+            <TableRow>
+              <TableCell
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 3,
+                  bgcolor: alpha(theme.palette.grey[900], 0.7),
+                  backdropFilter: 'blur(10px)',
+                  padding: '12px',
+                  color: theme.palette.grey[300],
+                  borderBottom: 'none',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    right: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '1px',
+                    height: '70%',
+                    background: `linear-gradient(180deg, 
+                      transparent,
+                      ${alpha(theme.palette.grey[500], 0.2)},
+                      transparent)`,
+                  },
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ 
+                  fontWeight: 600,
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  fontSize: '0.7rem',
+                }}>
+                  Personagem
+                </Typography>
+              </TableCell>
+              {missions.map(mission => (
+                <TableCell
+                  key={mission.id}
+                  align="center"
+                  sx={{
+                    minWidth: '90px',
+                    position: 'sticky',
+                    top: 0,
+                    bgcolor: alpha(theme.palette.grey[900], 0.7),
+                    backdropFilter: 'blur(10px)',
+                    zIndex: 2,
+                    padding: '8px 4px',
+                    borderBottom: 'none',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    {mission.mission_imgUrl ? (
+                      <Box
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          background: `linear-gradient(135deg, 
+                            ${alpha(theme.palette.grey[800], 0.5)}, 
+                            ${alpha(theme.palette.grey[900], 0.5)})`,
+                          backdropFilter: 'blur(10px)',
+                          border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`,
+                            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                          },
+                        }}
+                      >
+                        <img
+                          src={mission.mission_imgUrl}
+                          alt={mission.mission_name}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </Box>
+                    ) : (
+                      <Skeleton variant="rectangular" width={28} height={28} sx={{ borderRadius: '6px' }} />
+                    )}
+                    <Tooltip title={mission.mission_name || ''} arrow placement="top">
+                      <Typography
+                        variant="caption"
+                        noWrap
+                        sx={{
+                          maxWidth: '70px',
+                          color: theme.palette.grey[400],
+                          fontSize: '0.65rem',
+                          fontWeight: 500,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        {mission.mission_name || <Skeleton variant="text" width={50} />}
+                      </Typography>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          
+          <TableBody>
+            <DndContext
               sensors={sensors}
+              collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <TableBody>
-                <SortableContext
-                  items={characters.map(char => char.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {characters.map(character => (
-                    <SortableTableRow
-                      key={character.id}
-                      character={character}
-                      missions={missions || []}
-                      completedMissions={completedMissions}
-                      handleCheckbox={handleCheckbox}
-                      loadingStates={loadingStates}
-                      errorStates={errorStates}
-                      calculateProgress={calculateProgress}
-                      id={character.id}
-                    />
-                  ))}
-                </SortableContext>
-              </TableBody>
+              <SortableContext
+                items={characters}
+                strategy={verticalListSortingStrategy}
+              >
+                {characters.map(character => (
+                  <SortableTableRow
+                    key={character.id}
+                    character={character}
+                    missions={missions || []}
+                    completedMissions={completedMissions}
+                    handleCheckbox={handleCheckbox}
+                    loading={loading}
+                    loadingStates={loadingStates}
+                    calculateProgress={calculateProgress}
+                  />
+                ))}
+              </SortableContext>
             </DndContext>
-          </Table>
-        </TableContainer>
-      </Box>
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
