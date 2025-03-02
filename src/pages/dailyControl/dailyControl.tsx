@@ -1,8 +1,8 @@
-import { Box, Typography, Paper, Button } from '@mui/material';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { Box, Button, Paper, Typography } from '@mui/material';
 import { getFirestore } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 import { getAllLimitedMissions, getUserMissionsLogs } from '../../service/requests/limitedMissions/limitedMissions';
 import { CharacterMissions, MissionResult } from '../../service/requests/limitedMissions/types';
@@ -56,6 +56,7 @@ const DailyControl = () => {
     <Box>
       {userChars && userChars.length > 0 ? (
         <MissionControlTable
+          refetchData={fetchUserMissionLogs}
           missions={limitedMissions}
           UserCharsLogs={logs}
           userChars={userChars}

@@ -1,6 +1,6 @@
 {
     "name": "Chase Tracker",
-    "version": "0.1.15",
+    "version": "0.1.16",
     "scripts": {
         "dev": "vite",
         "preview": "vite preview"
@@ -24,6 +24,7 @@
         "dictionary-pt-br": "^3.0.0",
         "firebase": "^11.2.0",
         "framer-motion": "^12.4.7",
+        "html2canvas": "^1.4.1",
         "lodash": "^4.17.21",
         "lodash-es": "^4.17.21",
         "nspell": "^2.1.5",

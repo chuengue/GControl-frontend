@@ -1,64 +1,30 @@
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy
-} from '@dnd-kit/sortable';
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DragHandle } from '@mui/icons-material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  alpha,
-  Box,
-  Checkbox,
-  CircularProgress,
-  IconButton,
-  LinearProgress,
-  Paper,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography
-} from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import { Accordion, AccordionDetails, AccordionSummary, alpha, Box, Checkbox, CircularProgress, IconButton, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import theme from '../../../../../theme';
 import { UserCharacter } from '../../../../interfaces/char';
-import {
-  registerCompletedMission,
-  removeRegisterCompletedMission
-} from '../../../../service/requests/limitedMissions/limitedMissions';
-import {
-  CharacterMissions,
-  MissionResult
-} from '../../../../service/requests/limitedMissions/types';
+import { registerCompletedMission, removeRegisterCompletedMission } from '../../../../service/requests/limitedMissions/limitedMissions';
+import { CharacterMissions, MissionResult } from '../../../../service/requests/limitedMissions/types';
 import { useSession } from '../../../../SessionContext';
 import { useSnackbarStore } from '../../../../stores/snackBarStore';
+import { handleTableDownload } from '../../../../utils/tableDownload';
+import { styles } from './styles';
 
 interface Props {
   missions: MissionResult[] | undefined;
   UserCharsLogs: CharacterMissions[] | undefined;
   userChars: UserCharacter[] | undefined;
+  refetchData: () => Promise<void>;
 }
 
 interface SortableTableRowProps {
@@ -330,8 +296,7 @@ const SortableTableRow = ({
                     onChange={e =>
                       handleFloorChange(
                         character.id,
-                        Math.max(1, Math.min(50, Number(e.target.value)))
-                      )
+                        Math.max(1, Math.min(50, Number(e.target.value))))
                     }
                     inputProps={{
                       min: 1,
@@ -439,7 +404,7 @@ const SortableTableRow = ({
   );
 };
 
-const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userChars }) => {
+const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userChars, refetchData }) => {
   const [completedMissions, setCompletedMissions] = useState<
     Record<string, Record<string, boolean[]>>
   >({});
@@ -449,13 +414,69 @@ const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userCha
   const { showSnackbar } = useSnackbarStore();
   const [characters, setCharacters] = useState(userChars || []);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [showScrollButtons, setShowScrollButtons] = useState({
-    left: false,
-    right: false
-  });
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [nextReset, setNextReset] = useState<string>('');
 
   // Add state for Torre das Ilusões floors
   const [torreFloors, setTorreFloors] = useState<Record<string, number>>({});
+
+  // Auto-refresh interval (1 hour in milliseconds)
+  const REFRESH_INTERVAL = 60 * 60 * 1000;
+
+  // Adicionar ref para controlar montagem inicial
+  const isInitialMount = useRef(true);
+
+  // Função para refresh dos dados
+  const refreshData = useCallback(async () => {
+    if (!session) return;
+    
+    try {
+      setLoading(true);
+      await refetchData();
+      showSnackbar('Dados atualizados com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao atualizar dados:', error);
+      showSnackbar('Erro ao atualizar dados', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [session, refetchData, showSnackbar]);
+
+  // Efeito para inicializar os dados quando o componente montar
+  useEffect(() => {
+    if (!missions || !UserCharsLogs || !userChars) return;
+
+    const initialCompletedMissions = userChars.reduce(
+      (acc, character) => {
+        const charLog = UserCharsLogs.find(log => log.id === character.id);
+        acc[character.id] = {};
+        missions.forEach(mission => {
+          acc[character.id][mission.id] =
+            charLog?.missionsCompleted?.[mission.id]?.status ||
+            new Array(mission.max_attempts).fill(false);
+        });
+        return acc;
+      },
+      {} as Record<string, Record<string, boolean[]>>
+    );
+
+    setCompletedMissions(initialCompletedMissions);
+  }, [missions, UserCharsLogs, userChars]);
+
+  // Set up auto-refresh interval
+  useEffect(() => {
+    // Não fazer o refresh inicial automático
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const intervalId = setInterval(refreshData, REFRESH_INTERVAL);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refreshData]);
 
   // Load Torre das Ilusões floors from localStorage
   useEffect(() => {
@@ -582,34 +603,6 @@ const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userCha
     }
   };
 
-  useEffect(() => {
-    if (
-      !missions ||
-      !UserCharsLogs ||
-      !userChars ||
-      missions.length === 0 ||
-      userChars.length === 0
-    ) {
-      return;
-    }
-
-    const initialCompletedMissions = userChars.reduce(
-      (acc, character) => {
-        const charLog = UserCharsLogs.find(log => log.id === character.id);
-        acc[character.id] = {};
-        missions.forEach(mission => {
-          acc[character.id][mission.id] =
-            charLog?.missionsCompleted?.[mission.id]?.status ||
-            new Array(mission.max_attempts).fill(false);
-        });
-        return acc;
-      },
-      {} as Record<string, Record<string, boolean[]>>
-    );
-
-    setCompletedMissions(initialCompletedMissions);
-  }, [missions, UserCharsLogs, userChars]);
-
   const handleCheckboxChange = (characterId: string, missionId: string, attemptIndex: number) => {
     setCompletedMissions(prevState => {
       const newState = { ...prevState };
@@ -681,47 +674,9 @@ const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userCha
     }
   };
 
-  // Check if scroll buttons should be shown
-  const checkScrollButtons = () => {
-    if (tableContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
-      setShowScrollButtons({
-        left: scrollLeft > 0,
-        right: scrollLeft < scrollWidth - clientWidth
-      });
-    }
-  };
 
-  // Handle scroll events
-  useEffect(() => {
-    const container = tableContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', checkScrollButtons);
-      // Initial check
-      checkScrollButtons();
-      // Check on window resize
-      window.addEventListener('resize', checkScrollButtons);
 
-      return () => {
-        container.removeEventListener('scroll', checkScrollButtons);
-        window.removeEventListener('resize', checkScrollButtons);
-      };
-    }
-  }, []);
 
-  // Scroll handlers
-  const handleScroll = (direction: 'left' | 'right') => {
-    if (tableContainerRef.current) {
-      const scrollAmount = 200; // Adjust this value to control scroll distance
-      const newScrollLeft =
-        tableContainerRef.current.scrollLeft +
-        (direction === 'left' ? -scrollAmount : scrollAmount);
-      tableContainerRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   const calculateOverallProgress = () => {
     if (!characters || !missions) return { total: 0, completed: 0, percentage: 0 };
@@ -742,6 +697,100 @@ const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userCha
       completed: completedMissionsCount,
       percentage: Math.round((completedMissionsCount / totalMissions) * 100)
     };
+  };
+
+  const handleDownload = () => {
+    handleTableDownload(tableRef);
+  };
+
+  // Função para calcular tempo até próximo reset
+  const calculateNextReset = useCallback(() => {
+    const now = new Date();
+    const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const nextReset = new Date(brasiliaTime);
+    
+    nextReset.setHours(3, 0, 0, 0);
+    if (brasiliaTime.getHours() >= 3) {
+      nextReset.setDate(nextReset.getDate() + 1);
+    }
+
+    const diff = nextReset.getTime() - brasiliaTime.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return `${hours}h ${minutes}m`;
+  }, []);
+
+  // Atualizar contador a cada minuto
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNextReset(calculateNextReset());
+    }, 60000);
+
+    setNextReset(calculateNextReset());
+    return () => clearInterval(timer);
+  }, [calculateNextReset]);
+
+
+
+  // Função para identificar missões pendentes
+  const getPendingMissions = () => {
+    if (!characters || !missions) return [];
+
+    return missions.filter(mission =>
+      characters.some(char =>
+        !completedMissions[char.id]?.[mission.id]?.some(status => status)
+      )
+    );
+  };
+
+  const [showScrollButtons, setShowScrollButtons] = useState({
+    left: false,
+    right: false
+  });
+
+  // Function to check if scroll buttons should be shown
+  const checkScrollButtons = useCallback(() => {
+    if (tableContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+      setShowScrollButtons({
+        left: scrollLeft > 0,
+        right: scrollLeft < scrollWidth - clientWidth
+      });
+    }
+  }, []);
+
+  // Add scroll event listener
+  useEffect(() => {
+    const tableContainer = tableContainerRef.current;
+    if (tableContainer) {
+      tableContainer.addEventListener('scroll', checkScrollButtons);
+      // Initial check
+      checkScrollButtons();
+      // Check on window resize
+      window.addEventListener('resize', checkScrollButtons);
+    }
+
+    return () => {
+      if (tableContainer) {
+        tableContainer.removeEventListener('scroll', checkScrollButtons);
+      }
+      window.removeEventListener('resize', checkScrollButtons);
+    };
+  }, [checkScrollButtons]);
+
+  // Scroll functions
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (tableContainerRef.current) {
+      const scrollAmount = 300; // Adjust this value to change scroll distance
+      const currentScroll = tableContainerRef.current.scrollLeft;
+      const newScroll = direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount;
+      
+      tableContainerRef.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
   };
 
   if (!missions || !userChars || missions.length === 0 || userChars.length === 0) {
@@ -796,6 +845,314 @@ const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userCha
 
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: 2,
+        mb: 3 
+      }}>
+        {/* Header with Reset Timer and Download Button */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap'
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            p: 1.5,
+            borderRadius: '12px',
+            bgcolor: alpha(theme.palette.warning.main, 0.1),
+            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+          }}>
+            <AccessTimeIcon sx={{ color: theme.palette.warning.main }} />
+            <Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography sx={{ color: theme.palette.grey[300], fontSize: '0.75rem' }}>
+                    Reset do servidor às
+                  </Typography>
+                  <Typography sx={{ 
+                    color: theme.palette.warning.light, 
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    bgcolor: alpha(theme.palette.warning.main, 0.15),
+                    px: 0.8,
+                    py: 0.2,
+                    borderRadius: '4px'
+                  }}>
+                    03:00
+                  </Typography>
+                  <Typography sx={{ 
+                    color: theme.palette.warning.main, 
+                    fontSize: '1.1rem', 
+                    fontWeight: 'bold', 
+                    ml: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5
+                  }}>
+                    {nextReset}
+                  </Typography>
+                </Box>
+                <Typography sx={{ 
+                  color: theme.palette.grey[400], 
+                  fontSize: '0.7rem',
+                  fontStyle: 'italic'
+                }}>
+                  Missões diárias e tabela de controle resetam automaticamente
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton 
+              onClick={refreshData}
+              disabled={loading}
+              sx={{
+                ...styles.downloadButton,
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.2),
+                }
+              }}
+            >
+              <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1 }}>
+                {loading ? (
+                  <CircularProgress
+                    size={20}
+                    thickness={5}
+                    sx={{ color: theme.palette.primary.main }}
+                  />
+                ) : (
+                  <RefreshIcon sx={{ 
+                    fontSize: 20,
+                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    '@keyframes spin': {
+                      '0%': {
+                        transform: 'rotate(0deg)',
+                      },
+                      '100%': {
+                        transform: 'rotate(360deg)',
+                      },
+                    },
+                  }} />
+                )}
+                <Typography 
+                  variant="button" 
+                  sx={{ 
+                    fontSize: '0.8rem',
+                    color: theme.palette.primary.main
+                  }}
+                >
+                  {loading ? 'Atualizando...' : 'Atualizar'}
+                </Typography>
+              </Box>
+            </IconButton>
+
+            <IconButton onClick={handleDownload} sx={styles.downloadButton}>
+              <DownloadIcon sx={{ fontSize: 20 }} />
+              <Typography variant="button" sx={{ fontSize: '0.8rem' }}>
+                Baixar Tabela
+              </Typography>
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Stats Cards */}
+        <Box sx={{ 
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: 2
+        }}>
+         
+
+          {/* Pending Missions Card */}
+          <Paper sx={{ 
+            p: 2,
+            bgcolor: getPendingMissions().length === 0 
+              ? alpha(theme.palette.success.main, 0.1)
+              : alpha(theme.palette.error.main, 0.1),
+            border: `1px solid ${getPendingMissions().length === 0 
+              ? alpha(theme.palette.success.main, 0.2)
+              : alpha(theme.palette.error.main, 0.2)}`,
+            borderRadius: '12px'
+          }}>
+            {getPendingMissions().length === 0 ? (
+              // Card quando não há missões pendentes
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1.5,
+                py: 1
+              }}>
+                <AssignmentTurnedInIcon 
+                  sx={{ 
+                    color: theme.palette.success.main,
+                    fontSize: '2rem'
+                  }} 
+                />
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="subtitle2" color="success.main" sx={{ fontSize: '0.9rem', fontWeight: 'bold', mb: 0.5 }}>
+                    Todas as Missões Completadas!
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: theme.palette.grey[400],
+                      display: 'block'
+                    }}
+                  >
+                    Parabéns! Você completou todas as missões diárias.
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              // Card original para missões pendentes
+              <>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  mb: 2 
+                }}>
+                  <AssignmentTurnedInIcon 
+                    sx={{ 
+                      color: theme.palette.error.main,
+                      fontSize: '1.2rem'
+                    }} 
+                  />
+                  <Typography variant="subtitle2" color="error.main" sx={{ fontSize: '0.85rem' }}>
+                    Missões Pendentes
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: theme.palette.grey[400],
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                      px: 1,
+                      py: 0.2,
+                      borderRadius: '10px',
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    {getPendingMissions().length} missões
+                  </Typography>
+                </Box>
+                <Box sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                  gap: 1
+                }}>
+                  {getPendingMissions().map((mission, index) => (
+                    <Box 
+                      key={index}
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        p: 0.8,
+                        gap: 1,
+                        borderRadius: '8px',
+                        bgcolor: alpha(theme.palette.error.main, 0.05),
+                        border: `1px solid ${alpha(theme.palette.error.main, 0.1)}`,
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        cursor: 'help',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.error.main, 0.1),
+                          transform: 'translateY(-1px)',
+                          '& .hover-info': {
+                            opacity: 1
+                          }
+                        },
+                        '&::after': {
+                          content: '"..."',
+                          position: 'absolute',
+                          right: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: theme.palette.error.light,
+                          fontSize: '0.7rem',
+                          opacity: 0.7
+                        }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: theme.palette.error.main,
+                          boxShadow: `0 0 6px ${alpha(theme.palette.error.main, 0.5)}`,
+                          flexShrink: 0
+                        }}
+                      />
+                      <Tooltip 
+                        title={
+                          <Box sx={{ p: 0.5 }}>
+                            <Typography sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                              {mission.mission_name}
+                            </Typography>
+                            <Typography variant="body2">
+                              Personagens pendentes:
+                            </Typography>
+                            <Box sx={{ pl: 1 }}>
+                              {characters.filter(char => 
+                                !completedMissions[char.id]?.[mission.id]?.some(status => status)
+                              ).map(char => (
+                                <Typography key={char.id} variant="body2" sx={{ color: 'error.light' }}>
+                                  • {char.gameChar.name}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Box>
+                        }
+                        arrow 
+                        placement="top"
+                      >
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography 
+                            variant="caption" 
+                            color="grey.300"
+                            sx={{ 
+                              fontSize: '0.75rem',
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              paddingRight: '16px'
+                            }}
+                          >
+                            {mission.mission_name}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: theme.palette.error.light,
+                              fontSize: '0.70rem'
+                            }}
+                          >
+                            {characters.filter(char => 
+                              !completedMissions[char.id]?.[mission.id]?.some(status => status)
+                            ).length} personagens
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
+          </Paper>
+        </Box>
+      </Box>
+
       <Accordion
         defaultExpanded={false}
         sx={{
@@ -1045,266 +1402,201 @@ const MissionControlTable: React.FC<Props> = ({ missions, UserCharsLogs, userCha
         </AccordionDetails>
       </Accordion>
 
-      {/* Left scroll button */}
-      {showScrollButtons.left && (
-        <IconButton
-          onClick={() => handleScroll('left')}
-          sx={{
-            position: 'absolute',
-            left: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 4,
-            backgroundColor: alpha(theme.palette.grey[900], 0.9),
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.grey[800], 0.95),
-              transform: 'translateY(-50%) scale(1.1)'
-            },
-            transition: 'all 0.2s ease-in-out',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
-            color: theme.palette.grey[300],
-            '&:active': {
-              transform: 'translateY(-50%) scale(0.95)'
-            }
-          }}
-        >
-          <ChevronLeftIcon />
-        </IconButton>
-      )}
 
-      {/* Right scroll button */}
-      {showScrollButtons.right && (
-        <IconButton
-          onClick={() => handleScroll('right')}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 4,
-            backgroundColor: alpha(theme.palette.grey[900], 0.9),
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.grey[800], 0.95),
-              transform: 'translateY(-50%) scale(1.1)'
-            },
-            transition: 'all 0.2s ease-in-out',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
-            color: theme.palette.grey[300],
-            '&:active': {
-              transform: 'translateY(-50%) scale(0.95)'
-            }
-          }}
-        >
-          <ChevronRightIcon />
-        </IconButton>
-      )}
-
-      <TableContainer
-        ref={tableContainerRef}
-        component={Paper}
-        elevation={4}
-        sx={{
-          borderRadius: '16px',
-          bgcolor: alpha(theme.palette.grey[900], 0.7),
-          overflow: 'auto',
-          maxWidth: '100%',
-          height: 'calc(100vh - 280px)',
-          backdropFilter: 'blur(10px)',
-          '&::-webkit-scrollbar': {
-            height: '6px',
-            width: '6px'
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: alpha(theme.palette.grey[900], 0.5),
-            borderRadius: '3px'
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: alpha(theme.palette.grey[700], 0.5),
-            borderRadius: '3px',
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.grey[600], 0.6)
-            }
-          },
-          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
-          border: `1px solid ${alpha(theme.palette.grey[800], 0.3)}`
-        }}
-      >
-        <Table size="small" sx={{ minWidth: 650, background: 'transparent' }}>
-          <TableHead
+      <Box sx={{ position: 'relative' }}>
+        {/* Left scroll button */}
+        {showScrollButtons.left && (
+          <IconButton
+            onClick={() => handleScroll('left')}
             sx={{
-              position: 'sticky',
-              top: 0,
+              position: 'absolute',
+              left: -20,
+              top: '50%',
+              transform: 'translateY(-50%)',
               zIndex: 2,
-              bgcolor: alpha(theme.palette.grey[900], 0.7),
-              backdropFilter: 'blur(10px)',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: '2px',
-                background: `linear-gradient(90deg, 
-                  ${alpha(theme.palette.primary.main, 0.3)}, 
-                  ${alpha(theme.palette.primary.light, 0.3)})`
-              }
+              bgcolor: alpha(theme.palette.grey[900], 0.8),
+              backdropFilter: 'blur(4px)',
+              border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.grey[800], 0.9),
+              },
+              width: 40,
+              height: 40,
+              boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.2)}`,
             }}
           >
-            <TableRow>
-              <TableCell
-                sx={{
-                  position: 'sticky',
-                  left: 0,
-                  zIndex: 3,
-                  bgcolor: alpha(theme.palette.grey[900], 0.95),
-                  backdropFilter: 'blur(10px)',
-                  padding: '12px',
-                  color: theme.palette.grey[300],
-                  borderBottom: 'none',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    right: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '1px',
-                    height: '70%',
-                    background: `linear-gradient(180deg, 
-                      transparent,
-                      ${alpha(theme.palette.grey[500], 0.2)},
-                      transparent)`
-                  }
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    fontWeight: 600,
-                    letterSpacing: '0.5px',
-                    textTransform: 'uppercase',
-                    fontSize: '0.7rem'
-                  }}
-                >
-                  Personagem
-                </Typography>
-              </TableCell>
-              {sortedMissions.map(mission => (
-                <TableCell
-                  key={mission.id}
-                  align="center"
-                  sx={{
-                    minWidth: '90px',
-                    position: 'sticky',
-                    top: 0,
-                    bgcolor: alpha(theme.palette.grey[900], 0.95),
-                    backdropFilter: 'blur(10px)',
-                    zIndex: 2,
-                    padding: '8px 4px',
-                    borderBottom: 'none'
-                  }}
-                >
-                  <Box
+            <ChevronLeftIcon sx={{ color: theme.palette.grey[300] }} />
+          </IconButton>
+        )}
+
+        {/* Right scroll button */}
+        {showScrollButtons.right && (
+          <IconButton
+            onClick={() => handleScroll('right')}
+            sx={{
+              position: 'absolute',
+              right: -20,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 2,
+              bgcolor: alpha(theme.palette.grey[900], 0.8),
+              backdropFilter: 'blur(4px)',
+              border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.grey[800], 0.9),
+              },
+              width: 40,
+              height: 40,
+              boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.2)}`,
+            }}
+          >
+            <ChevronRightIcon sx={{ color: theme.palette.grey[300] }} />
+          </IconButton>
+        )}
+
+        <TableContainer
+          ref={tableContainerRef}
+          component={Paper}
+          elevation={4}
+          sx={{
+            ...styles.tableContainer,
+            '&::-webkit-scrollbar': {
+              height: 6,
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: alpha(theme.palette.grey[900], 0.5),
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: alpha(theme.palette.grey[700], 0.5),
+              borderRadius: 3,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.grey[600], 0.5),
+              },
+            },
+          }}
+        >
+          <Table 
+            ref={tableRef} 
+            size="small" 
+            component="table"
+            sx={{ minWidth: 650, background: 'transparent' }}
+          >
+            <TableHead sx={styles.tableHead}>
+              <TableRow>
+                <TableCell sx={styles.stickyCell}>
+                  <Typography
+                    variant="subtitle2"
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 0.5
+                      fontWeight: 600,
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem'
                     }}
                   >
-                    {mission.mission_imgUrl ? (
-                      <Box
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: '6px',
-                          overflow: 'hidden',
-                          background: `linear-gradient(135deg, 
-                            ${alpha(theme.palette.grey[800], 0.5)}, 
-                            ${alpha(theme.palette.grey[900], 0.5)})`,
-                          backdropFilter: 'blur(10px)',
-                          border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            transform: 'scale(1.1)',
-                            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`,
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
-                          }
-                        }}
-                      >
-                        <img
-                          src={mission.mission_imgUrl}
-                          alt={mission.mission_name}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </Box>
-                    ) : (
-                      <Skeleton
-                        variant="rectangular"
-                        width={28}
-                        height={28}
-                        sx={{ borderRadius: '6px' }}
-                      />
-                    )}
-                    <Tooltip title={mission.mission_name || ''} arrow placement="top">
-                      <Typography
-                        variant="caption"
-                        noWrap
-                        sx={{
-                          maxWidth: '70px',
-                          color: theme.palette.grey[400],
-                          fontSize: '0.65rem',
-                          fontWeight: 500,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}
-                      >
-                        {mission.mission_name || <Skeleton variant="text" width={50} />}
-                      </Typography>
-                    </Tooltip>
-                  </Box>
+                    Personagem
+                  </Typography>
                 </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={characters} strategy={verticalListSortingStrategy}>
-                {characters.map(character => (
-                  <SortableTableRow
-                    key={character.id}
-                    character={character}
-                    missions={sortedMissions}
-                    completedMissions={completedMissions}
-                    handleCheckbox={handleCheckbox}
-                    loading={loading}
-                    loadingStates={loadingStates}
-                    calculateProgress={calculateProgress}
-                    torreFloors={torreFloors}
-                    handleFloorChange={handleFloorChange}
-                  />
+                {sortedMissions.map(mission => (
+                  <TableCell
+                    key={mission.id}
+                    align="center"
+                    sx={styles.headerCell}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 0.5
+                      }}
+                    >
+                      {mission.mission_imgUrl ? (
+                        <Box
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            background: `linear-gradient(135deg, 
+                              ${alpha(theme.palette.grey[800], 0.5)}, 
+                              ${alpha(theme.palette.grey[900], 0.5)})`,
+                            backdropFilter: 'blur(10px)',
+                            border: `1px solid ${alpha(theme.palette.grey[700], 0.3)}`,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`,
+                              border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                            }
+                          }}
+                        >
+                          <img
+                            src={mission.mission_imgUrl}
+                            alt={mission.mission_name}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </Box>
+                      ) : (
+                        <Skeleton
+                          variant="rectangular"
+                          width={28}
+                          height={28}
+                          sx={{ borderRadius: '6px' }}
+                        />
+                      )}
+                      <Tooltip title={mission.mission_name || ''} arrow placement="top">
+                        <Typography
+                          variant="caption"
+                          noWrap
+                          sx={{
+                            maxWidth: '70px',
+                            color: theme.palette.grey[400],
+                            fontSize: '0.65rem',
+                            fontWeight: 500,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          {mission.mission_name || <Skeleton variant="text" width={50} />}
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
                 ))}
-              </SortableContext>
-            </DndContext>
-          </TableBody>
-        </Table>
-      </TableContainer>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={characters} strategy={verticalListSortingStrategy}>
+                  {characters.map(character => (
+                    <SortableTableRow
+                      key={character.id}
+                      character={character}
+                      missions={sortedMissions}
+                      completedMissions={completedMissions}
+                      handleCheckbox={handleCheckbox}
+                      loading={loading}
+                      loadingStates={loadingStates}
+                      calculateProgress={calculateProgress}
+                      torreFloors={torreFloors}
+                      handleFloorChange={handleFloorChange}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Box>
   );
 };

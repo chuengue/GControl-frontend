@@ -1,14 +1,15 @@
-import { Autocomplete, Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Pagination, Paper, Select, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, useTheme, Chip, Divider, IconButton, Tooltip } from '@mui/material';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import HistoryIcon from '@mui/icons-material/History';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import SearchIcon from '@mui/icons-material/Search';
+import { Autocomplete, Box, Button, Chip, CircularProgress, Container, Divider, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography, useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import React, { useEffect, useState } from 'react';
-import SearchIcon from '@mui/icons-material/Search';
-import HistoryIcon from '@mui/icons-material/History';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 import { getUserMissionsLogsHistoric } from '../../service/requests/limitedMissions/limitedMissions';
 import { useSession } from '../../SessionContext';
@@ -181,6 +182,41 @@ const MissionHistoricPage: React.FC = () => {
     setPage(1); // Resetar para a primeira página ao mudar o limite
   };
 
+  // Função para lidar com datas predefinidas
+  const handlePredefinedDateRange = (range: 'yesterday' | 'lastWeek' | 'lastMonth' | 'last30Days') => {
+    const now = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    switch (range) {
+      case 'yesterday':
+        start.setDate(now.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(now.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'lastWeek':
+        start.setDate(now.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'lastMonth':
+        start.setMonth(now.getMonth() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'last30Days':
+        start.setDate(now.getDate() - 30);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+    }
+
+    setStartDate(start);
+    setEndDate(end);
+    setPage(1);
+  };
+
   useEffect(() => {
     if (startDate && endDate) {
       handleFetchData();
@@ -238,7 +274,7 @@ const MissionHistoricPage: React.FC = () => {
       <Paper 
         elevation={0} 
         sx={{ 
-          p: 3, 
+          p: 2.5, 
           mb: 4, 
           borderRadius: 2,
           bgcolor: 'background.paper',
@@ -246,62 +282,156 @@ const MissionHistoricPage: React.FC = () => {
           borderColor: theme.palette.mode === 'light' ? 'grey.200' : 'grey.800'
         }}
       >
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={8}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <DatePicker
-                    label="Data Inicial"
-                    value={startDate}
-                    onChange={handleStartDateChange}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: "small",
-                        InputProps: {
-                          startAdornment: <CalendarTodayIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                        }
-                      }
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <DatePicker
-                    label="Data Final"
-                    value={endDate}
-                    onChange={handleEndDateChange}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: "small",
-                        InputProps: {
-                          startAdornment: <CalendarTodayIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                        }
-                      }
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </LocalizationProvider>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 2,
+              mb: 2
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CalendarTodayIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  Períodos Predefinidos
+                </Typography>
+              </Box>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  gap: 1, 
+                  flexWrap: 'wrap',
+                  '& .MuiButton-root': {
+                    minWidth: 'auto',
+                    borderRadius: '8px',
+                    px: 1.5,
+                    py: 0.5,
+                    transition: 'all 0.2s ease-in-out',
+                    borderColor: theme.palette.mode === 'light' ? 'grey.300' : 'grey.700',
+                    color: theme.palette.mode === 'light' ? 'grey.700' : 'grey.300',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 1,
+                      borderColor: 'primary.main',
+                      bgcolor: alpha(theme.palette.primary.main, 0.1)
+                    }
+                  }
+                }}
+              >
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handlePredefinedDateRange('yesterday')}
+                >
+                  Ontem
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handlePredefinedDateRange('lastWeek')}
+                >
+                  7 dias
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handlePredefinedDateRange('lastMonth')}
+                >
+                  1 mês
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handlePredefinedDateRange('last30Days')}
+                >
+                  30 dias
+                </Button>
+              </Box>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Button
-              variant="contained"
-              onClick={handleFetchData}
-              disabled={loading}
-              startIcon={<SearchIcon />}
-              sx={{
-                width: '100%',
-                height: '40px',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '1rem',
-                boxShadow: 'none'
-              }}
-            >
-              {loading ? 'Buscando...' : 'Buscar Histórico'}
-            </Button>
+
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <Grid container spacing={1}>
+                    <Grid item xs={12} sm={6}>
+                      <DatePicker
+                        label="Data Inicial"
+                        value={startDate}
+                        onChange={handleStartDateChange}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: "small",
+                            sx: {
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                transition: 'all 0.2s',
+                                '&:hover': {
+                                  borderColor: 'primary.main'
+                                }
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <DatePicker
+                        label="Data Final"
+                        value={endDate}
+                        onChange={handleEndDateChange}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: "small",
+                            sx: {
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                transition: 'all 0.2s',
+                                '&:hover': {
+                                  borderColor: 'primary.main'
+                                }
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+                </LocalizationProvider>
+              </Box>
+              <Button
+                variant="contained"
+                onClick={handleFetchData}
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                sx={{
+                  minWidth: { xs: '100%', sm: '160px' },
+                  height: '40px',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  boxShadow: 'none',
+                  transition: 'all 0.2s',
+                  bgcolor: theme.palette.primary.main,
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: 2,
+                    bgcolor: theme.palette.primary.dark
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)'
+                  }
+                }}
+              >
+                {loading ? 'Buscando...' : 'Buscar'}
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Paper>

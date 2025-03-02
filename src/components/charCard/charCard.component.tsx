@@ -5,7 +5,6 @@ import { blue } from '@mui/material/colors';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
 import { useNavigate } from 'react-router';
-
 import { UserCharCardProps } from '../../interfaces/char';
 import { deleteUserGameChar } from '../../service/requests/gameChar';
 import { toggleVisibility } from '../../service/requests/ranking/ranking';
@@ -14,6 +13,7 @@ import ConfirmationModal from '../../shared/components/confirmModal/confirmModal
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 import { GreenSwitch } from './styles';
+
 function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) {
   const [confirmModalIsOpen, setConfirmModalIsOpen] = React.useState(false);
   const [userCharIdSelected, setUserCharIdSelected] = React.useState<string>();
