@@ -12,12 +12,25 @@ import type {
 } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import * as React from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import theme from '../theme';
 import { GlobalSnackbar } from './components/globalSnackBar/globalSnackBar';
 import { firebaseSignOut, onAuthStateChanged } from './firebase/auth';
 import SessionContext, { type Session } from './SessionContext';
+import { trackPageView } from './utils/analytics';
 import { getFilteredNavigationForUser } from './utils/sidebarItems';
+
+// Component to handle page tracking
+function PageTracker() {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location]);
+
+  return null;
+}
+
 export interface NavItemCustom extends NavigationPageItem {
     role?: string;
 }
@@ -240,6 +253,7 @@ export default function App() {
                 authentication={AUTHENTICATION}
             >
                 <SessionContext.Provider value={sessionContextValue}>
+                    <PageTracker />
                     <GlobalSnackbar />
                     <Outlet />
                 </SessionContext.Provider>

@@ -14,7 +14,6 @@ export default function HomePage() {
   const theme = useTheme();
   const {userChars, fetchUserCharsData} = useCharStore()
   const {session} = useSession()
-console.log(userChars)
   React.useEffect(() => {
     fetchUserCharsData(session?.user.uid)
     const timer = setTimeout(() => setLoading(false), 1000);

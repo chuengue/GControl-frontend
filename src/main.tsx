@@ -22,6 +22,10 @@ import RankingPage from './pages/ranking/rankingPage';
 import register from './pages/register';
 import SignInPage from './pages/signin';
 import PrivateRoute from './PrivateRoute';
+import { initGA } from './utils/analytics';
+
+// Initialize GA4
+initGA();
 
 const router = createBrowserRouter([
     {

@@ -1,6 +1,6 @@
 {
     "name": "Chase Tracker",
-    "version": "0.1.16",
+    "version": "0.1.17",
     "scripts": {
         "dev": "vite",
         "preview": "vite preview"
@@ -32,6 +32,7 @@
         "react-beautiful-dnd": "^13.1.1",
         "react-date-range": "^2.0.1",
         "react-dom": "^19",
+        "react-ga4": "^2.1.0",
         "react-responsive": "^10.0.0",
         "react-router": "^7",
         "recharts": "^2.15.1",
