@@ -18,6 +18,7 @@ import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
 import UserCharDetailsPage from './pages/myChars/details';
 import MyChars from './pages/myChars/myChars';
+import NotFound from './pages/NotFound';
 import RankingPage from './pages/ranking/rankingPage';
 import register from './pages/register';
 import SignInPage from './pages/signin';
@@ -117,6 +118,10 @@ const router = createBrowserRouter([
                         path: 'about',
                        Component: AboutPage
                     },
+                    {
+                        path: '*',
+                        Component: NotFound
+                    }
                 ]
             },
           
@@ -131,6 +136,10 @@ const router = createBrowserRouter([
             {
                 path: '/forgot-password',
                 Component: ForgotPassword
+            },
+            {
+                path: '*',
+                Component: NotFound
             }
         ]
     }
