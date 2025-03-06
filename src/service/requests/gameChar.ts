@@ -1,4 +1,5 @@
 import { ApiResponseChar } from '../../shared/types';
+import useProgressStore from '../../stores/progressStore';
 import api from '../api';
 import { AtkTotalLogResponse, IUserGameChar } from './types';
 
@@ -114,17 +115,64 @@ export const getUserCharAtkHistoric = async (userCharId: string): Promise<AtkTot
 };
 export const updateUserGameChar = async (
   userCharId: string,
+  userId: string,
   { atkTotal, level }: { atkTotal: number; level: number }
 ): Promise<void> => {
   try {
-    const url = `/characters/${userCharId}`;
+    const url = `/users/characters/${userCharId}`;
+    const url2 = `/users/${userId}/characters/${userCharId}`;
 
+
+    const currentChar = await api.get(url2);
+    const currentData = currentChar.data;
+
+    // Calculate improvements
+    const improvements: { levelGained?: number; atkGained?: number } = {};
+    
+    if (level > currentData.level) {
+      improvements.levelGained = level - currentData.level;
+    }
+    if (atkTotal > currentData.atkTotal) {
+      improvements.atkGained = atkTotal - currentData.atkTotal;
+    }
+
+    // Update character data
     await api.put(url, {
       atkTotal,
       level
     });
+
+    // Update progress store if there are improvements
+    if (Object.keys(improvements).length > 0) {
+      const progressStore = useProgressStore.getState();
+      progressStore.updateRecentImprovements(userCharId, improvements);
+    }
   } catch (error) {
     console.error('Erro ao atualizar o personagem:', error);
+    throw error;
+  }
+};
+export const updateCharacter = async (charId: string, data: {
+  name?: string;
+  defaultImgUrl?: string;
+  thumbImgUrl?: string;
+  awakeningImg?: string;
+  haveAwakening?: boolean;
+  color?: string;
+}): Promise<void> => {
+  try {
+    const url = `/characters/${charId}`;
+    await api.put(url, data);
+  } catch (error) {
+    console.error('Erro ao atualizar o personagem:', error);
+    throw error;
+  }
+};
+export const toggleAwakened = async (userCharId: string) => {
+  try {
+    const response = await api.put(`/characters/${userCharId}/toggle-awakened`);
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };

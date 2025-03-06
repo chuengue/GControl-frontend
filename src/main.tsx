@@ -8,6 +8,7 @@ import DashboardPage from './pages';
 import AboutPage from './pages/about/about';
 import AddUserChar from './pages/addUserChar/addUserChar';
 import AddLimitedMission from './pages/admin/addLimitedMissions';
+import CharacterManagement from './pages/admin/characters';
 import CreateItem from './pages/admin/createItem';
 import CreateMission from './pages/admin/createMission';
 import RemoveItemPage from './pages/admin/removeItem';
@@ -43,6 +44,14 @@ const router = createBrowserRouter([
                     {
                         path: 'admin',
                         children: [
+                            {
+                                path: 'characters',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <CharacterManagement />
+                                    </PrivateRoute>
+                                )
+                            },
                             {
                                 path: 'create-item',
                                 Component: () => (

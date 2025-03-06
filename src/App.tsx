@@ -1,6 +1,5 @@
-import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Handyman, History, Home, Info, RemoveCircle, ShowChart, TableChartRounded } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Groups2, Handyman, History, Home, Info, RemoveCircle, ShowChart, TableChartRounded } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
-import Groups2Icon from '@mui/icons-material/Groups2';
 import PersonIcon from '@mui/icons-material/Person';
 import { Box, GlobalStyles, Typography } from '@mui/material';
 
@@ -58,7 +57,7 @@ export const NAVIGATION: CustomNav = [
     {
         segment: 'chars',
         title: 'Personagens',
-        icon: <Groups2Icon />,
+        icon: <Groups2 />,
         children: [
             {
                 segment: 'my-chars',
@@ -102,6 +101,11 @@ export const NAVIGATION: CustomNav = [
         role: 'admin',
         icon: <AdminPanelSettings />,
         children: [
+            {
+                segment: 'characters',
+                title: 'Gerenciar Personagens',
+                icon: <Groups2 />
+            },
             {
                 segment: 'create-mission',
                 title: 'Cadastrar Missão',
@@ -156,7 +160,7 @@ const BRANDING = {
     logo: (
         <Box
             component="img"
-            src="assets/images/logo.png"
+            src="/assets/images/logo.png"
             alt="Chase Tracker logo"
             sx={{
                 width: { xs: 32, sm: 40 },

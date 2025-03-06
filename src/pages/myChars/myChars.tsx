@@ -1,13 +1,13 @@
 'use client';
 import { Add as AddIcon } from '@mui/icons-material';
-import { Box, Button, Container, Fade, Typography, alpha, useMediaQuery } from '@mui/material';
-import { Grid } from '@mui/material';
+import { Box, Button, Container, Fade, Grid, Typography, alpha, useMediaQuery } from '@mui/material';
 import * as React from 'react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 import theme from '../../../theme';
-import { CharCard } from '../../components';
+import CharCardV2 from '../../components/charCardV2';
+import ProgressDashboard from '../../components/progressDashboard/progressDashboard.component';
 import { useSession } from '../../SessionContext';
 import useCharStore from '../../stores/charStore';
 
@@ -21,12 +21,13 @@ interface Character {
 function MyChars() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { session, setLoading } = useSession();
-  const { userChars, fetchUserCharsData } = useCharStore();
+  const { userChars, fetchUserCharsData, allChars ,fetchAllCharsData } = useCharStore();
   const navigate = useNavigate();
   const uid = session?.user.uid || '';
 
   useEffect(() => {
     fetchUserCharsData(uid);
+    fetchAllCharsData();
   }, []);
 
   function onAddCharacter() {
@@ -75,40 +76,38 @@ function MyChars() {
                 </Fade>
               </Grid>
               <Grid item>
-                                {userChars && userChars.length > 0 && (
-
-                <Fade in timeout={1000}>
-
-                  <Button
-                    variant="contained"
-                    onClick={onAddCharacter}
-                    startIcon={<AddIcon />}
-                    size={isMobile ? "medium" : "large"}
-                    sx={{
-                      borderRadius: '12px',
-                      bgcolor: alpha(theme.palette.primary.main, 0.9),
-                      backdropFilter: 'blur(8px)',
-                      border: `1px solid ${alpha(theme.palette.primary.light, 0.1)}`,
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        bgcolor: theme.palette.primary.main,
-                        transform: 'translateY(-2px)'
-                      },
-                      '&:active': {
-                        transform: 'translateY(0)'
-                      },
-                      textTransform: 'none',
-                      fontSize: { xs: '0.9rem', sm: '1rem' },
-                      fontWeight: 500,
-                      boxShadow: theme.shadows[4],
-                      px: { xs: 2, sm: 3 },
-                      py: { xs: 1, sm: 1.5 }
-                    }}
-                  >
-                    Adicionar Personagem
-                  </Button>
-               
-                </Fade> )}
+                {userChars && userChars.length > 0 && (
+                  <Fade in timeout={1000}>
+                    <Button
+                      variant="contained"
+                      onClick={onAddCharacter}
+                      startIcon={<AddIcon />}
+                      size={isMobile ? "medium" : "large"}
+                      sx={{
+                        borderRadius: '12px',
+                        bgcolor: alpha(theme.palette.primary.main, 0.9),
+                        backdropFilter: 'blur(8px)',
+                        border: `1px solid ${alpha(theme.palette.primary.light, 0.1)}`,
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          bgcolor: theme.palette.primary.main,
+                          transform: 'translateY(-2px)'
+                        },
+                        '&:active': {
+                          transform: 'translateY(0)'
+                        },
+                        textTransform: 'none',
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        fontWeight: 500,
+                        boxShadow: theme.shadows[4],
+                        px: { xs: 2, sm: 3 },
+                        py: { xs: 1, sm: 1.5 }
+                      }}
+                    >
+                      Adicionar Personagem
+                    </Button>
+                  </Fade>
+                )}
               </Grid>
             </Grid>
           </Grid>
@@ -119,7 +118,7 @@ function MyChars() {
               <Box
                 sx={{
                   height: '100%',
-                  maxWidth:{xs:"100%",md:"1000px"},
+                  maxWidth: { xs: "100%", md: "1000px" },
                   background: alpha(theme.palette.background.paper, 0.1),
                   borderRadius: '20px',
                   backdropFilter: 'blur(8px)',
@@ -188,19 +187,23 @@ function MyChars() {
                     </Button>
                   </Box>
                 ) : (
-                  <Grid 
-                    container 
-                    spacing={2.5} 
-                    sx={{ 
-                      width: '100%',
-                      maxWidth: '1400px',
-                      margin: '0 auto',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <CharCard chars={userChars} onAddCharacter={onAddCharacter} details />
-                  </Grid>
+                  <>
+                    <ProgressDashboard chars={userChars} allChars={allChars} />
+                    <Grid 
+                      container 
+                      spacing={2.5} 
+                      sx={{ 
+                        width: '100%',
+                        maxWidth: '1400px',
+                        margin: '0 auto',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mt: 4
+                      }}
+                    >
+                      <CharCardV2 chars={userChars} onAddCharacter={onAddCharacter} details />
+                    </Grid>
+                  </>
                 )}
               </Box>
             </Fade>

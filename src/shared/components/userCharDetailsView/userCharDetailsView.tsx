@@ -37,7 +37,7 @@ const UserCharDetailsView = () => {
   const UpdateAtkTotal = async (userCharId: string, atkTotal: number, level: number) => {
     if (chardId)
       try {
-        await updateUserGameChar(userCharId, {
+        await updateUserGameChar(userCharId, userId, {
           atkTotal,
           level
         });
