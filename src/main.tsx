@@ -1,8 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import ErrorPage from './components/ErrorPage';
 
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './layouts/dashboard';
 import DashboardPage from './pages';
 import AboutPage from './pages/about/about';
@@ -34,10 +36,12 @@ initGA();
 const router = createBrowserRouter([
     {
         Component: App,
+        errorElement: <ErrorPage />,
         children: [
             {
                 path: '/',
                 Component: Layout,
+                errorElement: <ErrorPage />,
                 children: [
                     {
                         path: '',
@@ -159,19 +163,23 @@ const router = createBrowserRouter([
           
             {
                 path: '/sign-in',
-                Component: SignInPage
+                Component: SignInPage,
+                errorElement: <ErrorPage />
             },
             {
                 path: '/sign-up',
-                Component: register
+                Component: register,
+                errorElement: <ErrorPage />
             },
             {
                 path: '/forgot-password',
-                Component: ForgotPassword
+                Component: ForgotPassword,
+                errorElement: <ErrorPage />
             },
             {
                 path: '*',
-                Component: NotFound
+                Component: NotFound,
+                errorElement: <ErrorPage />
             }
         ]
     }
@@ -179,6 +187,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <RouterProvider router={router} />
+        <ErrorBoundary>
+            <RouterProvider router={router} />
+        </ErrorBoundary>
     </React.StrictMode>
 );

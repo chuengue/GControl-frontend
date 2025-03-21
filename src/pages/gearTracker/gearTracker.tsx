@@ -1,27 +1,6 @@
 import { Add, Remove, SwapHoriz } from '@mui/icons-material';
-import {
-  alpha,
-  Box,
-  Card,
-  Chip,
-  Dialog,
-  DialogContent,
-  Fade,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Skeleton,
-  Stack,
-  Tab,
-  Tabs,
-  Tooltip,
-  Typography,
-  useTheme
-} from '@mui/material';
-import { blue, green, purple } from '@mui/material/colors';
+import { alpha, Box, Card, Chip, CircularProgress, Dialog, DialogContent, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, Skeleton, Stack, Tab, Tabs, Tooltip, Typography, useTheme } from '@mui/material';
+import { blue, green, purple, red } from '@mui/material/colors';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
@@ -37,7 +16,7 @@ import { useSession } from '../../SessionContext';
 import Inventory from '../../shared/components/inventory/inventory';
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
-import { formatNumberWithThousands } from '../../utils/utils.ts';
+import { capitalizeWords, formatNumberWithThousands } from '../../utils/utils.ts';
 import { AccessoryType, EquipmentType } from '../admin/types.ts';
 
 interface EquippedItem {
@@ -79,6 +58,9 @@ const GearTrackerPage = () => {
   const [selectedFarmingChars, setSelectedFarmingChars] = useState<number>(1);
   const [selectedPieces, setSelectedPieces] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+  const [equipLoading, setEquipLoading] = useState<boolean>(false);
+  const [unequipLoading, setUnequipLoading] = useState<string | null>(null);
 
   // Constantes para o cálculo do farming
   const REQUIRED_MATERIALS = {
@@ -154,10 +136,13 @@ const GearTrackerPage = () => {
     const fetchCharDetails = async () => {
       if (session?.user.uid && selectedChar?.id) {
         try {
+          setIsLoadingDetails(true);
           const details = await getUserCharDetails(session.user.uid, selectedChar.id);
           setUserCharDetails(details);
         } catch (error) {
           console.error('Error fetching char details:', error);
+        } finally {
+          setIsLoadingDetails(false);
         }
       }
     };
@@ -271,8 +256,8 @@ const GearTrackerPage = () => {
       showSnackbar('Selecione um personagem primeiro', 'warning');
       return;
     }
-
     try {
+      setEquipLoading(true);
       const existingItem = userItems.find(invItem => invItem.id === item.id);
 
       // Adiciona o item ao inventário se não existir
@@ -305,6 +290,8 @@ const GearTrackerPage = () => {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao mover e equipar item';
       showSnackbar(errorMessage, 'error');
       console.error('Error moving and equipping item:', error);
+    } finally {
+      setEquipLoading(false);
     }
   };
 
@@ -315,25 +302,23 @@ const GearTrackerPage = () => {
     }
 
     try {
-      // Find the item in the user's inventory
+      setUnequipLoading(item.id);
       const inventoryItem = userItems.find(invItem => invItem.id === item.id);
 
       if (!inventoryItem?.userInventoryItemId) {
         throw new Error('Item não encontrado no inventário');
       }
 
-      // Unequip the item
       await unequipItem(selectedChar.id, inventoryItem.userInventoryItemId);
-
-      // Update character details
       const updatedDetails = await getUserCharDetails(session.user.uid, selectedChar.id);
       setUserCharDetails(updatedDetails);
-
       showSnackbar('Item desequipado com sucesso', 'success');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao desequipar item';
       showSnackbar(errorMessage, 'error');
       console.error('Error unequipping item:', error);
+    } finally {
+      setUnequipLoading(null);
     }
   };
 
@@ -341,6 +326,7 @@ const GearTrackerPage = () => {
     setSelectedSlot({ type, slot });
     setIsEquipModalOpen(true);
   };
+
 
   const renderEquipmentGrid = () => (
     <Grid container spacing={2}>
@@ -356,7 +342,10 @@ const GearTrackerPage = () => {
             )?.[1];
 
             const itemRarity = item?.rarity || '';
-            const rarityColor = theme.palette.raritiesColors[itemRarity as keyof typeof theme.palette.raritiesColors] || blue[400];
+            const rarityColor =
+              theme.palette.raritiesColors[
+                itemRarity as keyof typeof theme.palette.raritiesColors
+              ] || blue[400];
 
             return (
               <Box
@@ -365,7 +354,7 @@ const GearTrackerPage = () => {
                   p: 2,
                   bgcolor: item ? alpha(rarityColor, 0.1) : alpha(blue[900], 0.2),
                   borderRadius: 2,
-                  border: item 
+                  border: item
                     ? `1px solid ${alpha(rarityColor, 0.3)}`
                     : `1px solid ${alpha(blue[400], 0.1)}`,
                   display: 'flex',
@@ -374,7 +363,7 @@ const GearTrackerPage = () => {
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
                     bgcolor: item ? alpha(rarityColor, 0.2) : alpha(blue[900], 0.3),
-                    transform: 'translateY(-1px)',
+                    transform: 'translateY(-1px)'
                   }
                 }}
               >
@@ -385,23 +374,25 @@ const GearTrackerPage = () => {
                   {item && (
                     <>
                       {item.setName && (
-                        <Chip 
-                          label={item.setName}
+                        <Chip
+                          label={capitalizeWords(
+                            equipmentSets.find(set => set.id === item.setName)?.name || ''
+                          )}
                           size="small"
-                          sx={{ 
+                          sx={{
                             bgcolor: alpha(rarityColor, 0.2),
                             color: 'white',
-                            border: `1px solid ${alpha(rarityColor, 0.3)}`,
+                            border: `1px solid ${alpha(rarityColor, 0.3)}`
                           }}
                         />
                       )}
-                      <Chip 
+                      <Chip
                         label={getRarityLabel(item.rarity)}
                         size="small"
-                        sx={{ 
+                        sx={{
                           bgcolor: 'transparent',
                           color: rarityColor,
-                          border: `1px solid ${alpha(rarityColor, 0.5)}`,
+                          border: `1px solid ${alpha(rarityColor, 0.5)}`
                         }}
                       />
                     </>
@@ -413,24 +404,29 @@ const GearTrackerPage = () => {
                       <IconButton
                         size="small"
                         onClick={() => handleUnequipItem(item)}
+                        disabled={unequipLoading === item.id}
                         sx={{
                           color: 'white',
-                          '&:hover': { 
+                          '&:hover': {
                             bgcolor: alpha(rarityColor, 0.2)
                           }
                         }}
                       >
-                        <Remove />
+                        {unequipLoading === item.id ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <Remove />
+                        )}
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title={item ? "Trocar Item" : "Equipar"}>
+                  <Tooltip title={item ? 'Trocar Item' : 'Equipar'}>
                     <IconButton
                       size="small"
                       onClick={() => handleOpenEquipModal('equipment', slot)}
                       sx={{
                         color: 'white',
-                        '&:hover': { 
+                        '&:hover': {
                           bgcolor: alpha(rarityColor, 0.2)
                         }
                       }}
@@ -458,14 +454,17 @@ const GearTrackerPage = () => {
             'lower_head',
             'upper_armor_ornament',
             'lower_armor_ornament',
-            'arm_ornament',
+            'arm_ornament'
           ].map(slot => {
             const item = Object.entries(organizeEquipmentBySlot()).find(
               ([key, value]) => key === slot
             )?.[1];
 
             const itemRarity = item?.rarity || '';
-            const rarityColor = theme.palette.raritiesColors[itemRarity as keyof typeof theme.palette.raritiesColors] || blue[400];
+            const rarityColor =
+              theme.palette.raritiesColors[
+                itemRarity as keyof typeof theme.palette.raritiesColors
+              ] || blue[400];
 
             return (
               <Box
@@ -474,7 +473,7 @@ const GearTrackerPage = () => {
                   p: 2,
                   bgcolor: item ? alpha(rarityColor, 0.1) : alpha(blue[900], 0.2),
                   borderRadius: 2,
-                  border: item 
+                  border: item
                     ? `1px solid ${alpha(rarityColor, 0.3)}`
                     : `1px solid ${alpha(blue[400], 0.1)}`,
                   display: 'flex',
@@ -483,7 +482,7 @@ const GearTrackerPage = () => {
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
                     bgcolor: item ? alpha(rarityColor, 0.2) : alpha(blue[900], 0.3),
-                    transform: 'translateY(-1px)',
+                    transform: 'translateY(-1px)'
                   }
                 }}
               >
@@ -494,23 +493,25 @@ const GearTrackerPage = () => {
                   {item && (
                     <>
                       {item.setName && (
-                        <Chip 
-                          label={item.setName}
+                        <Chip
+                          label={capitalizeWords(
+                            equipmentSets.find(set => set.id === item.setName)?.name || ''
+                          )}
                           size="small"
-                          sx={{ 
+                          sx={{
                             bgcolor: alpha(rarityColor, 0.2),
                             color: 'white',
-                            border: `1px solid ${alpha(rarityColor, 0.3)}`,
+                            border: `1px solid ${alpha(rarityColor, 0.3)}`
                           }}
                         />
                       )}
-                      <Chip 
+                      <Chip
                         label={getRarityLabel(item.rarity)}
                         size="small"
-                        sx={{ 
+                        sx={{
                           bgcolor: 'transparent',
                           color: rarityColor,
-                          border: `1px solid ${alpha(rarityColor, 0.5)}`,
+                          border: `1px solid ${alpha(rarityColor, 0.5)}`
                         }}
                       />
                     </>
@@ -522,24 +523,29 @@ const GearTrackerPage = () => {
                       <IconButton
                         size="small"
                         onClick={() => handleUnequipItem(item)}
+                        disabled={unequipLoading === item.id}
                         sx={{
                           color: 'white',
-                          '&:hover': { 
+                          '&:hover': {
                             bgcolor: alpha(rarityColor, 0.2)
                           }
                         }}
                       >
-                        <Remove />
+                        {unequipLoading === item.id ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <Remove />
+                        )}
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title={item ? "Trocar Item" : "Equipar"}>
+                  <Tooltip title={item ? 'Trocar Item' : 'Equipar'}>
                     <IconButton
                       size="small"
                       onClick={() => handleOpenEquipModal('accessory', slot)}
                       sx={{
                         color: 'white',
-                        '&:hover': { 
+                        '&:hover': {
                           bgcolor: alpha(rarityColor, 0.2)
                         }
                       }}
@@ -577,12 +583,10 @@ const GearTrackerPage = () => {
     userChars.forEach(char => {
       const charDetails = allCharsSummary.find(summary => summary.name === char.gameChar.name);
       if (charDetails) {
-        charDetails.sets.forEach((count, setName) => {
-          const setInfo = equipmentSets.find(
-            set => set.name.toLowerCase() === setName.toLowerCase()
-          );
+        charDetails.sets.forEach((count, setId) => {
+          const setInfo = equipmentSets.find(set => set.id === setId);
           if (setInfo) {
-            const group = setGroups.get(setName) || {
+            const group = setGroups.get(setId) || {
               total: 0,
               complete: 0,
               partial: 0,
@@ -597,7 +601,7 @@ const GearTrackerPage = () => {
               group.partialChars.push(charDetails.name);
             }
             group.total++;
-            setGroups.set(setName, group);
+            setGroups.set(setId, group);
           }
         });
       }
@@ -631,14 +635,12 @@ const GearTrackerPage = () => {
           Sets em Uso
         </Typography>
         <Grid container spacing={3}>
-          {usedSets.map(([setName, stats]) => {
-            const setInfo = equipmentSets.find(
-              set => set.name.toLowerCase() === setName.toLowerCase()
-            );
+          {usedSets.map(([setId, stats]) => {
+            const setInfo = equipmentSets.find(set => set.id === setId);
             if (!setInfo) return null;
 
             return (
-              <Grid item xs={12} sm={6} md={4} key={setName}>
+              <Grid item xs={12} sm={6} md={4} key={setId}>
                 <Card
                   sx={{
                     p: 2,
@@ -652,6 +654,8 @@ const GearTrackerPage = () => {
                     }
                   }}
                 >
+                  <Stack flexDirection="row" alignItems="center" justifyContent="space-between">
+
                   <Typography
                     variant="h6"
                     color={theme.palette.raritiesColors[setInfo.rarity]}
@@ -663,8 +667,18 @@ const GearTrackerPage = () => {
                       textShadow: `0 0 10px ${alpha(theme.palette.raritiesColors[setInfo.rarity], 0.3)}`
                     }}
                   >
-                    {setName}
+                    {capitalizeWords(setInfo.name)}
                   </Typography>
+                  <Chip
+                    label={getRarityLabel(setInfo.rarity)}
+                    size="small"
+                    sx={{
+                      bgcolor: 'transparent',
+                      color: theme.palette.raritiesColors[setInfo.rarity],
+                      border: `1px solid ${alpha(theme.palette.raritiesColors[setInfo.rarity], 0.5)}`
+                    }}
+                  />
+                  </Stack>
                   <Stack spacing={1}>
                     <Box
                       sx={{
@@ -792,7 +806,7 @@ const GearTrackerPage = () => {
                       }
                     }}
                   >
-                    {[1, 2, 3, 4, 5, 6,7,8,9,10,11,12].map(num => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
                       <MenuItem key={num} value={num}>
                         {num} {num === 1 ? 'Peça' : 'Peças'}
                       </MenuItem>
@@ -893,7 +907,7 @@ const GearTrackerPage = () => {
                         sx={{
                           flex: 1,
                           height: '8px',
-                          bgcolor: alpha(blue[400], 0.2),
+                          bgcolor: alpha(red[400], 0.2),
                           borderRadius: '4px',
                           overflow: 'hidden'
                         }}
@@ -902,12 +916,12 @@ const GearTrackerPage = () => {
                           sx={{
                             width: `${(farmingDays.vulcanosDays / farmingDays.maxDays) * 100}%`,
                             height: '100%',
-                            bgcolor: blue[400],
+                            bgcolor: red[400],
                             transition: 'width 0.3s ease-in-out'
                           }}
                         />
                       </Box>
-                      <Typography variant="body2" color={blue[400]}>
+                      <Typography variant="body2" color={red[400]}>
                         {farmingDays.vulcanosDays} dias
                       </Typography>
                     </Box>
@@ -922,7 +936,7 @@ const GearTrackerPage = () => {
                         sx={{
                           flex: 1,
                           height: '8px',
-                          bgcolor: alpha(green[400], 0.2),
+                          bgcolor: alpha(purple[400], 0.2),
                           borderRadius: '4px',
                           overflow: 'hidden'
                         }}
@@ -931,12 +945,12 @@ const GearTrackerPage = () => {
                           sx={{
                             width: `${(farmingDays.nemophillaDays / farmingDays.maxDays) * 100}%`,
                             height: '100%',
-                            bgcolor: green[400],
+                            bgcolor: purple[400],
                             transition: 'width 0.3s ease-in-out'
                           }}
                         />
                       </Box>
-                      <Typography variant="body2" color={green[400]}>
+                      <Typography variant="body2" color={purple[400]}>
                         {farmingDays.nemophillaDays} dias
                       </Typography>
                     </Box>
@@ -951,7 +965,7 @@ const GearTrackerPage = () => {
                         sx={{
                           flex: 1,
                           height: '8px',
-                          bgcolor: alpha(purple[400], 0.2),
+                          bgcolor: alpha(blue[400], 0.2),
                           borderRadius: '4px',
                           overflow: 'hidden'
                         }}
@@ -960,12 +974,12 @@ const GearTrackerPage = () => {
                           sx={{
                             width: `${(farmingDays.grandielDays / farmingDays.maxDays) * 100}%`,
                             height: '100%',
-                            bgcolor: purple[400],
+                            bgcolor: blue[400],
                             transition: 'width 0.3s ease-in-out'
                           }}
                         />
                       </Box>
-                      <Typography variant="body2" color={purple[400]}>
+                      <Typography variant="body2" color={blue[400]}>
                         {farmingDays.grandielDays} dias
                       </Typography>
                     </Box>
@@ -1010,7 +1024,7 @@ const GearTrackerPage = () => {
 
   const renderEquipmentGridSkeleton = () => (
     <Grid container spacing={1}>
-      {[...Array(8)].map((_, index) => (
+      {[...Array(14)].map((_, index) => (
         <Grid item xs={12} sm={6} key={index}>
           <Box
             sx={{
@@ -1022,10 +1036,10 @@ const GearTrackerPage = () => {
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 1,
-              minHeight: '62px'
+              minHeight: '75px'
             }}
           >
-            <Skeleton variant="text" width={150} height={30} />
+            <Skeleton variant="text" width={150} height={30} animation="wave" />
             <Stack direction="row" spacing={1}>
               <Skeleton variant="circular" width={24} height={24} />
               <Skeleton variant="circular" width={24} height={24} />
@@ -1061,11 +1075,15 @@ const GearTrackerPage = () => {
             >
               <Skeleton variant="text" width={200} height={30} sx={{ mb: 2 }} />
               <Stack spacing={1}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <Skeleton variant="text" width={100} />
                   <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <Skeleton variant="text" width={80} />
                   <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
                 </Box>
@@ -1094,8 +1112,8 @@ const GearTrackerPage = () => {
           >
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
               <Tabs value={selectedTab} onChange={handleTabChange} centered>
-                <Tab label="Resumo por Personagem"  />
-                <Tab label="Resumo Global de Sets"  />
+                <Tab label="Resumo por Personagem" />
+                <Tab label="Resumo Global de Sets" />
                 <Tab label="Calculadora Berkas" />
               </Tabs>
             </Box>
@@ -1182,11 +1200,28 @@ const GearTrackerPage = () => {
                             border: `1px solid ${alpha(blue[400], 0.2)}`
                           }}
                         >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mb: 2
+                            }}
+                          >
                             <Skeleton variant="text" width={120} height={30} />
                             <Stack flexDirection="row" gap={1}>
-                              <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
-                              <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 1 }} />
+                              <Skeleton
+                                variant="rectangular"
+                                width={60}
+                                height={24}
+                                sx={{ borderRadius: 1 }}
+                              />
+                              <Skeleton
+                                variant="rectangular"
+                                width={80}
+                                height={24}
+                                sx={{ borderRadius: 1 }}
+                              />
                             </Stack>
                           </Box>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -1209,12 +1244,14 @@ const GearTrackerPage = () => {
                     {allCharsSummary
                       .map(summary => {
                         // Add counts for sorting
-                        const voidItems = Array.from(summary.sets.entries()).find(([setName]) =>
-                          setName.toLowerCase().includes('void')
-                        );
-                        const berkasItems = Array.from(summary.sets.entries()).find(([setName]) =>
-                          setName.toLowerCase().includes('berkas')
-                        );
+                        const voidItems = Array.from(summary.sets.entries()).find(([setId]) => {
+                          const setInfo = equipmentSets.find(set => set.id === setId);
+                          return setInfo?.name.toLowerCase().includes('void');
+                        });
+                        const berkasItems = Array.from(summary.sets.entries()).find(([setId]) => {
+                          const setInfo = equipmentSets.find(set => set.id === setId);
+                          return setInfo?.name.toLowerCase().includes('berkas');
+                        });
 
                         const voidSet = equipmentSets.find(set =>
                           set.name.toLowerCase().includes('void')
@@ -1310,7 +1347,7 @@ const GearTrackerPage = () => {
 
                             <Box
                               sx={{
-                                mt: 'auto',
+                                mt: '8px',
                                 display: 'flex',
                                 flexWrap: 'wrap',
                                 gap: 0.5,
@@ -1325,22 +1362,20 @@ const GearTrackerPage = () => {
                                 }
                               }}
                             >
-                              {Array.from(summary.sets.entries()).map(([setName, count]) => {
-                                const setInfo = equipmentSets.find(
-                                  set => set.name.toLowerCase() === setName.toLowerCase()
-                                );
+                              {Array.from(summary.sets.entries()).map(([setId, count]) => {
+                                const setInfo = equipmentSets.find(set => set.id === setId);
                                 if (!setInfo) return null;
 
-                                const color = setName.toLowerCase().includes('berkas')
+                                const color = setInfo.name.toLowerCase().includes('berkas')
                                   ? purple[500]
-                                  : setName.toLowerCase().includes('void')
+                                  : setInfo.name.toLowerCase().includes('void')
                                     ? green[500]
                                     : blue[500];
 
                                 return (
                                   <Chip
-                                    key={setName}
-                                    label={`${setName}: ${count}/${setInfo.totalPieces}`}
+                                    key={setId}
+                                    label={`${capitalizeWords(setInfo.name)}: ${count}/${setInfo.totalPieces}`}
                                     size="small"
                                     sx={{
                                       bgcolor: alpha(color, 0.2),
@@ -1360,7 +1395,11 @@ const GearTrackerPage = () => {
               </Box>
             </>
           ) : selectedTab === 1 ? (
-            isLoading ? renderGlobalSetSummarySkeleton() : renderGlobalSetSummary()
+            isLoading ? (
+              renderGlobalSetSummarySkeleton()
+            ) : (
+              renderGlobalSetSummary()
+            )
           ) : (
             renderBerkasFarmingCalculator()
           )}
@@ -1384,7 +1423,9 @@ const GearTrackerPage = () => {
             mb: 3
           }}
         >
-          {isLoading ? renderCharactersSkeleton() : (
+          {isLoading ? (
+            renderCharactersSkeleton()
+          ) : (
             <Box
               sx={{
                 width: '100%',
@@ -1410,7 +1451,7 @@ const GearTrackerPage = () => {
 
       {/* Detalhes do equipamento */}
       {selectedChar && userCharDetails && selectedTab === 0 && (
-        <Fade in timeout={1000}>
+        <Fade in timeout={300}>
           <Card
             sx={{
               p: 3,
@@ -1429,188 +1470,74 @@ const GearTrackerPage = () => {
               </Typography>
             </Box>
 
-            {/* Set Progression Status */}
-            <Box sx={{ mb: 4, p: 3, bgcolor: alpha(blue[900], 0.4), borderRadius: 2 }}>
-              <Typography variant="h6" color="white" gutterBottom fontFamily="faktos" sx={{ mb: 3, textAlign: 'center' }}>
-                Progresso de Sets
-              </Typography>
-              <Grid container spacing={3}>
-                {isLoading ? (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ flex: 1 }}>
-                        <Skeleton variant="text" width="100%" height={30} />
-                        <Skeleton variant="text" width="80%" height={24} sx={{ mt: 1 }} />
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ flex: 1 }}>
-                        <Skeleton variant="text" width="100%" height={30} />
-                        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                          {[...Array(3)].map((_, index) => (
-                            <Skeleton
-                              key={index}
-                              variant="rectangular"
-                              width={80}
-                              height={24}
-                              sx={{ borderRadius: 1 }}
-                            />
-                          ))}
-                        </Stack>
-                      </Box>
-                    </Grid>
-                  </>
-                ) : (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      {(() => {
-                        const equippedItems = userCharDetails.results.gameChar.equippedItems || [];
-                        const berkasItems = equippedItems.filter(item =>
-                          item.setName?.toLowerCase().includes('berkas')
-                        );
-                        const voidItems = equippedItems.filter(item =>
-                          item.setName?.toLowerCase().includes('void')
-                        );
-
-                        const berkasSet = equipmentSets.find(set =>
-                          set.name.toLowerCase().includes('berkas')
-                        );
-                        const voidSet = equipmentSets.find(set =>
-                          set.name.toLowerCase().includes('void')
-                        );
-
-                        const renderProgressBar = (current: number, total: number, color: string) => (
-                          <Box sx={{ width: '100%', mt: 1 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                              <Typography variant="body2" color={alpha(color, 0.9)}>
-                                Progresso
-                              </Typography>
-                              <Typography variant="body2" color={alpha(color, 0.9)}>
-                                {current}/{total}
-                              </Typography>
-                            </Box>
-                            <Box
-                              sx={{
-                                width: '100%',
-                                height: '8px',
-                                bgcolor: alpha(color, 0.1),
-                                borderRadius: '4px',
-                                overflow: 'hidden'
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: `${(current / total) * 100}%`,
-                                  height: '100%',
-                                  bgcolor: color,
-                                  transition: 'width 0.3s ease-in-out'
-                                }}
-                              />
-                            </Box>
-                          </Box>
-                        );
-
-                        if (voidItems.length > 0) {
-                          return (
-                            <Box sx={{ p: 2, bgcolor: alpha(green[900], 0.2), borderRadius: 2, border: `1px solid ${alpha(green[500], 0.3)}` }}>
-                              <Typography variant="h6" color={green[300]} sx={{ mb: 1 }}>
-                                Set do Void
-                              </Typography>
-                              {renderProgressBar(voidItems.length, voidSet?.totalPieces || 0, green[400])}
-                              <Typography variant="body2" sx={{ mt: 2, color: alpha(green[300], 0.8) }}>
-                                Faltam {(voidSet?.totalPieces || 0) - voidItems.length} peças para completar
-                              </Typography>
-                            </Box>
-                          );
-                        }
-
-                        if (berkasItems.length > 0) {
-                          return (
-                            <Box sx={{ p: 2, bgcolor: alpha(purple[900], 0.2), borderRadius: 2, border: `1px solid ${alpha(purple[500], 0.3)}` }}>
-                              <Typography variant="h6" color={purple[300]} sx={{ mb: 1 }}>
-                                Set Berkas
-                              </Typography>
-                              {renderProgressBar(berkasItems.length, berkasSet?.totalPieces || 0, purple[400])}
-                              <Typography variant="body2" sx={{ mt: 2, color: alpha(purple[300], 0.8) }}>
-                                {berkasItems.length === (berkasSet?.totalPieces || 0)
-                                  ? "Set completo! Próximo objetivo: Set do Vazio"
-                                  : `Faltam ${(berkasSet?.totalPieces || 0) - berkasItems.length} peças para completar`}
-                              </Typography>
-                            </Box>
-                          );
-                        }
-
-                        return (
-                          <Box sx={{ p: 2, bgcolor: alpha(blue[900], 0.2), borderRadius: 2, border: `1px solid ${alpha(blue[500], 0.3)}` }}>
-                            <Typography variant="h6" color={blue[300]} sx={{ mb: 1 }}>
-                              Progresso Inicial
-                            </Typography>
-                            <Typography variant="body2" color={purple[300]} sx={{ mt: 1 }}>
-                              Próximo objetivo: Farmar o Set Berkas completo
-                            </Typography>
-                          </Box>
-                        );
-                      })()}
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ p: 2, bgcolor: alpha(blue[900], 0.2), borderRadius: 2, border: `1px solid ${alpha(blue[500], 0.3)}` }}>
-                        <Typography variant="subtitle1" color="white" sx={{ mb: 2 }}>
-                          Sets Equipados
-                        </Typography>
-                        <Stack spacing={1}>
-                          {Array.from(calculateSetSummary().entries()).map(([setName, count]) => {
-                            const setInfo = equipmentSets.find(
-                              set => set.name.toLowerCase() === setName.toLowerCase()
-                            );
-                            if (!setInfo) return null;
-
-                            const progress = (count / setInfo.totalPieces) * 100;
-                            const color = theme.palette.raritiesColors[setInfo.rarity];
-
-                            return (
-                              <Box key={setName}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                                  <Typography variant="body2" color={color}>
-                                    {setName}
-                                  </Typography>
-                                  <Typography variant="body2" color={alpha(color, 0.8)}>
-                                    {count}/{setInfo.totalPieces}
-                                  </Typography>
-                                </Box>
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '4px',
-                                    bgcolor: alpha(color, 0.1),
-                                    borderRadius: '2px',
-                                    overflow: 'hidden'
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${progress}%`,
-                                      height: '100%',
-                                      bgcolor: color,
-                                      transition: 'width 0.3s ease-in-out'
-                                    }}
-                                  />
-                                </Box>
-                              </Box>
-                            );
-                          })}
-                        </Stack>
-                      </Box>
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-            </Box>
-
             {/* Equipment Grid */}
             <Grid container spacing={4}>
-              <Grid item xs={12} md={12}>
-                {isLoading ? renderEquipmentGridSkeleton() : renderEquipmentGrid()}
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: alpha(blue[900], 0.2),
+                    borderRadius: 2,
+                    border: `1px solid ${alpha(blue[500], 0.3)}`
+                  }}
+                >
+                  <Typography variant="subtitle1" color="white" sx={{ mb: 2 }}>
+                    Sets Equipados
+                  </Typography>
+                  <Stack spacing={1}>
+                    {Array.from(calculateSetSummary().entries()).map(([setId, count]) => {
+                      const setInfo = equipmentSets.find(set => set.id === setId);
+                      if (!setInfo) return null;
+
+                      const progress = (count / setInfo.totalPieces) * 100;
+                      const color = theme.palette.raritiesColors[setInfo.rarity];
+
+                      return (
+                        <Box key={setId}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mb: 0.5
+                            }}
+                          >
+                            <Typography variant="body2" color={color}>
+                              {capitalizeWords(setInfo.name)}
+                            </Typography>
+                            <Typography variant="body2" color={alpha(color, 0.8)}>
+                              {count}/{setInfo.totalPieces}
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: '4px',
+                              bgcolor: alpha(color, 0.1),
+                              borderRadius: '2px',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: `${progress}%`,
+                                height: '100%',
+                                bgcolor: color,
+                                transition: 'width 0.3s ease-in-out'
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={8}>
+                {isLoading || isLoadingDetails
+                  ? renderEquipmentGridSkeleton()
+                  : renderEquipmentGrid()}
               </Grid>
             </Grid>
           </Card>
@@ -1635,6 +1562,7 @@ const GearTrackerPage = () => {
           {selectedSlot && selectedChar && (
             <Inventory
               fetchType="allItems"
+              loading={equipLoading}
               hasMoveItem
               onMoveTitle="Mover e Equipar"
               onMoveItem={handleMoveAndEquipItem}

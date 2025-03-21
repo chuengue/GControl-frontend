@@ -1,8 +1,11 @@
 import { Add, CheckCircle, Inventory, Remove } from '@mui/icons-material';
-import { Box, Card, CardContent, Container, Divider, IconButton, Menu, MenuItem, Popover, Stack, Typography, useTheme } from '@mui/material';
-import React, { useState } from 'react';
+import { Box, Card, CardContent, CircularProgress, Container, Divider, IconButton, Menu, MenuItem, Popover, Stack, Typography, useTheme } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
 import { AccessoryType, EquipmentType, ItemCategory, ItemStats, Rarity } from '../../../pages/admin/types';
+import { getEquipmentSet } from '../../../service/requests/sets/sets';
+import { EquipmentSet } from '../../../service/requests/sets/types';
+import { capitalizeWords } from '../../../utils/utils';
 import { ACCESSORY_TYPES_ENUM, EQUIPMENT_TYPE_ENUM, ITEM_CATEGORY_ENUM, RARITIES_ENUM } from './itemsEnum';
 
 export interface ItemBoxPropsItem {
@@ -12,7 +15,7 @@ export interface ItemBoxPropsItem {
   description?: string;
   category: ItemCategory;
   rarity: Rarity;
-  stats?: ItemStats;
+  stats: ItemStats;
   shared?: boolean;
   armorType?: EquipmentType;
   accessoryType?: AccessoryType;
@@ -31,6 +34,7 @@ const ItemBox: React.FC<{
   hasOnEquip?: boolean;
   hasOnUnequip?: boolean;
   onMoveTitle?: string;
+  loading?: boolean;
   onChangeQuantity?: (item, value) => void;
   onMoveItem?: (item) => void;
   onEquip?: (item) => void;
@@ -47,6 +51,7 @@ const ItemBox: React.FC<{
   hasOnUnequip = false,
   onChangeQuantity,
   hasDetails = true,
+  loading = false,
   onMoveItem,
   onEquip,
   onUnequip
@@ -58,6 +63,30 @@ const ItemBox: React.FC<{
     x: number;
     y: number;
   }>({ x: 0, y: 0 });
+  const [equipmentSets, setEquipmentSets] = useState<EquipmentSet[]>([]);
+
+  useEffect(() => {
+    const fetchEquipmentSets = async () => {
+      try {
+        const response = await getEquipmentSet();
+        setEquipmentSets(response.data);
+      } catch (error) {
+        console.error('Error fetching equipment sets:', error);
+      }
+    };
+
+    if (item.setName) {
+      fetchEquipmentSets();
+    }
+  }, [item.setName]);
+
+  useEffect(() => {
+    if (loading) {
+      document.body.style.cursor = 'progress';
+    } else {
+      document.body.style.cursor = 'default';
+    }
+  }, [loading]);
 
   const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -88,13 +117,10 @@ const ItemBox: React.FC<{
   };
 
   const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
-    if (item.category !== 'accessory' && item.category !== 'equipment') {
-      return;
-    }
     event.preventDefault();
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuOpen(true);
-    handlePopoverClose();
+    handlePopoverClose(); // Fecha o Popover ao abrir o menu de contexto
   };
 
   const handleCloseContextMenu = () => {
@@ -277,13 +303,13 @@ const ItemBox: React.FC<{
                 item.category === 'equipment') && (
                 <>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    <strong>Ataque:</strong> {item.stats?.attack}
+                    <strong>Ataque:</strong> {item.stats.attack}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    <strong>Defesa:</strong> {item.stats?.defense}
+                    <strong>Defesa:</strong> {item.stats.defense}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    <strong>HP:</strong> {item.stats?.hp}
+                    <strong>HP:</strong> {item.stats.hp}
                   </Typography>
                 </>
               )}
@@ -299,7 +325,8 @@ const ItemBox: React.FC<{
                   marginBottom: '12px'
                 }}
               >
-                <strong>Conjunto:</strong> {item.setName}
+                <strong>Conjunto:</strong>{' '}
+                {capitalizeWords(equipmentSets.find(set => set.id === item.setName)?.name || item.setName)}
               </Typography>
             )}
 
@@ -322,7 +349,7 @@ const ItemBox: React.FC<{
       )}
 
       <Menu
-        open={contextMenuOpen && (item.category === 'accessory' || item.category === 'equipment')}
+        open={contextMenuOpen}
         onClose={handleCloseContextMenu}
         anchorReference="anchorPosition"
         anchorPosition={{
@@ -359,11 +386,34 @@ const ItemBox: React.FC<{
         )}
 
         {hasMoveItem && (
-          <MenuItem onClick={() => onMoveItem?.(item)}>
-            <IconButton size="small">
+          <MenuItem 
+            onClick={() => onMoveItem?.(item)} 
+            disabled={loading}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              padding: '8px 16px',
+              '&.Mui-disabled': {
+                opacity: 0.7
+              }
+            }}
+          >
+            <IconButton size="small" sx={{ color: 'inherit' }}>
               <Inventory fontSize="small" />
-            </IconButton>{' '}
-            {onMoveTitle}
+            </IconButton>
+            <Typography variant="body2">
+              {onMoveTitle}
+            </Typography>
+            {loading && (
+              <CircularProgress 
+                size={16}
+                sx={{ 
+                  marginLeft: 'auto',
+                  color: 'primary.main' 
+                }}
+              />
+            )}
           </MenuItem>
         )}
 

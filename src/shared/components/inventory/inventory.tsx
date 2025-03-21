@@ -28,6 +28,7 @@ const Inventory: React.FC<{
   onMoveTitle?: string;
   hasOnEquip?: boolean;
   hasOnUnequip?: boolean;
+  loading?: boolean
   onMoveItem?: (item) => void;
 }> = ({
   fetchType = 'allItems',
@@ -36,6 +37,7 @@ const Inventory: React.FC<{
   hasOnEquip = false,
   onMoveTitle = '',
   hasOnUnequip = false,
+  loading = false,
   onMoveItem
 }) => {
   const { charId } = useParams<{ charId: string }>();
@@ -48,7 +50,6 @@ const Inventory: React.FC<{
   const [selectedEquipmentType, setSelectedEquipmentType] = useState<EquipmentType>('');
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
-  const { userChars, allChars } = useCharStore();
 
   // Função debounce para o search
   const debouncedSearch = useCallback(
@@ -68,34 +69,7 @@ const Inventory: React.FC<{
         equipmentType: selectedEquipmentType,
         page: page
       });
-      // Filter items based on usableBy property
-      const filteredItems = data.results.filter(item => {
-        // Permitir itens sem restrição de uso
-        if (!item.usableBy) return true;
-      
-        // Encontrar o personagem atual
-        const userChar = userChars.find(
-          char => char.id === charId || char.gameChar?.id === charId
-        );
-        console.log(charId)
-      
-        // Se o personagem não for encontrado, não filtrar o item
-        if (!userChar) return false;
-      
-        // Se usableBy for uma string, comparar diretamente
-        if (typeof item.usableBy === "string") {
-          return item.usableBy === userChar.gameChar.name;
-        }
-      
-        // Se usableBy for uma lista, verificar se inclui o nome do personagem
-        if (Array.isArray(item.usableBy)) {
-          return item.usableBy.includes(userChar.gameChar.name);
-        }
-      
-        return false;
-      });
-      
-      setItems(filteredItems);
+      setItems(data.results);
     } catch (error) {
       showSnackbar(error.message, 'error', error.stack);
     }
@@ -111,33 +85,7 @@ const Inventory: React.FC<{
         equipmentType: selectedEquipmentType
       });
       const itemOnly = data.results.map(item => formatItemBoxPropsItem(item));
-      // Filter items based on usableBy property
-      const filteredItems = data.results.filter(item => {
-        // Permitir itens sem restrição de uso
-        if (!item.usableBy) return true;
-      
-        // Encontrar o personagem atual
-        const userChar = userChars.find(
-          char => char.id === charId || char.gameChar?.id === charId
-        );
-      
-        // Se o personagem não for encontrado, não filtrar o item
-        if (!userChar) return false;
-      
-        // Se usableBy for uma string, comparar diretamente
-        if (typeof item.usableBy === "string") {
-          return item.usableBy === userChar.gameChar.name;
-        }
-      
-        // Se usableBy for uma lista, verificar se inclui o nome do personagem
-        if (Array.isArray(item.usableBy)) {
-          return item.usableBy.includes(userChar.gameChar.name);
-        }
-      
-        return false;
-      });
-      
-      setItems(filteredItems);
+      setUserItems(itemOnly);
     } catch (error) {
       setUserItems([]);
       showSnackbar(error.message, 'error', error.stack);
@@ -348,6 +296,7 @@ const Inventory: React.FC<{
                   onMoveTitle={onMoveTitle}
                   hasOnEquip={hasOnEquip}
                   hasOnUnequip={hasOnUnequip}
+                  loading={loading}
                   onMoveItem={onMoveItem}
                   onChangeQuantity={(item, value) => onChangeQuantity(item, value)}
                   onUnequip={item => onUnequipItem(item.userInventoryItemId)}

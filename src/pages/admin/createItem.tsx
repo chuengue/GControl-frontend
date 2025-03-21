@@ -12,7 +12,7 @@ const CreateItem = () => {
   const { allChars, fetchAllCharsData } = useCharStore();
   const { showSnackbar } = useSnackbarStore();
   const [loading, setLoading] = useState<boolean>(false);
-  const [equipmentSets, setEquipmentSets] = useState<Array<{ id: string; name: string }>>([]);
+  const [equipmentSets, setEquipmentSets] = useState<Array<{ id: string; name: string, rarity:string }>>([]);
 
   const [item, setItem] = useState<Omit<GrandChaseItem, 'id'>>({
     name: '',
@@ -65,24 +65,15 @@ const CreateItem = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Capitaliza a primeira letra de cada palavra no nome
-    setItem(prevItem => ({
-      ...prevItem,
-      name: prevItem.name.replace(/\b\w/g, char => char.toUpperCase())
-    }));
 
     try {
       setLoading(true);
       const register = await registerItem({
-        ...item,
-        name: item.name.replace(/\b\w/g, char => char.toUpperCase())
+        ...item
       });
       showSnackbar(register.results.message, 'success', {
         vertical: 'top',
         horizontal: 'center'
-      });
-      setItem(prevItem => {
-        return { ...prevItem, armorType: '', category: '', accessoryType: '' };
       });
     } catch (err) {
       showSnackbar(err.response.data.error, 'error', {
@@ -118,12 +109,6 @@ const CreateItem = () => {
             value={item.description || ''}
             onChange={handleChange}
             disabled={loading}
-            onBlur={() => {
-              setItem(prevItem => ({
-                ...prevItem,
-                name: prevItem.name.replace(/_/g, ' ')
-              }));
-            }}
             multiline
             rows={3}
           />
@@ -272,8 +257,8 @@ const CreateItem = () => {
                 label="Set Name"
               >
                 {equipmentSets.map(set => (
-                  <MenuItem key={set.id} value={set.name}>
-                    {set.name}
+                  <MenuItem key={set.id} value={set.id}>
+                    {set.name} - {set.rarity}
                   </MenuItem>
                 ))}
               </Select>

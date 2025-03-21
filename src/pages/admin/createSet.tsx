@@ -1,5 +1,6 @@
 import { Button, FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
 import React, { ChangeEvent, useState } from 'react';
+
 import { createEquipmentSet } from '../../service/requests/sets/sets';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 import { raritiesOptions } from './consts';
@@ -47,7 +48,7 @@ const CreateSet = () => {
             setSet({
                 name: '',
                 rarity: 'common',
-                totalPieces: 2
+                totalPieces: 0
             });
         } catch (err) {
             showSnackbar(err.response?.data?.error || 'Error creating set', 'error', {
@@ -119,7 +120,7 @@ const CreateSet = () => {
                         onChange={handleChange}
                         disabled={loading}
                         InputProps={{
-                            inputProps: { min: 2 }
+                            inputProps: { min: 1 }
                         }}
                     />
                 </Grid>

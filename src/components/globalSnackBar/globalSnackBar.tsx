@@ -15,7 +15,7 @@ export const GlobalSnackbar = () => {
     return (
         <Snackbar
             open={open}
-            autoHideDuration={3000} // Tempo que o Snackbar fica visível
+            autoHideDuration={2000} // Tempo que o Snackbar fica visível
             onClose={hideSnackbar}
             anchorOrigin={position}
         >
