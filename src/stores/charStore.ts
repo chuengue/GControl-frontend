@@ -21,7 +21,7 @@ interface CharStore {
     setAttackTotal: (attackTotal: number) => void;
     setCharStats: (stats: IUserGameCharStats) => void;
     fetchUserCharsData: (uid: string) => Promise<void>;
-    fetchUserItems: (userCharId: string) => Promise<void>;
+    fetchUserItems: (userCharId: string) => Promise<ItemBoxPropsItem[]>
     fetchAllCharsData: () => Promise<void>;
     setUserChars: (chars: UserCharacter[]) => void;
     setAllChars: (chars: Character[]) => void;
@@ -91,6 +91,7 @@ const useCharStore = create<CharStore>(set => ({
                 formatItemBoxPropsItem(item)
             );
             set({ userItems: formattedItems });
+            return formattedItems
         } catch (error) {
             console.error('Erro ao buscar itens:', error);
         } finally {

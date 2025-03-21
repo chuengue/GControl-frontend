@@ -11,12 +11,14 @@ import AddLimitedMission from './pages/admin/addLimitedMissions';
 import CharacterManagement from './pages/admin/characters';
 import CreateItem from './pages/admin/createItem';
 import CreateMission from './pages/admin/createMission';
+import CreateSet from './pages/admin/createSet';
 import RemoveItemPage from './pages/admin/removeItem';
 import DailyControl from './pages/dailyControl/dailyControl';
 import MissionHistoricPage from './pages/dailyControl/dailyControlHistoric';
 import FarmSessionPage from './pages/dashboard/dashboard';
 import FarmToolsPage from './pages/farmTools/farmTools';
 import ForgotPassword from './pages/forgotPassword';
+import GearTrackerPage from './pages/gearTracker/gearTracker';
 import UserCharDetailsPage from './pages/myChars/details';
 import MyChars from './pages/myChars/myChars';
 import NotFound from './pages/NotFound';
@@ -69,6 +71,14 @@ const router = createBrowserRouter([
                                 )
                             },
                             {
+                                path: 'add-set',
+                                Component: () => (
+                                    <PrivateRoute adminOnly>
+                                        <CreateSet />
+                                    </PrivateRoute>
+                                )
+                            },
+                            {
                                 path: 'add-limited-missions',
                                 Component: () => (
                                     <PrivateRoute adminOnly>
@@ -94,7 +104,7 @@ const router = createBrowserRouter([
                                 Component: MyChars
                             },
                             {
-                                path: 'details/:userId/:chardId',
+                                path: 'details/:userId/:charId',
                                 Component: UserCharDetailsPage
                             },
                             {
@@ -108,12 +118,25 @@ const router = createBrowserRouter([
                        Component: FarmSessionPage
                     },
                     {
+                        path: "gear-tracker",
+                        children: [
+                            {
+                                path: "",
+                                Component: GearTrackerPage
+                            },
+                            {
+                                path: ":charId",
+                                Component: GearTrackerPage
+                            }
+                        ]
+                    },
+                    {
                         path: 'daily-control',
-                       Component: DailyControl
+                        Component: DailyControl
                     },
                     {
                         path: 'missions-historic',
-                       Component: MissionHistoricPage
+                        Component: MissionHistoricPage
                     },
                     {
                         path: 'farm-tool',

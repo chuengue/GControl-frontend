@@ -1,33 +1,9 @@
 import { Add, CheckCircle, Inventory, Remove } from '@mui/icons-material';
-import {
-  Box,
-  Card,
-  CardContent,
-  Container,
-  Divider,
-  IconButton,
-  Menu,
-  MenuItem,
-  Popover,
-  Stack,
-  Typography,
-  useTheme
-} from '@mui/material';
+import { Box, Card, CardContent, Container, Divider, IconButton, Menu, MenuItem, Popover, Stack, Typography, useTheme } from '@mui/material';
 import React, { useState } from 'react';
 
-import {
-  AccessoryType,
-  EquipmentType,
-  ItemCategory,
-  ItemStats,
-  Rarity
-} from '../../../pages/admin/types';
-import {
-  ACCESSORY_TYPES_ENUM,
-  EQUIPMENT_TYPE_ENUM,
-  ITEM_CATEGORY_ENUM,
-  RARITIES_ENUM
-} from './itemsEnum';
+import { AccessoryType, EquipmentType, ItemCategory, ItemStats, Rarity } from '../../../pages/admin/types';
+import { ACCESSORY_TYPES_ENUM, EQUIPMENT_TYPE_ENUM, ITEM_CATEGORY_ENUM, RARITIES_ENUM } from './itemsEnum';
 
 export interface ItemBoxPropsItem {
   id: string;
@@ -36,7 +12,7 @@ export interface ItemBoxPropsItem {
   description?: string;
   category: ItemCategory;
   rarity: Rarity;
-  stats: ItemStats;
+  stats?: ItemStats;
   shared?: boolean;
   armorType?: EquipmentType;
   accessoryType?: AccessoryType;
@@ -112,10 +88,13 @@ const ItemBox: React.FC<{
   };
 
   const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
+    if (item.category !== 'accessory' && item.category !== 'equipment') {
+      return;
+    }
     event.preventDefault();
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuOpen(true);
-    handlePopoverClose(); // Fecha o Popover ao abrir o menu de contexto
+    handlePopoverClose();
   };
 
   const handleCloseContextMenu = () => {
@@ -298,13 +277,13 @@ const ItemBox: React.FC<{
                 item.category === 'equipment') && (
                 <>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    <strong>Ataque:</strong> {item.stats.attack}
+                    <strong>Ataque:</strong> {item.stats?.attack}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    <strong>Defesa:</strong> {item.stats.defense}
+                    <strong>Defesa:</strong> {item.stats?.defense}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    <strong>HP:</strong> {item.stats.hp}
+                    <strong>HP:</strong> {item.stats?.hp}
                   </Typography>
                 </>
               )}
@@ -343,7 +322,7 @@ const ItemBox: React.FC<{
       )}
 
       <Menu
-        open={contextMenuOpen}
+        open={contextMenuOpen && (item.category === 'accessory' || item.category === 'equipment')}
         onClose={handleCloseContextMenu}
         anchorReference="anchorPosition"
         anchorPosition={{

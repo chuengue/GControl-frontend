@@ -35,7 +35,8 @@ export const armorTypeOptions = [
     { label: 'Calça', value: 'lower' },
     { label: 'Luvas', value: 'gloves' },
     { label: 'Sapatos', value: 'shoes' },
-    { label: 'Arma', value: 'weapon' }
+    { label: 'Arma', value: 'weapon' },
+    { label: 'Capa', value: 'cloak' }
 ];
 
 export const allOptionsForEquippedItems = [
@@ -45,6 +46,7 @@ export const allOptionsForEquippedItems = [
     { label: 'Luvas', value: 'gloves' },
     { label: 'Sapatos', value: 'shoes' },
     { label: 'Arma', value: 'weapon' },
+    { label: 'Capa', value: 'cloak' },
     { label: 'Brincos', value: 'earring' },
     { label: 'Piercing', value: 'piercing' },
     { label: 'Anel', value: 'ring' },

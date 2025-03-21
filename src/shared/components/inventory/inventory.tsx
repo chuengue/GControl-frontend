@@ -38,7 +38,7 @@ const Inventory: React.FC<{
   hasOnUnequip = false,
   onMoveItem
 }) => {
-  const { chardId } = useParams<{ chardId: string }>();
+  const { charId } = useParams<{ charId: string }>();
   const { showSnackbar } = useSnackbarStore();
   const { userItems, setUserItems } = useCharStore();
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory>('');
@@ -48,6 +48,7 @@ const Inventory: React.FC<{
   const [selectedEquipmentType, setSelectedEquipmentType] = useState<EquipmentType>('');
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
+  const { userChars, allChars } = useCharStore();
 
   // Função debounce para o search
   const debouncedSearch = useCallback(
@@ -67,7 +68,34 @@ const Inventory: React.FC<{
         equipmentType: selectedEquipmentType,
         page: page
       });
-      setItems(data.results);
+      // Filter items based on usableBy property
+      const filteredItems = data.results.filter(item => {
+        // Permitir itens sem restrição de uso
+        if (!item.usableBy) return true;
+      
+        // Encontrar o personagem atual
+        const userChar = userChars.find(
+          char => char.id === charId || char.gameChar?.id === charId
+        );
+        console.log(charId)
+      
+        // Se o personagem não for encontrado, não filtrar o item
+        if (!userChar) return false;
+      
+        // Se usableBy for uma string, comparar diretamente
+        if (typeof item.usableBy === "string") {
+          return item.usableBy === userChar.gameChar.name;
+        }
+      
+        // Se usableBy for uma lista, verificar se inclui o nome do personagem
+        if (Array.isArray(item.usableBy)) {
+          return item.usableBy.includes(userChar.gameChar.name);
+        }
+      
+        return false;
+      });
+      
+      setItems(filteredItems);
     } catch (error) {
       showSnackbar(error.message, 'error', error.stack);
     }
@@ -75,7 +103,7 @@ const Inventory: React.FC<{
 
   const fetchUserItems = async () => {
     try {
-      const data = await getUserCharItems(chardId, {
+      const data = await getUserCharItems(charId, {
         category: selectedCategory,
         rarity: selectedRarity,
         search: search,
@@ -83,7 +111,33 @@ const Inventory: React.FC<{
         equipmentType: selectedEquipmentType
       });
       const itemOnly = data.results.map(item => formatItemBoxPropsItem(item));
-      setUserItems(itemOnly);
+      // Filter items based on usableBy property
+      const filteredItems = data.results.filter(item => {
+        // Permitir itens sem restrição de uso
+        if (!item.usableBy) return true;
+      
+        // Encontrar o personagem atual
+        const userChar = userChars.find(
+          char => char.id === charId || char.gameChar?.id === charId
+        );
+      
+        // Se o personagem não for encontrado, não filtrar o item
+        if (!userChar) return false;
+      
+        // Se usableBy for uma string, comparar diretamente
+        if (typeof item.usableBy === "string") {
+          return item.usableBy === userChar.gameChar.name;
+        }
+      
+        // Se usableBy for uma lista, verificar se inclui o nome do personagem
+        if (Array.isArray(item.usableBy)) {
+          return item.usableBy.includes(userChar.gameChar.name);
+        }
+      
+        return false;
+      });
+      
+      setItems(filteredItems);
     } catch (error) {
       setUserItems([]);
       showSnackbar(error.message, 'error', error.stack);
@@ -115,7 +169,7 @@ const Inventory: React.FC<{
 
   const onEquipItem = async (itemId: string) => {
     try {
-      await equipItem(chardId, itemId);
+      await equipItem(charId, itemId);
       fetchUserItems();
       showSnackbar('Item equipado', 'success', {
         vertical: 'top',
@@ -131,7 +185,7 @@ const Inventory: React.FC<{
 
   const onUnequipItem = async (itemId: string) => {
     try {
-      await unequipItem(chardId, itemId);
+      await unequipItem(charId, itemId);
       fetchUserItems();
       showSnackbar('Item equipado', 'success', {
         vertical: 'top',
@@ -149,7 +203,7 @@ const Inventory: React.FC<{
     const newValue = item.quantity + value;
     const userItemId = item.userInventoryItemId;
     if (newValue === 0) {
-      await deleteItem(chardId, userItemId);
+      await deleteItem(charId, userItemId);
       fetchUserItems();
       return;
     }
@@ -157,7 +211,7 @@ const Inventory: React.FC<{
       quantity: newValue
     };
     try {
-      await updateQuantityItem(chardId, userItemId, data);
+      await updateQuantityItem(charId, userItemId, data);
       fetchUserItems();
     } catch (error) {
       showSnackbar(error.message, 'error', error.stack);

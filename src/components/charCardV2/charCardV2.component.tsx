@@ -4,21 +4,21 @@ import EditIcon from '@mui/icons-material/Edit';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
-  Box,
-  Button,
-  Card,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-  LinearProgress,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-  useMediaQuery
+    Box,
+    Button,
+    Card,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    IconButton,
+    LinearProgress,
+    Stack,
+    TextField,
+    Tooltip,
+    Typography,
+    useMediaQuery
 } from '@mui/material';
 import { blue, green, orange } from '@mui/material/colors';
 import React from 'react';
@@ -26,10 +26,10 @@ import { useNavigate } from 'react-router';
 
 import { UserCharCardProps } from '../../interfaces/char';
 import {
-  deleteUserGameChar,
-  getUserCharAtkHistoric,
-  toggleAwakened,
-  updateUserGameChar
+    deleteUserGameChar,
+    getUserCharAtkHistoric,
+    toggleAwakened,
+    updateUserGameChar
 } from '../../service/requests/gameChar';
 import { toggleVisibility } from '../../service/requests/ranking/ranking';
 import { useSession } from '../../SessionContext';
@@ -102,8 +102,8 @@ function CharCardV2({ chars, onAddCharacter, details = true }: UserCharCardProps
     };
   };
 
-  const handleDetailsClick = (UserChardId: string) => {
-    navigate(`/chars/details/${userId}/${UserChardId}`);
+  const handleDetailsClick = (UsercharId: string) => {
+    navigate(`/chars/details/${userId}/${UsercharId}`);
   };
 
   const handleCloseModalConfirm = () => {

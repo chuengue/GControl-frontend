@@ -2,6 +2,7 @@ import { Button, Checkbox, FormControl, FormControlLabel, Grid, InputLabel, Menu
 import React, { useEffect, useState } from 'react';
 
 import { registerItem } from '../../service/requests/items';
+import { getEquipmentSet } from '../../service/requests/sets/sets';
 import useCharStore from '../../stores/charStore';
 import { useSnackbarStore } from '../../stores/snackBarStore';
 import { accessoriesOptions, armorTypeOptions, categoryOptions, raritiesOptions } from './consts';
@@ -11,6 +12,7 @@ const CreateItem = () => {
   const { allChars, fetchAllCharsData } = useCharStore();
   const { showSnackbar } = useSnackbarStore();
   const [loading, setLoading] = useState<boolean>(false);
+  const [equipmentSets, setEquipmentSets] = useState<Array<{ id: string; name: string }>>([]);
 
   const [item, setItem] = useState<Omit<GrandChaseItem, 'id'>>({
     name: '',
@@ -29,6 +31,24 @@ const CreateItem = () => {
     };
     getAllChars();
   }, [allChars, fetchAllCharsData]);
+
+  useEffect(() => {
+    const fetchEquipmentSets = async () => {
+      try {
+        const response = await getEquipmentSet();
+        setEquipmentSets(response.data);
+      } catch (error) {
+        showSnackbar('Failed to load equipment sets', 'error', {
+          vertical: 'top',
+          horizontal: 'center'
+        });
+      }
+    };
+
+    if (item.category === 'equipment' || item.category === 'accessory') {
+      fetchEquipmentSets();
+    }
+  }, [item.category]);
 
   const handleChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
     const { name, value } = e.target;
@@ -242,15 +262,22 @@ const CreateItem = () => {
         {/* Set Name e Usable By */}
         {(item.category === 'equipment' || item.category === 'accessory') && (
           <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Set Name"
-              variant="outlined"
-              name="setName"
-              value={item.setName || ''}
-              onChange={handleChange}
-              disabled={loading}
-            />
+            <FormControl fullWidth>
+              <InputLabel>Set Name</InputLabel>
+              <Select
+                name="setName"
+                value={item.setName || ''}
+                onChange={handleChange}
+                disabled={loading}
+                label="Set Name"
+              >
+                {equipmentSets.map(set => (
+                  <MenuItem key={set.id} value={set.name}>
+                    {set.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
         )}
         <Grid item xs={12} sm={6}>

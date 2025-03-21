@@ -24,20 +24,20 @@ const accessorySlots = [
 ];
 
 const UserCharDetailsPage = () => {
-    const { chardId } = useParams<{ chardId?: string }>(); // Permitir undefined
+    const { charId } = useParams<{ charId?: string }>(); // Permitir undefined
     const { userId } = useParams<{ userId?: string }>(); // Permitir undefined
     const { userChars, fetchUserItems, fetchUserCharsData } = useCharStore();
     const { showSnackbar } = useSnackbarStore();
     const [open, setOpen] = React.useState(false);
 
     useEffect(() => {
-        if (userId && chardId) {
-            getUserCharDetails(userId, chardId);
+        if (userId && charId) {
+            getUserCharDetails(userId, charId);
             fetchUserCharsData(userId);
         }
-    }, [userId, chardId]); // Adicionar dependências corretamente
+    }, [userId, charId]); // Adicionar dependências corretamente
 
-    if (!chardId) {
+    if (!charId) {
         return <>ID do personagem inválido...</>;
     }
 
@@ -49,16 +49,16 @@ const UserCharDetailsPage = () => {
         setOpen(false);
     };
 
-    const userChar = userChars.find(item => item.id === chardId);
+    const userChar = userChars.find(item => item.id === charId);
 
     const moveItemForUserInventory = async (item: { id: string }) => {
         try {
-            await addItemToInventory(chardId, {
+            await addItemToInventory(charId, {
                 itemId: item.id,
                 equipped: false,
                 quantity: 1
             });
-            await fetchUserItems(chardId);
+            await fetchUserItems(charId);
         } catch (error) {
             console.error('Erro ao mover item:', error);
             showSnackbar(error.message, 'success');

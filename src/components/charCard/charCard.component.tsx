@@ -29,8 +29,8 @@ function CharCard({ chars, onAddCharacter, details = true }: UserCharCardProps) 
     setCharList(chars);
   }, [chars]);
 
-  const handleDetailsClick = (UserChardId: string) => {
-    navigate(`/chars/details/${userId}/${UserChardId}`);
+  const handleDetailsClick = (UsercharId: string) => {
+    navigate(`/chars/details/${userId}/${UsercharId}`);
   };
   const handleCloseModalConfirm = () => {
     setConfirmModalIsOpen(false);

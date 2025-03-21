@@ -15,7 +15,7 @@ import { formatNumberWithThousands } from '../../../utils/utils.ts';
 import ItemBox from '../itemBox/itemBox';
 
 const UserCharDetailsView = () => {
-  const { chardId, userId } = useParams();
+  const { charId, userId } = useParams();
   const [userChar, setUserChar] = useState<any>(null);
   const { userItems, setUserItems } = useCharStore();
   const [atkHistory, setAtkHistory] = useState<AtkTotalLog[]>([]);
@@ -35,28 +35,28 @@ const UserCharDetailsView = () => {
   };
 
   const UpdateAtkTotal = async (userCharId: string, atkTotal: number, level: number) => {
-    if (chardId)
+    if (charId)
       try {
         await updateUserGameChar(userCharId, userId, {
           atkTotal,
           level
         });
         showSnackbar('Atualizado com sucesso', 'success');
-        fetchUserCharHistory(chardId);
+        fetchUserCharHistory(charId);
       } catch (error) {
         showSnackbar(error.message, 'error');
       }
   };
   useEffect(() => {
-    if (!chardId) return;
-    fetchUserCharHistory(chardId);
-  }, [chardId]);
+    if (!charId) return;
+    fetchUserCharHistory(charId);
+  }, [charId]);
 
   useEffect(() => {
     const fetchUserCharDetails = async () => {
-      if (!userId || !chardId) return;
+      if (!userId || !charId) return;
       try {
-        const userCharDetails = await getUserCharDetails(userId, chardId);
+        const userCharDetails = await getUserCharDetails(userId, charId);
         setUserChar(userCharDetails);
         setAtkTotal(userCharDetails.results.atkTotal); // Definir o atkTotal atual
       } catch (error) {
@@ -65,7 +65,7 @@ const UserCharDetailsView = () => {
     };
 
     fetchUserCharDetails();
-  }, [userId, chardId, userItems]);
+  }, [userId, charId, userItems]);
 
   const handleEditAtkTotal = event => {
     event.stopPropagation();
@@ -80,10 +80,10 @@ const UserCharDetailsView = () => {
 
   const handleSaveEdit = event => {
     event.stopPropagation();
-    if (!chardId) return;
+    if (!charId) return;
     if (atkTotalEdit === null) return;
 
-    UpdateAtkTotal(chardId, atkTotalEdit, userChar?.results.level);
+    UpdateAtkTotal(charId, atkTotalEdit, userChar?.results.level);
     setAtkTotal(atkTotalEdit);
     setIsEditing(false);
   };
@@ -91,8 +91,8 @@ const UserCharDetailsView = () => {
   const onUnequipItem = async (itemId: string) => {
     const userInventoryItem = userItems.find(item => item.id === itemId);
     try {
-      await unequipItem(chardId, userInventoryItem.userInventoryItemId);
-      fetchUserItems(chardId);
+      await unequipItem(charId, userInventoryItem.userInventoryItemId);
+      fetchUserItems(charId);
       showSnackbar('Item equipado', 'success', {
         vertical: 'top',
         horizontal: 'center'

@@ -5,7 +5,8 @@ export type EquipmentType =
     | 'lower'
     | 'gloves'
     | 'shoes'
-    | 'weapon';
+    | 'weapon'
+    | 'cloak'
 export type AccessoryType =
     | 'earring'
     | 'piercing'

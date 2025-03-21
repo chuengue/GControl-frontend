@@ -1,4 +1,4 @@
-import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Groups2, Handyman, History, Home, Info, RemoveCircle, ShowChart, TableChartRounded } from '@mui/icons-material';
+import { AddCircle, AdminPanelSettings, Agriculture, DataSaverOn, Groups2, Handyman, History, Home, Info, RemoveCircle, SettingsAccessibilityRounded, ShowChart, TableChartRounded } from '@mui/icons-material';
 import AddCircleRoundedIcon from '@mui/icons-material/AddCircleRounded';
 import PersonIcon from '@mui/icons-material/Person';
 import { Box, GlobalStyles, Typography } from '@mui/material';
@@ -53,6 +53,11 @@ export const NAVIGATION: CustomNav = [
     {
         title: 'Home',
         icon: <Home />
+    },
+    {
+        title:"Gear Tracker",
+        segment:"gear-tracker",
+        icon: <SettingsAccessibilityRounded/>
     },
     {
         segment: 'chars',
@@ -125,6 +130,11 @@ export const NAVIGATION: CustomNav = [
                 segment: 'add-limited-missions',
                 title: 'Adicionar Missão Limitada',
                 icon: <DataSaverOn />
+            },
+            {
+                segment: 'add-set',
+                title: 'Adicionar Set',
+                icon: <AddCircle />
             }
         ]
     },
